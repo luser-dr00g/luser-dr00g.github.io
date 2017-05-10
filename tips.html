@@ -1,0 +1,97 @@
+<html>
+  <head>
+    <title>Tip Calculator</title>
+  </head>
+  
+  <body onload="loaded()">
+    <h3>Tip Calculator</h3>
+    <table>
+      <tr><td> $ <input id=dividend type=text size=5 maxlength=5></td></tr>
+      <tr><td valign=top>Hours:</td>
+	  <td><table id=inputs>
+              </table></td></tr>
+    </table>
+
+
+    <table id=controls>
+      <tr>
+	<td><input type=button value="add row" onclick="add_row()">
+
+	<td><input type=button value="calculate" onclick="calculate()">
+      </tr>
+    </table>
+
+    <span id=output colspan=3>&nbsp;</span>
+
+  </body>
+  <script language="JavaScript">
+  <!--
+
+var num_inputs = 6;
+
+function loaded() {
+  add_row();
+  E('dividend').focus();
+}
+
+function add_row(){
+  var table = E('inputs');
+
+  var new_row = table.insertRow( table.rows.length );
+
+  for(  var i=0;  i<6;  i++) {
+    new_row.insertCell(i).innerHTML = "<input type=text size=5 maxlength=5>";
+  }
+  new_row.cells[0].firstChild.focus();   //start typing in first new field
+}
+
+
+function calculate(){
+  var inputs      = E('inputs').getElementsByTagName('input');
+  var hours       = hours_from_inputs( inputs );
+  var dollars     = Number( E('dividend').value );
+  var total_hours = sum_of( hours );
+  var rate        = rate_from_dollars_and_total_hours( dollars, total_hours );
+
+  display_output( hours, rate, total_hours );
+}
+
+function display_output( hours, rate, total_hours ){
+  E('output').innerHTML = "Total Hours: " + total_hours + "<br>";
+  E('output').innerHTML += "Rate ( $$ / Total Hours ): " + rate.toFixed(6) + "<br>";
+  for(  var i=0;  i < hours.length;  i++  ){
+    if(  (i % 6) == 0  )  E('output').innerHTML += "<br>";
+    var share = hours[i] * rate;
+    E('output').innerHTML += hours[i] + " &times; " + rate.toFixed(6) + " = " + share.toFixed(3) + "<br>";
+  }
+}
+
+function sum_of( nums ){
+  var x = 0;
+  for(  var i=0;  i < nums.length;  i++){
+    x += nums[i];
+  }
+  return x;
+}
+
+function hours_from_inputs( inputs ){
+  var hours = new Array( inputs.length );
+  for(  var i=0;  i < inputs.length;  i++  ){
+    hours[ i ] = Number(inputs[i].value);
+  }
+  return hours;
+}
+
+function rate_from_dollars_and_total_hours( dollars, total_hours ){
+  return  dollars / total_hours;
+}
+
+
+function E( id ){
+  return document.getElementById( id );
+}
+
+  //-->
+  </script>
+  
+</html>
