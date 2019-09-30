@@ -1,0 +1,186 @@
+
+header {
+    background: lightgreen;
+    color: darkgreen;
+    padding: .5px 0 .5px 1em;
+    margin: .5em 0;
+    bottom: 0;
+}
+
+.wrapper {
+    padding: 0;
+    margin: 0;
+    top: 0;
+    display: grid;
+    grid-gap: .5em;
+    grid-template-rows: 2fr auto repeat(3, 1fr) auto repeat(3, auto);
+    grid-template-areas:
+	"sketch"
+	"filler1"
+	"commands"
+	"info"
+	"undo"
+	"filler2"
+	"list"
+	"svg"
+        "faq"
+    ;
+}
+
+@media only screen and ((min-width: 500px) and (max-width: 899px)){
+.wrapper {
+    grid-template-columns: 1fr 40vw;
+    grid-template-rows: repeat(3, 1fr) repeat(3, auto);
+    grid-template-areas:
+	"sketch  commands"
+	"sketch  info"
+	"sketch  undo"
+        "filler1 filler2"
+        "list    svg"
+        "list    faq"
+    ;
+}
+}
+
+@media only screen and (min-width: 900px){
+.wrapper {
+    grid-template-columns: 3fr 2fr 2fr;
+    grid-template-rows: repeat(2, 1fr) repeat(3, auto);
+    grid-template-areas:
+	"sketch  commands info"
+	"sketch  commands undo"
+	"sketch  filler2  filler2"
+	"sketch  list     svg"
+	"filler1 list     faq"
+    ;
+}
+}
+
+.wrapper > div {
+    background: #eee;
+    padding: 1em;
+}
+.wrapper > div:nth-child(odd){
+    background: #ddd;
+}
+
+#sketch   {grid-area: sketch;  }
+#commands {grid-area: commands;}
+#info     {grid-area: info;    }
+#undo     {grid-area: undo;    }
+#list     {grid-area: list;    }
+#svg      {grid-area: svg;     }
+
+canvas {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+}
+
+svg {
+    width: 100%;
+    height: 100%;
+}
+
+input {
+    width: 3em;
+}
+
+#commands {
+    display: flex;
+    border: 1px solid black;
+    justify-content: space-around;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+#keypad {
+    border: 1px solid grey;
+    background: #bbb;
+}
+#keypad td {
+    border: 1px groove white;
+}
+
+button {
+    border-top: 2px ridge black;
+    border-left: 2px ridge black;
+    border-right: 2px groove black;
+    border-bottom: 2px groove black;
+    padding: .3em .3em .3em .3em;
+}
+
+#b_f {
+    padding: .4em .4em .3em .4em;
+}
+#b_b {
+    padding: .2em .4em .4em .4em;
+}
+#b_l {
+    padding: .2em .3em .2em .3em;
+}
+#b_r {
+    padding: .2em .3em .2em .3em;
+}
+#d_share {
+    padding: .3em .3em .3em .3em;
+}
+
+#filler1 {
+    background: darkgreen;
+}
+#filler2 {
+    background: lightgreen;
+}
+
+.undo {
+    color: red;
+}
+
+small button {
+    top: 0;
+    padding: 0 .1em 0 .1em;
+    height: 1.6em;
+    width: 2.7em;
+    font-size: xx-small;
+}
+
+.tweaks {
+    padding: 0;
+    height: 1em;
+}
+.tweaks tr {
+    top: 0;
+    border: 0;
+    padding: 0;
+}
+.tweaks tr:first-of-type {
+    border-bottom: 2px dotted grey;
+}
+.tweaks tr:last-of-type {
+    border-top: 2px dotted grey;
+}
+.tweaks td {
+    top: 0;
+    border: 0;
+    padding: 0;
+    text-align: right;
+}
+.tweaks tr td:first-of-type {
+    border-right: 2px dotted grey;
+}
+.tweaks tr td:last-of-type {
+    border-left: 2px dotted grey;
+}
+
+.buttons {
+    background: #bbb;
+    display: flex;
+    border: 1px solid black;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+}

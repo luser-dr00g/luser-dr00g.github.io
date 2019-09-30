@@ -1,0 +1,127 @@
+<!doctype html>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang=en><meta charset=utf-8>
+  <title>Turtle Doodle</title>
+
+<link href=style.css rel=stylesheet type=text/css>
+<script src="script.js"> </script>
+
+<header>
+  <h1 >Turtle Doodle</h1>
+</header>
+
+<main>
+<div class=wrapper>
+  <div id=sketch>
+    <canvas>
+  </div>
+
+  <div id=commands>
+  <div>
+    <table id=keypad>
+    <tr><td>
+	<td rowspan=2 align=center>
+	  <button id=b_f  >&#x2191;</button> <!-- forward -->
+	  <td>
+    <tr><td rowspan=2 align=center>
+	  <button id=b_l  >&#x21b6;</button> <!-- left -->
+    <td rowspan=2 align=center>
+	  <button id=b_r  >&#x21b7;</button> <!-- right -->
+    <tr><td rowspan=2 align=center>
+	  <button id=b_b  >&#x2193;</button> <!-- back -->
+    <tr><td><td>
+    </table>
+  </div>
+  <div>
+    <table><tr>
+      <td><small>Step:</small>
+      <td><input id=i_step type=number min=0 max=100 value=20 step=1 size=3>
+      <td><small><table class=tweaks>
+	    <tr><td><button id=b_s_plus_five>+5</button>
+		<td><button id=b_s_plus_ten>+10</button>
+	    <tr><td><button id=b_s_minus_five>-5</button>
+		<td><button id=b_s_minus_ten>-10</button>
+	  </table></small>
+    <tr>
+      <td><small>Angle:</small>
+      <td><input id=i_angle type=number min=0 max=180 value=90 step=1 size=3>
+      <td><small><table class=tweaks>
+	    <tr><td><button id=b_a_plus_five>+5</button>
+		<td><button id=b_a_plus_ten>+10</button>
+	    <tr><td><button id=b_a_minus_five>-5</button>
+		<td><button id=b_a_minus_ten>-10</button>
+	  </table></small>
+      <td>
+    </table>
+  </div>
+  </div>
+
+  <div id=info>
+  <div class=info> </div>
+  <br>
+  <div class=buttons>
+    <div><button id=b_new      >New</button></div>
+    <div><button id=b_save     >Save</button></div>
+    <div id=d_share><a id=a_share href=? ><small>share</small></a></div>
+    <div><button id=b_undo_one >Undo <small>1x</small></button></div>
+    <div><button id=b_undo     >Undo</button></div>
+    <div><button id=b_undo_all >Undo <small>All</small></button></div>
+  </div>
+  </div>
+
+  <div id=undo>
+  <div class=undo> </div>
+  <div class=last> </div>
+  <br>
+  <div class=buttons>
+    <div><button id=b_redo_one >Redo <small>1x</small></button></div>
+    <div><button id=b_redo     >Redo</button></div>
+    <div><button id=b_redo_all >Redo <small>All</small></button></div>
+    <div><button id=b_swap     >Swap</button></div>
+    <div><button id=b_drop     >Drop</button></div>
+    <div><button id=b_clear    >Clear</button></div>
+  </div>
+  </div>
+
+  <div id=list>
+  <section class=list> </section>
+  </div>
+
+  <div id=svg>
+    <a href=# id=svg_show_image onclick=show_svg_image() >show svg</a>
+    <a href=# id=svg_show_code style=display:none
+              onclick=show_svg_code() >show code</a>
+    <code>
+    <div class=svg> </div>
+    </code>
+  </div>
+
+  <div id=faq>
+    <a href=# id=faq_show onclick=show_faq() >show faq</a>
+    <div id=faq_content style=display:none >
+      <a href=# id=faq_hide onclick=hide_faq() >hide faq</a>
+      <dl>
+	<dt> Where's the turtle?
+	<dd> There is no turtle. Or perhaps there are many, depending upon
+	     how you look at it. In a sense a new turtle is created for each step
+	     through the commands. Only the final turtle is remembered, and only
+	     by the coordinates he reached and the angle he faced.
+      </dl>
+    </div>
+  </div>
+
+  <div id=filler1 style='grid-area:filler1'>
+  </div>
+
+  <div id=filler2 style='grid-area:filler2'>
+  </div>
+
+</div>
+</main>
+  
+<footer>
+  &copy; M. Joshua Ryan<br>
+  Inspired by LOGO, created by Seymour Papert.
+  <br>
+  <div id=debug> </div>
+
