@@ -31,7 +31,7 @@ header {
     ;
 }
 
-@media only screen and ((min-width: 500px) and (max-width: 900px)){
+@media only screen and ((min-width: 501px) and (max-width: 900px)){
 .wrapper {
     grid-template-columns: 1fr 40vw;
     grid-template-rows: repeat(3, 1fr) repeat(3, auto);
@@ -46,7 +46,7 @@ header {
 }
 }
 
-@media only screen and (min-width: 900px){
+@media only screen and (min-width: 901px){
 .wrapper {
     grid-template-columns: 3fr 2fr 2fr;
     grid-template-rows: repeat(2, 1fr) repeat(3, auto);
