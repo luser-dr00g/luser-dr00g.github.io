@@ -13,10 +13,6 @@ header {
     top: 0;
     display: grid;
     grid-gap: .5em;
-}
-
-@media (max-width: 500px){
-.wrapper {
     grid-template-rows: 2fr auto repeat(3, 1fr) auto repeat(3, auto);
     grid-template-areas:
 	"sketch"
@@ -31,7 +27,7 @@ header {
     ;
 }
 
-@media (min-width: 501px) and (max-width: 900px){
+@media (min-width: 500px){
 .wrapper {
     grid-template-columns: 1fr 40vw;
     grid-template-rows: repeat(3, 1fr) repeat(3, auto);
@@ -46,7 +42,7 @@ header {
 }
 }
 
-@media (min-width: 901px){
+@media (min-width: 900px){
 .wrapper {
     grid-template-columns: 3fr 2fr 2fr;
     grid-template-rows: repeat(2, 1fr) repeat(3, auto);
