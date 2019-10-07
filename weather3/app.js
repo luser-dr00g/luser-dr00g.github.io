@@ -140,11 +140,11 @@ function format_request( type, loc, u ){
 
 function url_for_request( type ){
   switch( type ){
-  case 'current':   return 'http://api.openweathermap.org/data/2.5/weather?'
+  case 'current':   return 'https://api.openweathermap.org/data/2.5/weather?'
   case 'forecast2':
   case 'forecast3':
   case 'forecast4':
-  case 'forecast5': return 'http://api.openweathermap.org/data/2.5/forecast?'
+  case 'forecast5': return 'https://api.openweathermap.org/data/2.5/forecast?'
   }
 }
 
@@ -194,7 +194,7 @@ function format_weather_results( data ){
     '<tr><td colspan=3 class=top>' +
       (data.dt_txt ? data.dt_txt + '<br>' : '' ) +
       data.weather[0].main + '<br>' +
-      '<img src="http://openweathermap.org/img/wn/' +
+      '<img src="https://openweathermap.org/img/wn/' +
 	data.weather[0].icon + '@2x.png">' + '<br>' +
       data.weather[0].description + '<br>' +
       data.main.temp + '&deg; ' + unit_[unit.value].temp +'<br>' +
