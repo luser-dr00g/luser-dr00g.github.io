@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang=en><meta charset=utf-8>
+<script type=module src=app.js></script>
+<link href=style.css rel=stylesheet type=text/css>
+<main>
+  <div class=controls >
+    <div class=i_location >
+      <input class=i_search type=text
+	    placeholder="Enter city name">
+      <button class=search >Search</button>
+    </div>
+    <div class=units>
+      <div class=unit_imperial >imperial</div>
+      <div class=unit_metric   >metric</div>
+      <div class=unit_standard >standard</div>
+    </div>
+    <div class=report_type_controls >
+      <div class=current   >current weather</div>
+      <div class=forecast2 >2 day forecast</div>
+      <div class=forecast3 >3 day forecast</div>
+      <div class=forecast4 >4 day forecast</div>
+      <div class=forecast5 >5 day forecast</div>
+    </div>
+  </div>
+  <div class=report      > </div>
+  <div>
+    <div>Weather data provided by
+      <a href="https://openweathermap.org/" >openweathermap.com.</a>
+    </div>
+    <small> <div class=show_server_data > show server data </div> </small>
+    <small> <div class=hide_server_data
+		 style="display:none" > hide server data </div> </small>
+    <div class=server_data style="display:none" > </div>
+    <div class=debug       > </div>
+  </div>

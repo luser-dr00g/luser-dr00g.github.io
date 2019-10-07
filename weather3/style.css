@@ -1,0 +1,69 @@
+body {
+    background: lightblue;
+}
+
+div {
+    background: darkblue;
+    color: white;
+    text-align: center;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+}
+.controls > div {
+    padding 0 1em 0 1em;
+}
+
+.units {
+    display: flex;
+    justify-content: space-evenly;
+}
+.units > div {
+    padding: 0 1em 0 1em;
+    cursor: pointer;
+}
+
+.report_type_controls {
+    display: flex;
+    justify-content: space-evenly;
+}
+.report_type_controls > div {
+    padding: 0 1em 0 1em;
+    cursor: pointer;
+}
+
+h1 {
+    padding: 0 0 .5em 0;
+    margin: 0;
+}
+
+.report {
+    padding: 1em;
+    margin: 1em;
+}
+
+.report_data {
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.result {
+    background: lightblue;
+}
+
+.show_server_data {
+    cursor: pointer;
+}
+
+.hide_server_data {
+    cursor: pointer;
+}
+
+.server_data {
+    background: white;
+    color: black;
+    text-align: left;
+}
