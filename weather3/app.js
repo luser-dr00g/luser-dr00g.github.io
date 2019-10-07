@@ -67,6 +67,21 @@ weather.update = function( value ){
   });
 }
 
+var showing_server_data = new Model();
+var server_data_view = new View();
+server_data_view.setModel( showing_server_data );
+server_data_view.onUpdate = function( value ){
+  if( value ){
+    show( qs('.server_data') )
+    hide( qs('.show_server_data') )
+    show( qs('.hide_server_data') )
+  } else {
+    hide( qs('.server_data') )
+    show( qs('.show_server_data') )
+    hide( qs('.hide_server_data') )
+  }
+}
+
 
 var report = new View();
 report.setModel( weather );
@@ -93,16 +108,8 @@ control.forecast2     = function(){ report_type.setValue( 'forecast2' ) }
 control.forecast3     = function(){ report_type.setValue( 'forecast3' ) }
 control.forecast4     = function(){ report_type.setValue( 'forecast4' ) }
 control.forecast5     = function(){ report_type.setValue( 'forecast5' ) }
-control.show_server_data=function(){
-  show( qs('.server_data') )
-  hide( qs('.show_server_data') )
-  show( qs('.hide_server_data') )
-}
-control.hide_server_data=function(){
-  hide( qs('.server_data') )
-  show( qs('.show_server_data') )
-  hide( qs('.hide_server_data') )
-}
+control.show_server_data=function(){ showing_server_data.setValue( true )  }
+control.hide_server_data=function(){ showing_server_data.setValue( false ) }
 
 function hide( x ){ x.style.display = 'none' }
 function show( x ){ x.style.display = 'block' }
