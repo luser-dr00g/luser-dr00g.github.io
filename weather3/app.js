@@ -214,7 +214,8 @@ function format_weather_results( data ){
   return '<div class=result>' +
     '<tr><td colspan=3 class=top>' +
       (data.dt_txt ?
-        day_of_week( data.dt_txt ) + ' ' + time( data.dt_txt ) + '<br>'
+        day_of_week( fix_utc( data.dt_txt ) ) + ' ' +
+        time( fix_utc( data.dt_txt ) ) + '<br>'
         : '' ) +
       data.weather[0].main + '<br>' +
       '<img src="https://openweathermap.org/img/wn/' +
@@ -227,6 +228,10 @@ function format_weather_results( data ){
 	data.wind.speed + ' ' + unit_[unit.value].speed + '<br>' +
       data.main.pressure + ' hPa pressure' + '<br>' +
     '</div>';
+}
+
+function fix_utc( dt ){
+    return dt.replace(/ /,'T') + '.000Z';
 }
 
 function day_of_week( dt ){
