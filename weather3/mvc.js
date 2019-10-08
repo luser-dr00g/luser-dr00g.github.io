@@ -1,3 +1,4 @@
+// based on https://gist.github.com/mlhaufe/c841b2269b0099c3c52648717f9551cc
 class Model {
   _observers = []
   observe( observer ){ this._observers.push( observer ) }
@@ -6,8 +7,7 @@ class Model {
   setValue( value ){
     if( typeof( this.onChange ) == 'function' ) this.onChange( value )
     this.notify( this.value = value )
-  };
-}
+  } }
 
 class View {
   _subViews = []

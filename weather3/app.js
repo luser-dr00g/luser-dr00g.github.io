@@ -199,7 +199,9 @@ function format_forecast_results( data, days ){
 function format_weather_results( data ){
   return '<div class=result>' +
     '<tr><td colspan=3 class=top>' +
-      (data.dt_txt ? data.dt_txt + '<br>' : '' ) +
+      (data.dt_txt ?
+        day_of_week( data.dt_txt ) + ' ' + time( data.dt_txt ) + '<br>'
+        : '' ) +
       data.weather[0].main + '<br>' +
       '<img src="https://openweathermap.org/img/wn/' +
 	data.weather[0].icon + '@2x.png">' + '<br>' +
@@ -210,6 +212,20 @@ function format_weather_results( data ){
 	(data.wind.deg ? compass_point( data.wind.deg ) : '') + '<br>' +
       data.main.pressure + ' hPa pressure' + '<br>' +
     '</div>';
+}
+
+function day_of_week( dt ){
+  let d = new Date(dt);
+  let w = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  return w[ d.getDay() ];
+}
+
+function time( dt ){
+  let d = new Date(dt);
+  let hour = d.getHours();
+  let h = hour == 0 || hour == 12 ? 12 : hour % 12;
+  let qm = hour < 12 ? 'AM' : 'PM';
+  return '' + h + qm;
 }
 
 function compass_point( d ){
