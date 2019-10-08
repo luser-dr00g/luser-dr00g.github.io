@@ -1,6 +1,5 @@
 body {
     background: lightblue;
-    text-shadow: .1em .1em 1px black;
 }
 
 div {
@@ -28,6 +27,7 @@ div {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-evenly;
+    text-shadow: .1em .1em 1px black;
 }
 .units > div {
     padding: .5em 1em .6em 1em;
@@ -41,6 +41,7 @@ div {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-evenly;
+    text-shadow: .1em .1em 1px black;
 }
 .report_type_controls > div {
     padding: .5em 1em .6em 1em;
@@ -71,6 +72,7 @@ h1 {
 .result {
     background: linear-gradient( to right, blue, darkblue );
     margin: .5em;
+    text-shadow: .1em .1em 1px black;
 }
 
 .show_server_data {
