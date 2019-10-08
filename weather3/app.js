@@ -3,10 +3,20 @@ import {Model, View, Controller} from './mvc.js';
 
 function main(){ //DOMContentLoaded
   document.addEventListener('click', click );
+  qs('.i_search').addEventListener('keydown', e=>{
+    if( e.keyCode == 13 || e.which == 13 ){
+      location.setValue( format_query( qs('.i_search').value ) )
+      qs('.i_search').blur();
+      return false;
+    }
+    return true;
+  });
   unit.setValue(sessionStorage.getItem('weather_unit')||'imperial');
   report_type.setValue(sessionStorage.getItem('weather_report_type')||'current');
   get_geolocation_if_available();
 }
+
+function A( s ){ return s.charCodeAt( 0 ) }
 
 
 var location = new Model();
@@ -173,14 +183,18 @@ function show_forecast( data, days ){
 }
 
 function format_weather_data( data ){
-  return '<h1>Current weather for ' + data.name + '</h1>' +
+  return '<h1>Current weather for ' +
+	  data.name + ', ' +
+	  data.sys.country + '</h1>' +
 	'<div class=report_data>' +
 	format_weather_results( data ) +
 	'</div>';
 }
 
 function format_forecast_data( data, days ){
-  return '<h1>' + days + ' day forecast for ' + data.city.name + '</h1>' +
+  return '<h1>' + days + ' day forecast for ' +
+	  data.city.name + ', ' +
+	  data.city.country + '</h1>' +
 	'<div class=report_data>' +
 	format_forecast_results( data, days ) +
 	'</div>';
@@ -208,8 +222,9 @@ function format_weather_results( data ){
       data.weather[0].description + '<br>' +
       data.main.temp + '&deg; ' + unit_[unit.value].temp +'<br>' +
       data.main.humidity + '% humidity' + '<br>' +
-      'wind ' + data.wind.speed + ' ' + unit_[unit.value].speed + ' ' +
-	(data.wind.deg ? compass_point( data.wind.deg ) : '') + '<br>' +
+      'wind ' +
+	(data.wind.deg ? compass_point( data.wind.deg ) + ' ' : '') +
+	data.wind.speed + ' ' + unit_[unit.value].speed + '<br>' +
       data.main.pressure + ' hPa pressure' + '<br>' +
     '</div>';
 }

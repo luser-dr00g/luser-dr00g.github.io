@@ -1,20 +1,27 @@
 body {
     background: lightblue;
+    text-shadow: .1em .1em 1px black;
 }
 
 div {
-    background: darkblue;
+    #background: darkblue;
     color: white;
     text-align: center;
 }
 
 .controls {
+    background: linear-gradient( to right, darkblue, blue );
     display: flex;
     flex-wrap: wrap;
     justify-content: space-evenly;
+    padding: .5em;
 }
 .controls > div {
-    padding 0 1em 0 1em;
+    padding: 0 1em 0 1em;
+}
+
+.i_location {
+    margin: .4em 0 0 0;
 }
 
 .units {
@@ -23,8 +30,11 @@ div {
     justify-content: space-evenly;
 }
 .units > div {
-    padding: 0 1em 0 1em;
+    padding: .5em 1em .6em 1em;
     cursor: pointer;
+}
+.units > div:hover {
+    background: lightblue;
 }
 
 .report_type_controls {
@@ -33,8 +43,11 @@ div {
     justify-content: space-evenly;
 }
 .report_type_controls > div {
-    padding: 0 1em 0 1em;
+    padding: .5em 1em .6em 1em;
     cursor: pointer;
+}
+.report_type_controls > div:hover {
+    background: lightblue;
 }
 
 h1 {
@@ -43,19 +56,21 @@ h1 {
 }
 
 .report {
+    background: linear-gradient( to right, darkblue, blue );
     padding: 1em;
     margin: 1em;
 }
 
 .report_data {
     display: flex;
-    flex-wrap: wrap;
+    flex-flow: row wrap;
     justify-content: space-evenly;
     margin: .5em .5em .5em .5em;
 }
 
 .result {
-    background: lightblue;
+    background: linear-gradient( to right, blue, darkblue );
+    margin: .5em;
 }
 
 .show_server_data {
@@ -68,4 +83,13 @@ h1 {
     background: white;
     color: black;
     text-align: left;
+    text-shadow: none;
+}
+
+.footer {
+    background: linear-gradient( to right, darkblue, blue );
+}
+
+a {
+    color: yellow;
 }
