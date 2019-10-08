@@ -6,6 +6,7 @@ div {
     #background: darkblue;
     color: white;
     text-align: center;
+    font: 12px sans-serif;
 }
 
 .controls {
@@ -14,6 +15,7 @@ div {
     flex-wrap: wrap;
     justify-content: space-evenly;
     padding: .5em;
+    font: 12px sans;
 }
 .controls > div {
     padding: 0 1em 0 1em;
@@ -54,12 +56,14 @@ div {
 h1 {
     padding: 0 0 .5em 0;
     margin: 0;
+    font: 20px sans-serif;
 }
 
 .report {
     background: linear-gradient( to right, darkblue, blue );
     padding: 1em;
     margin: 1em;
+    font: 12px sans-serif;
 }
 
 .report_data {
