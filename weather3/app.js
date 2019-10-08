@@ -16,8 +16,6 @@ function main(){ //DOMContentLoaded
   get_geolocation_if_available();
 }
 
-function A( s ){ return s.charCodeAt( 0 ) }
-
 
 var location = new Model();
 
@@ -144,6 +142,8 @@ function format_query( q ){
   var m;
   if( m = q.match(/(-?\d+(\.\d+)?),(-?\d+(\.\d+))?/) ){
     return format_latlon_query( m[1], m[2] );
+  } else if( m = q.match(/ *(\d\d\d\d\d) */) ){
+    return 'zip=' + m[1];
   } else {
     return 'q=' + q.replace(/ /g,'+');
   }
