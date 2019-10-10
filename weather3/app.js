@@ -30,7 +30,7 @@ unit_controls.onUpdate = function( value ){
   show( qs('.unit_imperial') );
   show( qs('.unit_metric'  ) );
   show( qs('.unit_standard') );
-  show( qs('.unit_' + value) );
+  hide( qs('.unit_' + value) );
 }
 
 var report_type = new Model();
@@ -46,7 +46,7 @@ report_type_controls.onUpdate = function( value ){
   show( qs('.forecast3') );
   show( qs('.forecast4') );
   show( qs('.forecast5') );
-  show( qs('.' + value ) );
+  hide( qs('.' + value ) );
 }
 
 var request = new Model();
