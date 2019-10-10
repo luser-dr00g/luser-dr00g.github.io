@@ -27,10 +27,10 @@ unit.onChange = function( value ){
 var unit_controls = new View();
 unit_controls.setModel( unit );
 unit_controls.onUpdate = function( value ){
-  qs('.unit_imperial').style.display = 'block';
-  qs('.unit_metric'  ).style.display = 'block';
-  qs('.unit_standard').style.display = 'block';
-  qs('.unit_' + value).style.display = 'none';
+  show( qs('.unit_imperial') );
+  show( qs('.unit_metric'  ) );
+  show( qs('.unit_standard') );
+  show( qs('.unit_' + value) );
 }
 
 var report_type = new Model();
@@ -41,12 +41,12 @@ report_type.onChange = function( value ){
 var report_type_controls = new View();
 report_type_controls.setModel( report_type );
 report_type_controls.onUpdate = function( value ){
-  qs('.current').style.display = 'block';
-  qs('.forecast2').style.display = 'block';
-  qs('.forecast3').style.display = 'block';
-  qs('.forecast4').style.display = 'block';
-  qs('.forecast5').style.display = 'block';
-  qs('.' + value).style.display = 'none';
+  show( qs('.current') );
+  show( qs('.forecast2') );
+  show( qs('.forecast3') );
+  show( qs('.forecast4') );
+  show( qs('.forecast5') );
+  show( qs('.' + value ) );
 }
 
 var request = new Model();
