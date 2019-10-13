@@ -78,11 +78,13 @@ class WeatherView extends View {
     this.find('.report').innerHTML = this.format_forecast_data( data, days );
   }
   format_weather_data( data ){
-return `<h1>Current Weather for ${data.name}, ${data.sys.country}</h1>
+return `<h1>Current Weather for \
+<nobr>${data.name},</nobr> ${data.sys.country}</h1>
 <div class=report_data>${this.format_weather_results(data)}</div>`;
   }
   format_forecast_data( data, days ){
-return `<h1>${days} days forecast for ${data.city.name}, ${data.city.country}</h1>
+return `<h1>${days} days forecast for \
+<nobr>${data.city.name},</nobr> ${data.city.country}</h1>
 <div class=report_data>${this.format_forecast_results(data,days)}</div>`;
   }
   format_forecast_results( data, days ){
