@@ -127,22 +127,6 @@ var server_data = new Model();
 var showing_server_data = new Model();
 
 
-var control = report.getController();
-Object.assign( control, {
-  search: function(){ location.value = this.getView().find('.i_search').value },
-  unit_imperial: function(){ unit.value = 'imperial' },
-  unit_metric:   function(){ unit.value = 'metric'   },
-  unit_standard: function(){ unit.value = 'standard' },
-  current:   function(){ report_type.value = 'current'   },
-  forecast2: function(){ report_type.value = 'forecast2' },
-  forecast3: function(){ report_type.value = 'forecast3' },
-  forecast4: function(){ report_type.value = 'forecast4' },
-  forecast5: function(){ report_type.value = 'forecast5' },
-  show_server_data:function(){ showing_server_data.value = true  },
-  hide_server_data:function(){ showing_server_data.value = false },
-});
-
-
 var unit_controls = new View( unit,
   function( value ){
     this.show( this.find('.unit_imperial') );
@@ -186,13 +170,27 @@ var showing_server_data_view = new View( showing_server_data,
 );
 
 
+var control = report.getController();
+Object.assign( control, {
+  search: function(){ location.value = this.getView().find('.i_search').value },
+  unit_imperial: function(){ unit.value = 'imperial' },
+  unit_metric:   function(){ unit.value = 'metric'   },
+  unit_standard: function(){ unit.value = 'standard' },
+  current:   function(){ report_type.value = 'current'   },
+  forecast2: function(){ report_type.value = 'forecast2' },
+  forecast3: function(){ report_type.value = 'forecast3' },
+  forecast4: function(){ report_type.value = 'forecast4' },
+  forecast5: function(){ report_type.value = 'forecast5' },
+  show_server_data:function(){ showing_server_data.value = true  },
+  hide_server_data:function(){ showing_server_data.value = false },
+});
+
 
 document.addEventListener( 'DOMContentLoaded', main );
 
 function main(){
   unit.loadValue();
   report_type.loadValue();
-
   get_geolocation_if_available();
 
   document.addEventListener( 'click', click );
