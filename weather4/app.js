@@ -39,7 +39,7 @@ class WeatherModel extends DependentModel {
   constructor( models ){
     super( models,
       function (value){
-	console.log( 'XHR ' + value );
+	//console.log( 'XHR ' + value );
 	xhr({
 	  type: 'GET',
 	  url: value,
@@ -70,11 +70,11 @@ class WeatherView extends View {
       });
   }
   show_current_weather( data ){
-    console.log('display current weather');
+    //console.log('display current weather');
     this.find('.report').innerHTML = this.format_weather_data( data );
   }
   show_forecast( data, days ){
-    console.log(`display ${days} day forecast`);
+    //console.log(`display ${days} day forecast`);
     this.find('.report').innerHTML = this.format_forecast_data( data, days );
   }
   format_weather_data( data ){
