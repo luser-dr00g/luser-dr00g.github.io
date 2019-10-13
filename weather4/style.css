@@ -1,0 +1,101 @@
+body {
+    background: lightblue;
+}
+
+div {
+    #background: darkblue;
+    color: white;
+    text-align: center;
+    font: 12px Helvetica, Ariel, sans-serif;
+}
+
+.controls {
+    background: linear-gradient( to right, darkblue, blue );
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    padding: .5em;
+    font: 12px Helvetica, Ariel, sans;
+}
+.controls > div {
+    padding: 0 1em 0 1em;
+}
+
+.i_location {
+    margin: .4em 0 0 0;
+}
+
+.units {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    text-shadow: .1em .1em 1px black;
+}
+.units > div {
+    padding: .5em 1em .6em 1em;
+    cursor: pointer;
+}
+.units > div:hover {
+    background: lightblue;
+}
+
+.report_type_controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    text-shadow: .1em .1em 1px black;
+}
+.report_type_controls > div {
+    padding: .5em 1em .6em 1em;
+    cursor: pointer;
+}
+.report_type_controls > div:hover {
+    background: lightblue;
+}
+
+h1 {
+    padding: 0 0 .5em 0;
+    margin: 0;
+    font: 20px Helvetica, Ariel, sans-serif;
+}
+
+.report {
+    background: linear-gradient( to right, darkblue, blue );
+    padding: 1em;
+    margin: 1em;
+    font: 12px Helvetica, Ariel, sans-serif;
+}
+
+.report_data {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-evenly;
+    margin: .5em .5em .5em .5em;
+}
+
+.result {
+    background: linear-gradient( to right, blue, darkblue );
+    margin: .5em;
+    text-shadow: .1em .1em 1px black;
+}
+
+.show_server_data {
+    cursor: pointer;
+}
+.hide_server_data {
+    cursor: pointer;
+}
+.server_data {
+    background: white;
+    color: black;
+    text-align: left;
+    text-shadow: none;
+}
+
+.footer {
+    background: linear-gradient( to right, darkblue, blue );
+}
+
+a {
+    color: yellow;
+}
