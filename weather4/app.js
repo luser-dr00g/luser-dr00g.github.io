@@ -131,6 +131,7 @@ var showing_server_data = new Model();
 
 var unit_controls = new View( unit,
   function( value ){
+    console.log( value );
     this.show( this.find('.unit_imperial') );
     this.show( this.find('.unit_metric') );
     this.show( this.find('.unit_standard') );
@@ -140,6 +141,7 @@ var unit_controls = new View( unit,
 
 var report_type_controls = new View( report_type,
   function( value ){
+    console.log( value );
     this.show( this.find('.current') );
     this.show( this.find('.forecast2') );
     this.show( this.find('.forecast3') );
