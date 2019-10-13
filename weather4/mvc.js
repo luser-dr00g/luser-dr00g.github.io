@@ -23,8 +23,8 @@ class SessionModel extends Model {
     //this.loadValue()
   }
   loadValue(){
-    let val = sessionStorage.getItem( this._sessionVariable )
-    if( val !== null ) super.value = val
+    if( sessionStorage.getItem( this._sessionVariable ) )
+      super.value = sessionStorage.getItem( this._sessionVariable );
   }
   saveValue( value ){
     sessionStorage.setItem( this._sessionVariable, value )
