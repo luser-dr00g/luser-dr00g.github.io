@@ -2,9 +2,9 @@ import {Model, SessionModel, DependentModel, View, Controller}
        from './mvc.js';
 
 class LocationModel extends Model {
-  set value( value ){ super.value = this.format_query( value ); }
+  set value( value ){ super.value = this.formatQuery( value ); }
   get value(){ return super.value; }
-  format_query( q ){
+  formatQuery( q ){
     var m;
     if( m = q.match(/(-?\d+(\.\d+)?),(-?\d+(\.\d+))?/) ){
       return `lat=${m[1]}&lon=${m[3]}`;
@@ -22,13 +22,13 @@ class RequestModel extends DependentModel {
       function (value){
 	if( location.value )
 	  this.value =
-	    this.format_request( report_type.value, location.value, unit.value )
+	    this.formatRequest( reportType.value, location.value, unit.value )
       }
     );
   }
   url = 'https://api.openweathermap.org/data/2.5/'
   auth = '&APPID=39495affc770605f852615a5be774e62'
-  format_request( type, loc, unit ){
+  formatRequest( type, loc, unit ){
     let req = type=='current'? 'weather' : 'forecast';
     if( unit == 'standard' ) unit = ''; else unit = '&units=' + unit;
     return `${this.url}${req}?${loc}${unit}${this.auth}`;
@@ -45,10 +45,10 @@ class WeatherModel extends DependentModel {
 	  url: value,
 	  success: function( x, obj ){
 	    obj.value = JSON.parse( x.response );
-	    server_data.value = request.value + '\n' + x.response;
+	    serverData.value = request.value + '\n' + x.response;
 	  },
 	  failure: function( x, obj ){
-	    server_data.value = `server returned ${x.status} ${x.statusText}`;
+	    serverData.value = `server returned ${x.status} ${x.statusText}`;
 	  }
 	}, this);
       }
@@ -56,80 +56,95 @@ class WeatherModel extends DependentModel {
   }
 }
 
+
 class WeatherView extends View {
   constructor( model ){
     super( model,
       function( value ){
-	switch( report_type.value ){
-	case 'current':   this.show_current_weather( value ); break;
-	case 'forecast2': this.show_forecast( value, 2 );     break;
-	case 'forecast3': this.show_forecast( value, 3 );     break;
-	case 'forecast4': this.show_forecast( value, 4 );     break;
-	case 'forecast5': this.show_forecast( value, 5 );     break;
+	switch( reportType.value ){
+	case 'current':   this.showCurrentWeather( value ); break;
+	case 'forecast2': this.showForecast( value, 2 );     break;
+	case 'forecast3': this.showForecast( value, 3 );     break;
+	case 'forecast4': this.showForecast( value, 4 );     break;
+	case 'forecast5': this.showForecast( value, 5 );     break;
 	}
       });
   }
-  show_current_weather( data ){
+  showCurrentWeather( data ){
     //console.log('display current weather');
-    this.find('.report').innerHTML = this.format_weather_data( data );
+    this.find('.report').innerHTML = this.formatWeatherData( data );
   }
-  show_forecast( data, days ){
+  showForecast( data, days ){
     //console.log(`display ${days} day forecast`);
-    this.find('.report').innerHTML = this.format_forecast_data( data, days );
+    this.find('.report').innerHTML = this.formatForecastData( data, days );
   }
-  format_weather_data( data ){
+  formatWeatherData( data ){
 return `<h1>Current Weather for \
 <nobr>${data.name},</nobr> ${data.sys.country}</h1>
-<div class=report_data>${this.format_weather_results(data)}</div>`;
+<div class=report_data>${this.formatWeatherResults(data)}</div>`;
   }
-  format_forecast_data( data, days ){
+  formatForecastData( data, days ){
 return `<h1>${days} days forecast for \
 <nobr>${data.city.name},</nobr> ${data.city.country}</h1>
-<div class=report_data>${this.format_forecast_results(data,days)}</div>`;
+<div class=report_data>${this.formatForecastResults(data,days)}</div>`;
   }
-  format_forecast_results( data, days ){
+  formatForecastResults( data, days ){
     let list = data.list.slice( 0, days * 8 );
     let z = '';
     for( var i = 0; i < list.length; i += 8 ){
-      z += this.format_weather_results( list[i] );
+      z += this.formatWeatherResults( list[i] );
     }
     return z;
   }
-  format_weather_results( data ){
-    let day_time = (data.dt_txt ? day_of_week( fix_utc( data.dt_txt ) ) + ' ' +
-		    time_of_day( fix_utc( data.dt_txt ) ) + '<br>' : '');
+  formatWeatherResults( data ){
+    let dayTime = (data.dt_txt ? dayOfWeek( fixUtc( data.dt_txt ) ) + ' ' +
+		    timeOfDay( fixUtc( data.dt_txt ) ) + '<br>' : '');
 return `<div class=result>
-${day_time}
+${dayTime}
 ${data.weather[0].main}<br>
 <img src="https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png"><br>
 ${data.weather[0].description}<br>
 ${data.main.temp}&deg; ${unit_[unit.value].temp}<br>
 ${data.main.humidity} % humidity<br>
-wind ${data.wind.deg? compass_point( data.wind.deg )+' ' :''}\
+wind ${data.wind.deg? compassPoint( data.wind.deg )+' ' :''}\
 ${data.wind.speed} ${unit_[unit.value].speed}<br>
 ${data.main.pressure} hPa pressure<br>
 </div>`;
   }
 }
 
+class WeatherController extends Controller {
+  search(){ location.value = this.getView().find('.i_search').value }
+  unit_imperial(){ unit.value = 'imperial' }
+  unit_metric(){ unit.value = 'metric'   }
+  unit_standard(){ unit.value = 'standard' }
+  current(){ reportType.value = 'current'   }
+  forecast2(){ reportType.value = 'forecast2' }
+  forecast3(){ reportType.value = 'forecast3' }
+  forecast4(){ reportType.value = 'forecast4' }
+  forecast5(){ reportType.value = 'forecast5' }
+  show_server_data(){ showingServerData.value = true  }
+  hide_server_data(){ showingServerData.value = false }
+}
 
 var location    = new LocationModel();
 
 var unit        = new SessionModel( 'weather_unit' );
 //window.unit = unit;
 
-var report_type = new SessionModel( 'weather_report_type' );
+var reportType = new SessionModel( 'weather_report_type' );
 
-var request     = new RequestModel( [location, unit, report_type] );
+var request     = new RequestModel( [location, unit, reportType] );
 
 var weather     = new WeatherModel( [request] );
 
-var server_data = new Model();
+var serverData = new Model();
 
-var showing_server_data = new Model();
+var showingServerData = new Model();
 
 
-var unit_controls = new View( unit,
+
+var unitControls = new View( unit,
   function( value ){
     console.log( value );
     this.show( this.find('.unit_imperial') );
@@ -139,7 +154,7 @@ var unit_controls = new View( unit,
   }
 );
 
-var report_type_controls = new View( report_type,
+var reportTypeControls = new View( reportType,
   function( value ){
     console.log( value );
     this.show( this.find('.current') );
@@ -153,13 +168,13 @@ var report_type_controls = new View( report_type,
 
 var report = new WeatherView( weather );
 
-var server_data_view = new View( server_data,
+var serverDataView = new View( serverData,
   function( value ){
     this.find('.server_data').innerText += value + '\n';
   }
 );
 
-var showing_server_data_view = new View( showing_server_data,
+var showingServerDataView = new View( showingServerData,
   function( value ){
     if( value ){
       this.show( this.find('.server_data') );
@@ -174,28 +189,16 @@ var showing_server_data_view = new View( showing_server_data,
 );
 
 
-var control = report.getController();
-Object.assign( control, {
-  search: function(){ location.value = this.getView().find('.i_search').value },
-  unit_imperial: function(){ unit.value = 'imperial' },
-  unit_metric:   function(){ unit.value = 'metric'   },
-  unit_standard: function(){ unit.value = 'standard' },
-  current:   function(){ report_type.value = 'current'   },
-  forecast2: function(){ report_type.value = 'forecast2' },
-  forecast3: function(){ report_type.value = 'forecast3' },
-  forecast4: function(){ report_type.value = 'forecast4' },
-  forecast5: function(){ report_type.value = 'forecast5' },
-  show_server_data:function(){ showing_server_data.value = true  },
-  hide_server_data:function(){ showing_server_data.value = false },
-});
+var control = new WeatherController();
+control.setView( report );
 
 
 document.addEventListener( 'DOMContentLoaded', main );
 
 function main(){
   unit.loadValue();
-  report_type.loadValue();
-  get_geolocation_if_available();
+  reportType.loadValue();
+  getGeolocationIfAvailable();
 
   document.addEventListener( 'click', click );
   control.getView().find('.i_search').addEventListener('keydown', e=>{
@@ -213,14 +216,14 @@ function click( e ){
     control[ e.target.className ]()
 }
 
-function get_geolocation_if_available(){
+function getGeolocationIfAvailable(){
   if( 'geolocation' in navigator ){
     navigator.geolocation.getCurrentPosition( function(pos){
-      geolocation_found( pos.coords.latitude, pos.coords.longitude );
+      geolocationFound( pos.coords.latitude, pos.coords.longitude );
     });
   }
 }
-function geolocation_found( lat, lon ){ location.value = `${lat},${lon}`; }
+function geolocationFound( lat, lon ){ location.value = `${lat},${lon}`; }
 
 function xhr( options, obj ){
   let url     = options.url,
@@ -238,17 +241,17 @@ function xhr( options, obj ){
   xh.send();
 }
 
-function fix_utc( dt ){
+function fixUtc( dt ){
     return dt.replace(/ /,'T') + '.000Z';
 }
 
-function day_of_week( dt ){
+function dayOfWeek( dt ){
   let d = new Date(dt);
   let w = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   return w[ d.getDay() ];
 }
 
-function time_of_day( dt ){
+function timeOfDay( dt ){
   let d = new Date(dt);
   let hour = d.getHours();
   let h = hour == 0 || hour == 12 ? 12 : hour % 12;
@@ -256,7 +259,7 @@ function time_of_day( dt ){
   return '' + h + qm;
 }
 
-function compass_point( d ){
+function compassPoint( d ){
   return (d<11.25 || d>=348.75)? 'N' :
          (d>=11.25 && d<33.75)? 'NNE' :
          (d>=33.75 && d<56.25)? 'NE' :
