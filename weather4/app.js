@@ -1,3 +1,21 @@
+
+class Chrono extends Date {
+  constructor( dt ){
+    super(dt.replace(/ /,'T') + '.000Z');
+  }
+  dayOfWeek(){
+    let w = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    return w[ this.getDay() ];
+  }
+  timeOfDay(){
+    let hour = this.getHours();
+    let h = hour == 0 || hour == 12 ? 12 : hour % 12;
+    let qm = hour < 12 ? 'AM' : 'PM';
+    return '' + h + qm;
+  }
+}
+
+
 import {Model, SessionModel, DependentModel, View, Controller}
        from './mvc.js';
 
@@ -57,18 +75,37 @@ class WeatherModel extends DependentModel {
 }
 
 
+class UnitControls extends View {
+  onUpdate( value ){
+    console.log( value );
+    this.show( this.find('.unit_imperial') );
+    this.show( this.find('.unit_metric') );
+    this.show( this.find('.unit_standard') );
+    this.hide( this.find('.unit_' + value) );
+  }
+}
+
+class ReportTypeControls extends View {
+  onUpdate( value ){
+    console.log( value );
+    this.show( this.find('.current') );
+    this.show( this.find('.forecast2') );
+    this.show( this.find('.forecast3') );
+    this.show( this.find('.forecast4') );
+    this.show( this.find('.forecast5') );
+    this.hide( this.find('.' + value ) );
+  }
+}
+
 class WeatherView extends View {
-  constructor( model ){
-    super( model,
-      function( value ){
-	switch( reportType.value ){
-	case 'current':   this.showCurrentWeather( value ); break;
-	case 'forecast2': this.showForecast( value, 2 );     break;
-	case 'forecast3': this.showForecast( value, 3 );     break;
-	case 'forecast4': this.showForecast( value, 4 );     break;
-	case 'forecast5': this.showForecast( value, 5 );     break;
-	}
-      });
+  onUpdate( value ){
+    switch( reportType.value ){
+    case 'current':   this.showCurrentWeather( value ); break;
+    case 'forecast2': this.showForecast( value, 2 );     break;
+    case 'forecast3': this.showForecast( value, 3 );     break;
+    case 'forecast4': this.showForecast( value, 4 );     break;
+    case 'forecast5': this.showForecast( value, 5 );     break;
+    }
   }
   showCurrentWeather( data ){
     //console.log('display current weather');
@@ -97,8 +134,8 @@ return `<h1>${days} days forecast for \
     return z;
   }
   formatWeatherResults( data ){
-    let dayTime = (data.dt_txt ? dayOfWeek( fixUtc( data.dt_txt ) ) + ' ' +
-		    timeOfDay( fixUtc( data.dt_txt ) ) + '<br>' : '');
+    let dayTime = (data.dt_txt ? (new Chrono( data.dt_txt )).dayOfWeek() + ' ' +
+		   (new Chrono( data.dt_txt )).timeOfDay() + '<br>' : '');
 return `<div class=result>
 ${dayTime}
 ${data.weather[0].main}<br>
@@ -110,6 +147,26 @@ wind ${data.wind.deg? compassPoint( data.wind.deg )+' ' :''}\
 ${data.wind.speed} ${unit_[unit.value].speed}<br>
 ${data.main.pressure} hPa pressure<br>
 </div>`;
+  }
+}
+
+class ServerDataView extends View {
+  onUpdate( value ){
+    this.find('.server_data').innerText += '\n' + value + '\n';
+  }
+}
+
+class ShowingServerDataView extends View {
+  onUpdate( value ){
+    if( value ){
+      this.show( this.find('.server_data') );
+      this.hide( this.find('.show_server_data') );
+      this.show( this.find('.hide_server_data') );
+    } else {
+      this.hide( this.find('.server_data') );
+      this.show( this.find('.show_server_data') );
+      this.hide( this.find('.hide_server_data') );
+    }
   }
 }
 
@@ -127,66 +184,26 @@ class WeatherController extends Controller {
   hide_server_data(){ showingServerData.value = false }
 }
 
-var location    = new LocationModel();
+var location              = new LocationModel();
 
-var unit        = new SessionModel( 'weather_unit' );
-//window.unit = unit;
+var unit                  = new SessionModel( 'weather_unit', 'imperial' );
+var unitControls          = new UnitControls( unit );
 
-var reportType = new SessionModel( 'weather_report_type' );
-
-var request     = new RequestModel( [location, unit, reportType] );
-
-var weather     = new WeatherModel( [request] );
-
-var serverData = new Model();
-
-var showingServerData = new Model();
+var reportType            = new SessionModel( 'weather_report_type', 'current' );
+var reportTypeControls    = new ReportTypeControls( reportType );
 
 
+var request               = new RequestModel( [location, unit, reportType] );
 
-var unitControls = new View( unit,
-  function( value ){
-    console.log( value );
-    this.show( this.find('.unit_imperial') );
-    this.show( this.find('.unit_metric') );
-    this.show( this.find('.unit_standard') );
-    this.hide( this.find('.unit_' + value) );
-  }
-);
+var weather               = new WeatherModel( [request] );
+var report                = new WeatherView( weather );
 
-var reportTypeControls = new View( reportType,
-  function( value ){
-    console.log( value );
-    this.show( this.find('.current') );
-    this.show( this.find('.forecast2') );
-    this.show( this.find('.forecast3') );
-    this.show( this.find('.forecast4') );
-    this.show( this.find('.forecast5') );
-    this.hide( this.find('.' + value ) );
-  }
-);
 
-var report = new WeatherView( weather );
+var serverData            = new Model();
+var serverDataView        = new ServerDataView( serverData );
 
-var serverDataView = new View( serverData,
-  function( value ){
-    this.find('.server_data').innerText += value + '\n';
-  }
-);
-
-var showingServerDataView = new View( showingServerData,
-  function( value ){
-    if( value ){
-      this.show( this.find('.server_data') );
-      this.hide( this.find('.show_server_data') );
-      this.show( this.find('.hide_server_data') );
-    } else {
-      this.hide( this.find('.server_data') );
-      this.show( this.find('.show_server_data') );
-      this.hide( this.find('.hide_server_data') );
-    }
-  }
-);
+var showingServerData     = new Model();
+var showingServerDataView = new ShowingServerDataView( showingServerData );
 
 
 var control = new WeatherController();
@@ -239,24 +256,6 @@ function xhr( options, obj ){
   };
   xh.open( type, url, true );
   xh.send();
-}
-
-function fixUtc( dt ){
-    return dt.replace(/ /,'T') + '.000Z';
-}
-
-function dayOfWeek( dt ){
-  let d = new Date(dt);
-  let w = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  return w[ d.getDay() ];
-}
-
-function timeOfDay( dt ){
-  let d = new Date(dt);
-  let hour = d.getHours();
-  let h = hour == 0 || hour == 12 ? 12 : hour % 12;
-  let qm = hour < 12 ? 'AM' : 'PM';
-  return '' + h + qm;
 }
 
 function compassPoint( d ){

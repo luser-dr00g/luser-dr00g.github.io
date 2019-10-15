@@ -17,20 +17,23 @@ class Model {
 
 class SessionModel extends Model {
   _sessionVariable = '';
-  constructor( sessionVariable ){
+  constructor( sessionVariable, defaultValue ){
     super()
     this._sessionVariable = sessionVariable
+    this._defaultValue = defaultValue;
     //this.loadValue()
   }
   loadValue(){
     if( sessionStorage.getItem( this._sessionVariable ) )
-      super.value = sessionStorage.getItem( this._sessionVariable );
+      super.value = sessionStorage.getItem( this._sessionVariable )
+    else
+      super.value = this._defaultValue
   }
   saveValue( value ){
     sessionStorage.setItem( this._sessionVariable, value )
   }
   onChange( value ){
-    this.saveValue( value );
+    this.saveValue( value )
   }
 }
 
@@ -44,12 +47,11 @@ class DependentModel extends Model {
 
 class View {
   _subViews = []
-  constructor( model, update ){
+  constructor( model ){
     if( model ) this.setModel( model )
-    if( update ) this.onUpdate = update;
   }
   update( data ){
-    if( typeof( this.onUpdate ) == 'function' ) this.onUpdate( data );
+    this.onUpdate( data );
     this._subViews.forEach( s=> s.update( data ) );
   }
   getModel(){ return this._model }
@@ -85,6 +87,7 @@ class View {
     if( this._model ) this._model.unobserve( this )
     this._subViews.forEach(s=> s.destroy() )
   }
+  onUpdate( value ){ }
   find( sel, ctx ){
     return (ctx || document).querySelector( sel )
   }
