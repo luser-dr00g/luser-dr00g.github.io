@@ -12,6 +12,21 @@ class Chrono extends Date {
   }
 }
 
+class CompassPoint {
+  constructor( deg ){
+    this.deg = deg;
+  }
+  toString(){
+    return [     'N','NNE',
+      'NE','ENE','E','ESE',
+      'SE','SSE','S','SSW',
+      'SW','WSW','W','WNW',
+      'NW','NNW'
+    ][ Math.floor( (this.deg+11.25) / 22.5 ) % 16 ];
+  }
+}
+
+
 import {Model, SessionModel, DependentModel, View} from './mvc.js';
 
 class LocationModel extends Model {
@@ -186,7 +201,7 @@ class DetailView extends View {
 	this._unit.unit( 'temp' );
       this.find('.detail_humidity').textContent = data.main.humidity;
       this.find('.detail_wind_dir').textContent =
-	data.wind.deg ? this.compassPoint( data.wind.deg ) : '';
+	data.wind.deg ? `${new CompassPoint(data.wind.deg)}` : '';
       this.find('.detail_wind_speed').textContent =
 	this._unit.convert( data.wind.speed, 'speed' );
       this.find('.detail_speed_unit').textContent =
@@ -196,14 +211,6 @@ class DetailView extends View {
       this.find('.detail_pressure_unit').textContent =
 	this._unit.unit( 'pressure' );
     }
-  }
-  compassPoint( deg ){
-    let tab = [           'N','NNE',
-	       'NE','ENE','E','ESE',
-	       'SE','SSE','S','SSW',
-	       'SW','WSW','W','WNW',
-	       'NW','NNW','N'      ];
-    return tab[ Math.round( (deg+11.25) / 22.5 ) % 16 ];
   }
 }
 
