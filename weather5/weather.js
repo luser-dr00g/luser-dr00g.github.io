@@ -197,23 +197,13 @@ class DetailView extends View {
 	this._unit.unit( 'pressure' );
     }
   }
-  compassPoint( d ){
-    return (d<11.25 || d>=348.75)? 'N' :
-      (d>=11.25 && d<33.75)? 'NNE' :
-      (d>=33.75 && d<56.25)? 'NE' :
-      (d>=56.25 && d<78.75)? 'ENE' :
-      (d>=78.75 && d<101.25)? 'E' :
-      (d>=101.25 && d<123.75)? 'ESE' :
-      (d>=123.75 && d<146.25)? 'SE' :
-      (d>=146.25 && d<168.75)? 'SSE' :
-      (d>=168.75 && d<191.25)? 'S' :
-      (d>=191.25 && d<213.75)? 'SSW' :
-      (d>=213.75 && d<236.25)? 'SW' :
-      (d>=236.25 && d<258.75)? 'WSW' :
-      (d>=258.75 && d<281.25)? 'W' :
-      (d>=281.25 && d<303.75)? 'WNW' :
-      (d>=303.75 && d<326.25)? 'NW' :
-      (d>=326.25 && d<348.75)? 'NNW' : 'error';
+  compassPoint( deg ){
+    let tab = [           'N','NNE',
+	       'NE','ENE','E','ESE',
+	       'SE','SSE','S','SSW',
+	       'SW','WSW','W','WNW',
+	       'NW','NNW','N'      ];
+    return tab[ Math.round( (deg+11.25) / 22.5 ) % 16 ];
   }
 }
 
