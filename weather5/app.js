@@ -1,4 +1,6 @@
 /*jshint esversion: 6 */
+/*eslint-env browser */
+/*eslint-parserOptions sourceType:module */
 
 import {
   LocationModel, UnitModel, DaysModel, WeatherModel, ForecastModel,
@@ -61,10 +63,10 @@ function main(){
   chart.setHtmlElement( chart.find('.chart') );
 
   chart.findAll('tr').forEach( (tr,i)=>{
-    tr.addEventListener( 'mouseenter', (e)=>
+    tr.addEventListener( 'mouseenter', ()=>
       detail.update( forecast.value.list[i] )
     );
-    tr.addEventListener( 'mouseleave', (e)=>
+    tr.addEventListener( 'mouseleave', ()=>
       detail.update( weather.value )
     );
   });

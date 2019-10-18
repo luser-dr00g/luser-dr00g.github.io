@@ -16,7 +16,7 @@ class Model {
   get value(){
     return this._value;
   }
-  onChange( value ){ }
+  onChange( ){ }
 }
 
 class SessionModel extends Model {
@@ -91,7 +91,7 @@ class View {
     this._subViews.forEach(s=> s.destroy() );
   }
   setHtmlElement( element ){ this._htmlElement = element; }
-  onUpdate( value ){ }
+  onUpdate( ){ }
   find( sel ){
     return (this._htmlElement || document).querySelector( sel );
   }
