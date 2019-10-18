@@ -1,3 +1,5 @@
+/*jshint esversion: 6 */
+
 class Chrono extends Date {
   constructor( dt ){
     super( dt.replace(/ /,'T') + '.000Z' );
@@ -10,16 +12,16 @@ class Chrono extends Date {
   }
 }
 
-import {Model, SessionModel, DependentModel, View, Controller} from './mvc.js';
+import {Model, SessionModel, DependentModel, View} from './mvc.js';
 
 class LocationModel extends Model {
-  set value( value ){ super.value = this.formatQuery( value ) }
-  get value(){ return super.value }
+  set value( value ){ super.value = this.formatQuery( value ); }
+  get value(){ return super.value; }
   formatQuery( q ){
     var m;
-    if( m = q.match(/(-?\d+(\.\d+)?),(-?\d+(\.\d+))?/) ){
+    if( (m = q.match(/(-?\d+(\.\d+)?),(-?\d+(\.\d+))?/)) ){
       return `lat=${m[1]}&lon=${m[3]}`;
-    } else if( m = q.match(/ *(\d\d\d\d\d) */) ){
+    } else if( (m = q.match(/ *(\d\d\d\d\d) */)) ){
       return 'zip=' + m[1];
     } else {
       return 'q=' + q.replace(/ /g,'+');
@@ -61,25 +63,25 @@ class UnitModel extends SessionModel {
   }
   speed( value ){
     let t = {
-      standard: function(x){ return x},
-      metric:   function(x){ return x},
-      imperial: function(x){ return x * 2.237 }
+      standard: function(x){ return x; },
+      metric:   function(x){ return x; },
+      imperial: function(x){ return x * 2.237; }
     };
     return t[ this.value ]( value );
   }
   temp( value ){
     let t = {
-      standard: function(x){ return x },
-      metric:   function(x){ return x - 273.15 },
-      imperial: function(x){ return (x - 273.15) * 9/5 + 32 },
+      standard: function(x){ return x; },
+      metric:   function(x){ return x - 273.15; },
+      imperial: function(x){ return (x - 273.15) * 9/5 + 32; },
     };
     return t[ this.value ]( value );
   }
   pressure( value ){
     let t = {
-      standard: function(x){ return x },
-      metric:   function(x){ return x * .75006 },
-      imperial: function(x){ return x * .02953 }
+      standard: function(x){ return x; },
+      metric:   function(x){ return x * 0.75006; },
+      imperial: function(x){ return x * 0.02953; }
     };
     return t[ this.value ]( value );
   }
@@ -92,24 +94,24 @@ class UnitModel extends SessionModel {
 class DaysModel extends SessionModel {
 }
 
-var auth = '&APPID=39495affc770605f852615a5be774e62'
+var auth = '&APPID=39495affc770605f852615a5be774e62';
 
 class WeatherModel extends DependentModel {
   update( loc ){
     this.value = 'loading';
     const url =
-	'https://api.openweathermap.org/data/2.5/weather?' + loc + auth
+	  'https://api.openweathermap.org/data/2.5/weather?' + loc + auth;
     //console.log( url );
     fetch( url ).then( response=>{
       if( response.ok ){
-	return response.json()
+	return response.json();
       } else {
-	return null
+	return null;
       }
     }).then( data =>{
       //console.log( data )
       if( data ){
-	this.value = data
+	this.value = data;
       }
     });
   }
@@ -118,18 +120,18 @@ class WeatherModel extends DependentModel {
 class ForecastModel extends DependentModel {
   update( loc ){
     let url =
-	'https://api.openweathermap.org/data/2.5/forecast?' + loc + auth
+	'https://api.openweathermap.org/data/2.5/forecast?' + loc + auth;
     //console.log( url );
     fetch( url ).then( response =>{
       if( response.ok ){
-	return response.json()
+	return response.json();
       } else {
-	return null
+	return null;
       }
     }).then( data =>{
       //console.log( data )
       if( data ){
-	this.value = data
+	this.value = data;
       }
     });
   }
@@ -138,16 +140,16 @@ class ForecastModel extends DependentModel {
 class UnitView extends View {
   onUpdate( value ){
     //console.log( value );
-    this.findAll('div').forEach( d=> this.show( d ) )
-    this.hide( this.find('.unit_' + value) )
+    this.findAll('div').forEach( d=> this.show( d ) );
+    this.hide( this.find('.unit_' + value) );
   }
 }
 
 class DaysView extends View {
   onUpdate( value ){
     //console.log( value );
-    this.findAll('div').forEach( d=> this.show( d ) )
-    this.hide( this.find('.forecast_' + value) )
+    this.findAll('div').forEach( d=> this.show( d ) );
+    this.hide( this.find('.forecast_' + value) );
   }
 }
 
@@ -155,13 +157,13 @@ class ReportView extends View {
   onUpdate( data ){
     //console.log( 'report ' + data )
     if( data === 'loading' ){
-      this.hide( this.find('.instructions') )
-      this.show( this.find('.loading') )
-      this.hide( this.find('.report') )
+      this.hide( this.find('.instructions') );
+      this.show( this.find('.loading') );
+      this.hide( this.find('.report') );
     } else {
-      this.hide( this.find('.instructions') )
-      this.hide( this.find('.loading') )
-      this.show( this.find('.report') )
+      this.hide( this.find('.instructions') );
+      this.hide( this.find('.loading') );
+      this.show( this.find('.report') );
       this.find('.report_title_city').textContent = data.name;
       this.find('.report_title_country_code').textContent = data.sys.country;
     }

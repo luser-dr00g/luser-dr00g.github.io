@@ -1,3 +1,5 @@
+/*jshint esversion: 6 */
+
 import {
   LocationModel, UnitModel, DaysModel, WeatherModel, ForecastModel,
   UnitView, DaysView, ReportView, DetailView, ChartDays, ChartView,
@@ -7,14 +9,17 @@ import { View, Controller } from './mvc.js';
 class WeatherController extends Controller {
   search(){
     const input = this.getView().find( '.location' );
-    location.value = input.value;
+    _location.value = input.value;
     input.blur();
   }
-  unit_imperial(){ unit.value = 'imperial'; detail.update( weather.value );
+  unit_imperial(){ unit.value = 'imperial';
+		   detail.update( weather.value );
 		   chart.update( forecast.value ); }
-  unit_metric(){   unit.value = 'metric';   detail.update( weather.value );
+  unit_metric(){   unit.value = 'metric';
+		   detail.update( weather.value );
 		   chart.update( forecast.value ); }
-  unit_standard(){ unit.value = 'standard'; detail.update( weather.value );
+  unit_standard(){ unit.value = 'standard';
+		   detail.update( weather.value );
 		   chart.update( forecast.value ); }
   forecast_1(){ days.value = 1; }
   forecast_2(){ days.value = 2; }
@@ -23,22 +28,22 @@ class WeatherController extends Controller {
   forecast_5(){ days.value = 5; }
 }
 
-var location = new LocationModel();
-var unit     = new UnitModel( 'weather_unit', 'imperial' );
-var days     = new DaysModel( 'weather_days', 2 );
+var _location  = new LocationModel();
+var unit      = new UnitModel( 'weather_unit', 'imperial' );
+var days      = new DaysModel( 'weather_days', 2 );
 
-var weather  = new WeatherModel( [ location ] );
-var forecast = new ForecastModel( [ location ] );
+var weather   = new WeatherModel( [ _location ] );
+var forecast  = new ForecastModel( [ _location ] );
 
-var locationView = new View( location );
-var unitView = new UnitView( unit );
-var daysView = new DaysView( days );
-var report   = new ReportView( weather );
-var detail   = new DetailView( weather );
-detail._unit = unit;
-var chartdays= new ChartDays( days );
-var chart    = new ChartView( forecast );
-chart._unit = unit;
+var locationView = new View( _location );
+var unitView  = new UnitView( unit );
+var daysView  = new DaysView( days );
+var report    = new ReportView( weather );
+var detail    = new DetailView( weather );
+detail._unit  = unit;
+var chartdays = new ChartDays( days );
+var chart     = new ChartView( forecast );
+chart._unit   = unit;
 
 var control  = new WeatherController();
 control.setView( locationView );
@@ -65,8 +70,8 @@ function main(){
   });
   unit.loadValue();
   days.loadValue();
-  //location.value = '63118';
-  location.getGeolocationIfAvailable();
+  //_location.value = '63118';
+  _location.getGeolocationIfAvailable();
 }
 
 function click( e ){
@@ -74,7 +79,7 @@ function click( e ){
   //console.log( e.target.className );
   //console.log( control[ e.target.className ] );
   if( typeof( control[ e.target.className ] ) == 'function' )
-    control[ e.target.className ]()
+    control[ e.target.className ]();
 }
 
 function key( e ){
