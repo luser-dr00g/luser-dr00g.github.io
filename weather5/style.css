@@ -1,16 +1,12 @@
+body {
+    background: white;
+}
+
 header, main, footer {
     background: darkblue;
     color: white;
     text-align: center;
     font: 12px Helvetica, Arial, sans-serif;
-}
-
-.controls {
-    background: linear-gradient( to right, darkblue, blue );
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-evenly;
-    padding: .5em;
 }
 
 main {
@@ -19,6 +15,19 @@ main {
 
 footer {
     background: linear-gradient( to right, darkblue, blue );
+}
+
+a {
+    color: lightblue;
+}
+
+
+.controls {
+    background: linear-gradient( to right, darkblue, blue );
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    padding: .5em;
 }
 
 #unit > div {
@@ -47,6 +56,7 @@ footer {
     background: linear-gradient( to right, darkblue, blue );
 }
 
+
 tr {
     margin: .05em .4em .05em .4em;
 }
@@ -69,8 +79,4 @@ tr > td:nth-of-type(4){
 }
 tr > td:nth-of-type(5){
     text-align: center;
-}
-
-a {
-    color: lightblue;
 }
