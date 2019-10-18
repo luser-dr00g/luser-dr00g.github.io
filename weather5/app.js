@@ -1,6 +1,4 @@
 /*jshint esversion: 6 */
-/*eslint-env browser */
-/*eslint-parserOptions sourceType:module */
 
 import {
   LocationModel, UnitModel, DaysModel, WeatherModel, ForecastModel,
@@ -50,7 +48,6 @@ chart._unit   = unit;
 var control  = new WeatherController();
 control.setView( locationView );
 
-document.addEventListener( 'DOMContentLoaded', main );
 
 function main(){
   document.addEventListener( 'click', click );
@@ -91,3 +88,5 @@ function key( e ){
   }
   return true;
 }
+
+document.addEventListener( 'DOMContentLoaded', main );
