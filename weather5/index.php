@@ -43,21 +43,22 @@
       <span class=report_title_city style=white-space:nowrap >City</span>,
       <span class=report_title_country_code >CC</span>
     </div>
-    <div class=report_data >
+    <div class=l_split >
 
       <div class=detail >
-        <span class=detail_time            >Now            </span><br>
-        <span class=detail_main            >Clouds         </span><br>
-        <img class=detail_icon src='https://openweathermap.org/img/wn/01d@2x.png' alt=icon >           <br>
-        <span class=detail_description     >overcast clouds</span><br>
-        <span class=detail_temp            >61.36          </span>&deg;
-          <span class=detail_temp_unit     >F              </span><br>
-        <span class=detail_humidity        >72             </span>% humidity<br>
-        <span class=detail_wind_dir        >S              </span>
-          <span class=detail_wind_speed    >8.05           </span>
-          <span class=detail_speed_unit    >M/h            </span><br>
-        <span class=detail_pressure        >1015           </span>
-          <span class=detail_pressure_unit >hPa            </span><br>
+        <span class=detail_time            >Now   </span><br>
+        <span class=detail_main            >Clouds</span><br>
+        <img class=detail_icon
+	     src='https://openweathermap.org/img/wn/01d@2x.png' alt=icon ><br>
+        <span class=detail_description     >clouds</span><br>
+        <span class=detail_temp            >61.36 </span>&deg;
+          <span class=detail_temp_unit     >F     </span><br>
+        <span class=detail_humidity        >72    </span>% humidity<br>
+        <span class=detail_wind_dir        >S     </span>
+          <span class=detail_wind_speed    >8.05  </span>
+          <span class=detail_speed_unit    >M/h   </span><br>
+        <span class=detail_pressure        >1015  </span>
+          <span class=detail_pressure_unit >hPa   </span><br>
       </div>
 
       <div class=chart >
@@ -65,14 +66,19 @@
 <?php for( $i=0; $i < 40; ++$i ):
   $day   = floor( $i / 8 );
   $slice = $i % 8; ?>
-          <tr class=chart<?= $day ?> >
-            <td><span id=chart_<?= $day ?>_<?= $slice ?>_day >Monday</span>
-            <td><span id=chart_<?= $day ?>_<?= $slice ?>_time >12AM</span>
-            <td><span id=chart_<?= $day ?>_<?= $slice ?>_temp >63</span>&deg;
-                <span id=chart_<?= $day ?>_<?= $slice ?>_temp_unit >F</span>
-            <td><span id=chart_<?= $day ?>_<?= $slice ?>_description >Cloudy</span>
-            <td><img id=chart_<?= $day ?>_<?= $slice ?>_icon
-		     src='https://openweathermap.org/img/wn/02d@2x.png' alt=icon >
+          <tr class="chart<?= $day ?> slice" >
+            <td class=slice_day >
+	      <span id=chart_<?= $day ?>_<?= $slice ?>_day >Monday</span>
+            <td class=slice_time >
+	      <span id=chart_<?= $day ?>_<?= $slice ?>_time >12AM</span>
+            <td class=slice_temp >
+	      <span id=chart_<?= $day ?>_<?= $slice ?>_temp >63</span>&deg;
+	      <span id=chart_<?= $day ?>_<?= $slice ?>_temp_unit >F</span>
+            <td class=slice_description >
+	      <span id=chart_<?= $day ?>_<?= $slice ?>_description >Cloudy</span>
+            <td class=slice_icon >
+	      <img id=chart_<?= $day ?>_<?= $slice ?>_icon
+		   src='https://openweathermap.org/img/wn/02d@2x.png' alt=icon >
 <?php endfor; ?>
         </table>
       </div>

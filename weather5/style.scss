@@ -1,82 +1,94 @@
+
+$light: lightblue;
+$med: blue;
+$dark: darkblue;
+
+
+
 body {
     background: white;
-}
-
-header, main, footer {
-    background: darkblue;
-    color: white;
     text-align: center;
     font: 12px Helvetica, Arial, sans-serif;
 }
 
 main {
-    background: linear-gradient( to right, blue, darkblue );
+    background: linear-gradient( to right, $med, $dark );
+    color: white;
 }
 
 footer {
-    background: linear-gradient( to right, darkblue, blue );
+    background: linear-gradient( to right, $dark, $med );
+    color: white;
 }
 
 a {
-    color: lightblue;
+    color: $light;
 }
 
 
-.controls {
-    background: linear-gradient( to right, darkblue, blue );
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-evenly;
-    padding: .5em;
-}
 
-#unit > div {
-    cursor: pointer;
-}
-
-#days > div {
-    cursor: pointer;
-}
-
-.report_data {
+.l_split {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-evenly;
 }
 
+
+
+.controls {
+    background: linear-gradient( to right, $dark, $med );
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    padding: .5em;
+}
+
+.panel > div {
+    cursor: default;
+}
+
 .detail {
     position: sticky;
     top: 10vh;
-    background: linear-gradient( to right, darkblue, blue );
+    background: linear-gradient( to right, $dark, $med );
     padding: 1em 1em 1em 1em;
 }
 
 .chart {
-    background: linear-gradient( to right, darkblue, blue );
+    background: linear-gradient( to right, $dark, $med );
+    table-layout: fixed;
+    border-collapse: collapse;
+    cursor: default;
 }
 
-
-tr {
+.slice {
     margin: .05em .4em .05em .4em;
+
+    > .slice_day {
+	text-align: center;
+    }
+    > .slice_time {
+	text-align: right;
+    }
+    > .slice_temp {
+	padding-left: 1em;
+	text-align: left;
+    }
+    > .slice_description {
+	text-align: center;
+    }
+    > .slice_icon {
+	text-align: center;
+    }
 }
 
-td {
-    padding: 0 .1em 0 1em;
+
+
+.panel > div:hover {
+    background: $dark;
 }
 
-tr > td:nth-of-type(1){
-    text-align: center;
-}
-tr > td:nth-of-type(2){
-    text-align: right;
-}
-tr > td:nth-of-type(3){
-    text-align: left;
-}
-tr > td:nth-of-type(4){
-    text-align: center;
-}
-tr > td:nth-of-type(5){
-    text-align: center;
+.slice:hover {
+    background: linear-gradient( to right, $med, $light );
 }

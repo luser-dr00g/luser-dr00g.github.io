@@ -1,24 +1,28 @@
 body {
   background: white;
-}
-
-header, main, footer {
-  background: darkblue;
-  color: white;
   text-align: center;
   font: 12px Helvetica, Arial, sans-serif;
 }
 
 main {
   background: linear-gradient(to right, blue, darkblue);
+  color: white;
 }
 
 footer {
   background: linear-gradient(to right, darkblue, blue);
+  color: white;
 }
 
 a {
   color: lightblue;
+}
+
+.l_split {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-evenly;
 }
 
 .controls {
@@ -29,19 +33,8 @@ a {
   padding: 0.5em;
 }
 
-#unit > div {
-  cursor: pointer;
-}
-
-#days > div {
-  cursor: pointer;
-}
-
-.report_data {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-evenly;
+.panel > div {
+  cursor: default;
 }
 
 .detail {
@@ -53,34 +46,37 @@ a {
 
 .chart {
   background: linear-gradient(to right, darkblue, blue);
+  table-layout: fixed;
+  border-collapse: collapse;
+  cursor: default;
 }
 
-tr {
+.slice {
   margin: 0.05em 0.4em 0.05em 0.4em;
 }
-
-td {
-  padding: 0 0.1em 0 1em;
-}
-
-tr > td:nth-of-type(1) {
+.slice > .slice_day {
   text-align: center;
 }
-
-tr > td:nth-of-type(2) {
+.slice > .slice_time {
   text-align: right;
 }
-
-tr > td:nth-of-type(3) {
+.slice > .slice_temp {
+  padding-left: 1em;
   text-align: left;
 }
-
-tr > td:nth-of-type(4) {
+.slice > .slice_description {
+  text-align: center;
+}
+.slice > .slice_icon {
   text-align: center;
 }
 
-tr > td:nth-of-type(5) {
-  text-align: center;
+.panel > div:hover {
+  background: darkblue;
+}
+
+.slice:hover {
+  background: linear-gradient(to right, blue, lightblue);
 }
 
 /*# sourceMappingURL=style.css.map */
