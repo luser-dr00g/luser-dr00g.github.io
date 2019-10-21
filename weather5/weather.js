@@ -118,16 +118,16 @@ class WeatherModel extends DependentModel {
 	  'https://api.openweathermap.org/data/2.5/weather?' + loc + auth;
     //console.log( url );
     fetch( url ).then( response=>{
-      if( response.ok ){
-	return response.json();
-      } else {
-	return null;
-      }
+      if( !response.ok ){
+	throw Error(response.statusText);
+      } 
+      return response.json();
     }).then( data =>{
-      //console.log( data )
-      if( data ){
-	this.value = data;
-      }
+      console.log( data )
+      this.value = data;
+    }).catch( error =>{
+      console.log( error );
+      this.value = 'error';
     });
   }
 }
@@ -174,10 +174,17 @@ class ReportView extends View {
     if( data === 'loading' ){
       this.hide( this.find('.instructions') );
       this.show( this.find('.loading') );
+      this.hide( this.find('.error') );
+      this.hide( this.find('.report') );
+    } else if( data === 'error' ){
+      this.hide( this.find('.instructions') );
+      this.hide( this.find('.loading') );
+      this.show( this.find('.error') );
       this.hide( this.find('.report') );
     } else {
       this.hide( this.find('.instructions') );
       this.hide( this.find('.loading') );
+      this.hide( this.find('.error') );
       this.show( this.find('.report') );
       this.find('.report_title_city').textContent = data.name;
       this.find('.report_title_country_code').textContent = data.sys.country;
@@ -187,7 +194,7 @@ class ReportView extends View {
 
 class DetailView extends View {
   onUpdate( data ){
-    if( data !== 'loading' ){
+    if( data !== 'loading' && data !== 'error' ){
       let time = data.dt_txt ? new Chrono( data.dt_txt ) : null;
       time = time ? time.dayOfWeek() + ' ' + time.timeOfDay() : 'Now';
       this.find('.detail_time').textContent = time;
@@ -229,24 +236,26 @@ class ChartDays extends View {
 
 class ChartView extends View {
   onUpdate( data ){
-    data.list.forEach( (item,i) => {
-      let j = Math.floor( i/8 ), k = i%8;
-      let x = '#chart_' + j + '_' + k + '_';
-      let time = new Chrono( item.dt_txt );
-      //console.log( x + 'time' );
-      this.find(x + 'day').innerHTML = time.dayOfWeek();
-      this.find(x + 'time').innerHTML = time.timeOfDay();
-      this.find(x + 'temp').innerHTML =
-	this._unit.convert( item.main.temp, 'temp' );
-      this.find(x + 'temp_unit').innerHTML =
-	this._unit.unit( 'temp' );
-      this.find(x + 'description').innerHTML = item.weather[0].description;
-      this.find(x + 'icon').src =
-	'https://openweathermap.org/img/wn/' + item.weather[0].icon + '@2x.png';
-      this.find(x + 'icon').height = 24;
-      /*
-      */
-    });
+    if( data !== 'loading' && data !== 'error' ){
+      data.list.forEach( (item,i) => {
+	let j = Math.floor( i/8 ), k = i%8;
+	let x = '#chart_' + j + '_' + k + '_';
+	let time = new Chrono( item.dt_txt );
+	//console.log( x + 'time' );
+	this.find(x + 'day').innerHTML = time.dayOfWeek();
+	this.find(x + 'time').innerHTML = time.timeOfDay();
+	this.find(x + 'temp').innerHTML =
+	  this._unit.convert( item.main.temp, 'temp' );
+	this.find(x + 'temp_unit').innerHTML =
+	  this._unit.unit( 'temp' );
+	this.find(x + 'description').innerHTML = item.weather[0].description;
+	this.find(x + 'icon').src =
+	  'https://openweathermap.org/img/wn/' + item.weather[0].icon + '@2x.png';
+	this.find(x + 'icon').height = 24;
+	/*
+	*/
+      });
+    }
   }
 }
 
