@@ -1,82 +1,86 @@
 body {
-    background: white;
+  background: white;
 }
 
 header, main, footer {
-    background: darkblue;
-    color: white;
-    text-align: center;
-    font: 12px Helvetica, Arial, sans-serif;
+  background: darkblue;
+  color: white;
+  text-align: center;
+  font: 12px Helvetica, Arial, sans-serif;
 }
 
 main {
-    background: linear-gradient( to right, blue, darkblue );
+  background: linear-gradient(to right, blue, darkblue);
 }
 
 footer {
-    background: linear-gradient( to right, darkblue, blue );
+  background: linear-gradient(to right, darkblue, blue);
 }
 
 a {
-    color: lightblue;
+  color: lightblue;
 }
 
-
 .controls {
-    background: linear-gradient( to right, darkblue, blue );
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-evenly;
-    padding: .5em;
+  background: linear-gradient(to right, darkblue, blue);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  padding: 0.5em;
 }
 
 #unit > div {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 #days > div {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .report_data {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    justify-content: space-evenly;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-evenly;
 }
 
 .detail {
-    position: sticky;
-    top: 10vh;
-    background: linear-gradient( to right, darkblue, blue );
-    padding: 1em 1em 1em 1em;
+  position: sticky;
+  top: 10vh;
+  background: linear-gradient(to right, darkblue, blue);
+  padding: 1em 1em 1em 1em;
 }
 
 .chart {
-    background: linear-gradient( to right, darkblue, blue );
+  background: linear-gradient(to right, darkblue, blue);
 }
 
-
 tr {
-    margin: .05em .4em .05em .4em;
+  margin: 0.05em 0.4em 0.05em 0.4em;
 }
 
 td {
-    padding: 0 .1em 0 1em;
+  padding: 0 0.1em 0 1em;
 }
 
-tr > td:nth-of-type(1){
-    text-align: center;
+tr > td:nth-of-type(1) {
+  text-align: center;
 }
-tr > td:nth-of-type(2){
-    text-align: right;
+
+tr > td:nth-of-type(2) {
+  text-align: right;
 }
-tr > td:nth-of-type(3){
-    text-align: left;
+
+tr > td:nth-of-type(3) {
+  text-align: left;
 }
-tr > td:nth-of-type(4){
-    text-align: center;
+
+tr > td:nth-of-type(4) {
+  text-align: center;
 }
-tr > td:nth-of-type(5){
-    text-align: center;
+
+tr > td:nth-of-type(5) {
+  text-align: center;
 }
+
+/*# sourceMappingURL=style.css.map */
