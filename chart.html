@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<meta http-equiv="content-type" content="text/html" charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<html>
+<style type="text/css">
+  body{ padding: 0; margin: 0 }
+  .everything{ width: 70%;
+	       background-color: #DDD }
+  .tabs{
+      display: flex;
+      justify-content: space-around;
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      border-bottom: 1px solid black;
+  }
+  .tab{
+      cursor: pointer;
+      padding: 10px;
+  }
+  .tab:hover{
+      background-color: #AAA;
+  }
+  .tab.active{
+      background-color: #CCC;
+  }
+  .tab-content{
+      margin-left: 20px;
+      margin-right: 20px;
+  }
+  #text{ width: 90vw; height : 80vh }
+  table{
+      background-color: white;
+      border-style: solid;
+      border-radius: 10px;
+       }
+  th{
+      text-align: left;
+      border-bottom: groove;
+      cursor: pointer;
+    }
+  td{
+      border-bottom: dashed 1px;
+      border-left: dashed 1px;
+      border-collapse: collapse;
+      margin: 0;
+    }
+  .name{ cursor: move }
+  .name.dragging{ opacity: .5 }
+  .name.dragover{ border-color: blue }
+  .notes{ cursor: pointer }
+  .sorted::before{ content: "▲" }
+  .sorted.reversed::before{ content: "▼" }
+  [data-tab-content]{ display: none }
+  .active[data-tab-content]{ display: block }
+</style>
+<body>
+<div class="everything">
+  <input type=text id=pasteme autofocus placeholder="-Paste Here-">
+  <input type=text id=filter value="(F/B)|(Food)|(BAR)">
+  <button onclick="deleteData()">delete saved data</button>
+  <button onclick="removeEmptySlots()">remove empty slots</button>
+  <button onclick="saveTextFile()">save text file</button>
+  <span id=status></span>
+  <ul class="tabs">
+    <li data-tab-target="#text" class="tab">text
+    <li data-tab-target="#grid" class="active tab">grid
+    <li data-tab-target="#stations" class="tab">stations
+  </ul>
+  <div class="tab-content">
+    <textarea id="text" data-tab-content></textarea>
+    <div id="grid" data-tab-content class="active"></div>
+    <div id="stations" data-tab-content></div>
+  </div>
+</div>
+</body>
+<script>
+
+let words = str => str.split( " " );
+let first_word_of = str => words(str)[ 0 ];
+let isTime = x => /^\d/.test( x ) && /[ap]m/.test( x );
+let cmpString = (a, b) => a<b ? -1 : a>b ? 1 : 0;
+let cmpTime = (a, b) => milTime( a ) - milTime( b );
+let milTime = ( x ) => {
+  let re = /(1?\d):?(\d\d)?([ap]m)/;
+  let matches = re.exec( x );
+  if(  matches === null  ) return  0;
+  let result =
+    (Number(matches[1])*100) + Number(matches[2]??=0) + Number(matches[3]=='pm'?1200:0);
+  //console.log( [ matches, result ] );
+  return  result;
+}
+let cmp = (a, b) => ( isTime( a ) ? cmpTime : cmpString )( a, b );
+let cmpColumn = idx => (a, b) => cmp( a[idx], b[idx] );
+let cmpRevColumn = idx => (a, b) => - cmp( a[idx], b[idx] );
+function toSorted( arr, cmpFunc ){
+  let tmp = Array.from( arr );
+  tmp.sort( cmpFunc );
+  return  tmp;
+}
+
+let filter = new RegExp( document.querySelector("#filter").value, "" );
+const tabContents = document.querySelectorAll('[data-tab-content]');
+const tabs = document.querySelectorAll('[data-tab-target]');
+const paste = document.querySelector("#pasteme");
+const text = document.querySelector("#text");
+const grid = document.querySelector("#grid");
+const stations = document.querySelector("#stations");
+
+var globalData;
+var globalInfo;
+
+tabs.forEach( tab => {
+  tab.addEventListener( 'click', ()=>{
+    const target = document.querySelector( tab.dataset.tabTarget );
+    tabContents.forEach( tab => tab.classList.remove( "active" ) );
+    target.classList.add( "active" );
+    tabs.forEach( tab => tab.classList.remove( "active" ) );
+    tab.classList.add( "active" );
+  });
+});
+paste.addEventListener( "paste", fetchAndOutput );
+text.addEventListener( "change", reparseText );
+loadAndOutput();
+//deleteData();
+
+function saveData(){
+  localStorage.setItem( "globalData", JSON.stringify( globalData ) );
+  localStorage.setItem( "globalInfo", JSON.stringify( globalInfo ) );
+}
+  
+function deleteData(){
+  localStorage.removeItem( "globalData" );
+  localStorage.removeItem( "globalInfo" );
+}
+
+function loadData(){
+  globalData = JSON.parse( localStorage.getItem( "globalData" ) );
+  globalInfo = JSON.parse( localStorage.getItem( "globalInfo" ) );
+}
+
+function output(){
+  if(  globalData  ){
+    text.value = formatText( globalData );
+    grid.innerHTML = formatTable( globalData );
+    addGridEditWidgets();
+    addGridDraggables();
+    stations.innerHTML = formatStations( globalData );
+  }
+}
+  
+function update(){
+  text.value = formatText( globalData );
+  updateTable( globalData );
+  addGridEditWidgets();
+  addGridDraggables();
+  stations.innerHTML = formatStations( globalData );
+}
+
+function loadAndOutput (){
+  loadData();
+  output();
+  showStatus();
+}
+
+function fetchAndOutput ( event ){
+  globalData = parse( event.clipboardData.getData('text/plain') );
+  output();
+  event.preventDefault();
+  saveData();
+}
+
+function reparseText( event ){
+  globalData = parse( text.value );
+  output();
+  saveData();
+}
+
+function sortAndOutput ( column ){
+  sortGrid( column );
+  update();
+  saveData();
+}
+
+function removeEmptySlots (){
+  globalData = globalData.filter( rec=> rec[2].match( /\w/ ) );
+  update();
+  saveData();
+}
+
+function saveTextFile (){
+  let textData = formatText( globalData )
+  textData = [...textData].map( c => c=='\n' ? "\r\n" : c ).join("");
+  let yourDate = Date.parse( globalInfo.date );
+  const offset = yourDate.getTimezoneOffset()
+  yourDate = new Date(yourDate.getTime() - (offset*60*1000))
+  const filename = yourDate.toISOString().split('T')[0] + ".txt";
+  downloadToFile( textData, filename, "text/plain" );
+}
+
+function downloadToFile ( content, filename, contentType ){
+  const a = document.createElement( "a" );
+  const file = new Blob( [ content ], { type: contentType } );
+  a.href = URL.createObjectURL( file );
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function sortGrid ( column ){
+  let firstRow = document.querySelector("tr");
+  let header = firstRow.childNodes[ column ];
+  firstRow.childNodes.forEach( e =>
+    { if(  e !== header  ) {
+        e.classList.remove("sorted");
+        e.classList.remove("reversed");
+      } } );
+  if(  header.classList.contains("sorted") ){
+    header.classList.toggle("reversed");
+  } else {
+    header.classList.add("sorted");
+  }
+  globalData.sort( header.classList.contains("reversed")  ?
+		     cmpRevColumn( column )  :
+		     cmpColumn( column ) );
+}
+
+function parse ( input ){
+  let date = findDate( input );
+  globalInfo = { date: date };
+  showStatus();
+  let nodots = input.replace( /[ \t]+\./g, "" );
+  let notrail = nodots.replace( /[ \t]*$/g, "" );
+  var loc = "",
+      pos = "",
+      output = [];
+  notrail.split( "\n" ).forEach( e => {
+    if(  e.match( /^[A-Z]/ )  ){
+      let w = words( e );
+      pos = w.pop();
+      loc = w.join( " " );
+    } else if(  loc.match( filter )  ){
+      let re = /(\D*)(1?\d:?\d?\d?[ap]m) *- *(1?\d:?\d?\d?[ap]m)(.*)/;
+      let name = "", start = "", end = "", notes = "";
+      let matches = re.exec( e );
+      name = matches[1]; if(  name == ""  ) name = "\t";
+      start = matches[2];
+      end = matches[3];
+      notes = matches[4]; //if(  notes == ""  ) notes = "\t";
+      output.push( [ loc , pos, name, start, end, notes ] );
+    }
+  } );
+  return  output;
+}
+
+function showStatus(){
+  if(  globalInfo === null  ) return;
+  let status = document.querySelector("#status");
+  status.textContent = "data for " + globalInfo.date;
+}
+
+function findDate ( input ){
+  let re = /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d\d?), (\d\d\d\d)/;
+  let matches = re.exec( input );
+  let mon = matches[1], day = matches[2], year = matches[3];
+  return  year + "-" + mon + "-" + day;
+}
+
+function dateToEnglish( date ){
+  let re = /(....)-(...)-(..?)/;
+  let matches = re.exec( date );
+  let mon = matches[2], day = matches[3], year = matches[1];
+  return  mon + " " + day + ", " + year;
+}
+
+function formatText ( data ){
+  var cat = "";
+  return  "data for " + dateToEnglish( globalInfo.date ) + "\n" +
+    data.map( rec =>{
+      let pre = rec.slice(0,2).join( " " );
+      let [ name, start, end, notes ] = rec.slice(2);
+      let person = name + start + "-" + end + notes;
+      if(  pre == cat  ){
+        return  person;
+      } else {
+        cat = pre;
+        return  pre + "\n" + person;
+      }
+    }).join( "\n" );
+}
+
+function formatTable ( data ){
+  let classes = [ "location", "position", "name", "start", "end", "notes" ];
+  return  "<table>" +
+    "<tr><th onclick='sortAndOutput(0)' >Location " +
+    "<th onclick='sortAndOutput(1)' >Position " +
+    "<th onclick='sortAndOutput(2)' >Name" +
+    "<th onclick='sortAndOutput(3)' >Start" +
+    "<th onclick='sortAndOutput(4)' >End" +
+    "<th onclick='sortAndOutput(5)' >Notes" +
+    data.map( rec =>
+      "<tr>" + rec.map( (col,idx) => "<td><span class='" + classes[idx] + "'>" + col + "</span>" ).join( " " )
+    ).join( "\n" ) + "</table>";
+}
+
+function updateTable ( data ){
+  var table = grid.querySelector("table");
+  let header = grid.querySelector("tr");
+  let classes = [ "location", "position", "name", "start", "end", "notes" ];
+  table.parentNode.removeChild( table );
+
+  table = document.createElement("table");
+  grid.appendChild( table );
+  table.appendChild( header );
+  data.forEach( rec => {
+    let row = document.createElement("tr");
+    rec.forEach( (col,idx) => {
+      let e = document.createElement("td");
+      let s = document.createElement("span");
+      s.classList.add( classes[idx] );
+      let t = document.createTextNode( col );
+      s.appendChild( t );
+      e.appendChild( s );
+      row.appendChild( e );
+    } );
+    table.appendChild( row );
+  } );
+}
+
+function addGridEditWidgets(){
+  let notes = document.querySelectorAll(".notes");
+  notes.forEach( (note,idx)=>{
+    const clickHandler = (event)=>{
+      let edit = document.createElement("input");
+      edit.value = globalData[idx][5];
+      let target = note.childNodes[0];
+      //console.log( target );
+      target.parentNode.replaceChild( edit, target );
+      note.parentNode.removeEventListener( "click", clickHandler );
+      edit.addEventListener( "change", (event)=>{
+	if(  edit.value == ""  ) edit.value = "\t";
+	target.textContent = edit.value;
+	globalData[idx][5] = edit.value;
+	edit.parentNode.replaceChild( target, edit );
+	update();
+	saveData();
+      });
+      edit.focus();
+    };
+    note.parentNode.addEventListener( "click", clickHandler );
+  });
+}
+
+function drop( name, idx ){
+  return  function () {
+    //console.log('drop');
+    const draggable = document.querySelector(".dragging");
+    if( draggable === name ){
+      return;
+    }
+    //console.log( name.textContent );
+    //console.log( draggable.textContent );
+    if(  ! name.textContent.match( /\S/ )  ){
+      const src = Array.from( document.querySelectorAll(".name") ).findIndex( x=> x.classList.contains("dragging") );
+      //console.log( idx, src );
+      moveName( idx, src );
+    } else {
+      const src = Array.from( document.querySelectorAll(".name") ).findIndex( x=> x.classList.contains("dragging") );
+      //console.log( idx, src );
+      insertName( idx, src );
+    }
+  };
+}
+
+function addGridDraggables(){
+  let names = document.querySelectorAll(".name");
+  names.forEach( (name,idx)=>{
+    name.setAttribute( "draggable", "true" );
+    name.addEventListener( "dragstart", ()=>{
+      name.classList.add( "dragging" );
+      //console.log("dragstart");
+    });
+    name.addEventListener( "dragend", ()=>{
+      name.classList.remove( "dragging" );
+      //console.log("dragend");
+    });
+    name.addEventListener( "touchstart", ()=>{
+      name.classList.add( "dragging" );
+    });
+    name.addEventListener( "touchend", ()=>{
+      drop( name, idx )();
+      name.classList.remove( "dragging" );
+    });
+    name.parentNode.addEventListener( "drop", drop( name, idx ) );
+    name.parentNode.addEventListener( "dragenter", (event)=>{
+      //console.log("dragover");
+      event.preventDefault();
+    });
+    name.parentNode.addEventListener( "dragover", (event)=>{
+      //console.log("dragover");
+      names.forEach( name => name.classList.remove( "dragover" ) );
+      name.classList.add( "dragover" );
+      event.preventDefault();
+    });
+  });
+}
+
+function moveName( dest, src ){
+  if(  dest < 0  ) return;
+  let sixteen = globalData[ src ][ 1 ] == '16';
+  for( var i = 2; i <= 5; i++ ){
+    globalData[ dest ][ i ] = globalData[ src ][ i ];
+  }
+  [ 2, 5 ].forEach( i => {
+    globalData[ src ][ i ] = "\t";
+  });
+  if(  sixteen  ){
+    globalData[ src ][ 1 ] = globalData[ dest ][ 1 ];
+    globalData[ dest ][ 1 ] = '16';
+  }
+  update();
+}
+
+function insertName( dest, src ){
+  let sixteen = globalData[ src ][ 1 ] == '16';
+  if(  dest < 0  ) return;
+  let destrec = globalData[ dest ];
+  let srcrec = Array.from( globalData[ src ] );
+  [ 2, 5 ].forEach( i => {
+    globalData[ src ][ i ] = "\t";
+  });
+  if(  sixteen  ) globalData[ src ][ 1 ] = destrec[ 1 ];
+  let head = globalData.slice( 0, dest+1 );
+  let tail = globalData.slice( dest+1 );
+  head.push( [ destrec[0], (sixteen ? srcrec[1] : destrec[1]), srcrec[2], srcrec[3], srcrec[4], srcrec[5] ] );
+  globalData = head.concat( tail );
+  update();
+}
+
+function formatStations ( data ){
+  let sorted = toSorted( toSorted( data, cmpColumn( 1 ) ), cmpColumn( 0 ) );
+  let roof = sorted.filter( rec => rec[0].match( /Roof/i ) );
+  let distro = sorted.filter( rec => rec[0].match( /Distr/i ) );
+  let overflow = sorted.filter( rec => rec[0].match( /Overflow/i ) );
+  let beatniks = sorted.filter( rec => rec[0].match( /Beatnik/i ) );
+  let elephant = sorted.filter( rec => rec[0].match( /Elephant/i ) );
+  let copout = sorted.filter( rec => rec[0].match( /CopOut/i ) );
+  let mezz = sorted.filter( rec => rec[0].match( /Lizzard/i ) );
+  let cabin = sorted.filter( rec => rec[0].match( /Cabin/i ) );
+  let grill = sorted.filter( rec => rec[0].match( /Grill/i ) );
+  let other = Array.from( sorted.filter( rec => ! rec[0].match( /Roof|Distro|Overflow|Beatnik|Elephant|CopOut|Lizzard|Cabin|Grill/i ) ) );
+  other[0] = Array.from( other[0] );
+  other[0][0] = "Other F/B staff";
+  //console.log( other );
+  let output = "";
+  [ roof, distro, overflow, beatniks, elephant, copout, mezz, cabin, grill, other ].forEach( station=>{
+    if(  station[0]  ){
+      let boh = station.filter( rec => rec[1].match( /BOH/ ) ).map( rec => rec.slice(2,5) );
+      let foh = station.filter( rec => rec[1].match( /FOH/ ) ).map( rec => rec.slice(2,5) );
+      let bar = station.filter( rec => rec[1].match( /BAR/ ) ).map( rec => rec.slice(2,5) );
+      let support = station.filter( rec => ! rec[1].match( /BOH|FOH|BAR/ ) ).map( rec => rec.slice(2,5) );
+      let positions = transpose( [ boh, foh, bar, support ] );
+      //console.log( positions );
+      output +=
+        "<table>" +
+        "<tr><th colspan=12>" + station[0][0] +
+	"<tr><th colspan=3>BOH<th colspan=3>FOH<th colspan=3>BAR<th colspan=3>Support" +
+	positions.map( row =>
+	  "<tr>" + row.map( col => "<td>" + col ).join( " " )
+	) +
+        "</table>";
+    }
+  });
+  return  output;
+}
+  
+function transpose ( tab ){
+  let maxlen = tab.reduce( (acc,cur)=> acc+cur.length, 0 );
+  //console.log( maxlen );
+  let filled = tab.map( pos=>{
+    let len = pos.length;
+    pos.length = maxlen;
+    pos.fill( ["","",""], len, maxlen );
+    return pos;
+  } );
+  //console.log( filled );
+  return  filled.reduce( (acc,cur)=>{
+    cur.forEach( (row,i)=>acc[i]=acc[i].concat(row) );
+    return acc;
+  } );
+}
+
+</script>
+</html>
