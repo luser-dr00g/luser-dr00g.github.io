@@ -52,7 +52,8 @@
   .options{ display: flex; justify-content: space-around; cursor: pointer }
   .option{ border: none }
   .option.selected{ border: 2px solid black }
-  .name{ cursor: move; touch-action: none }
+  .name{ cursor: move } 
+	td:has(.name) { touch-action: none }
   .name.dragging{ opacity: .5 }
   .name.dragover{ border-color: blue }
   .notes{ cursor: pointer }
