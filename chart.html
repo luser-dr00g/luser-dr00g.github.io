@@ -3,7 +3,9 @@
 <meta name="viewport" content="width=device-width">
 <html>
 <style type="text/css">
-  body{ padding: 0; margin: 0 }
+  body{ padding: 0;
+	margin: 0;
+	overscroll-behavior: none; }
   .everything{ width: 70%;
 	       background-color: #DDD }
   .tabs{
@@ -29,6 +31,7 @@
       margin-right: 20px;
   }
   #text{ width: 90vw; height : 80vh }
+  #grid{ touch-action: none }
   table{
       background-color: white;
       border-style: solid;
@@ -45,6 +48,11 @@
       border-collapse: collapse;
       margin: 0;
     }
+  .location{ cursor: pointer }
+  .position{ cursor: pointer }
+  .options{ display: flex; justify-content: space-around; cursor: pointer }
+  .option{ border: none }
+  .option.selected{ border: 2px solid black }
   .name{ cursor: move }
   .name.dragging{ opacity: .5 }
   .name.dragover{ border-color: blue }
@@ -150,6 +158,7 @@ function output(){
 }
   
 function update(){
+  saveData();
   text.value = formatText( globalData );
   updateTable( globalData );
   addGridEditWidgets();
@@ -179,13 +188,11 @@ function reparseText( event ){
 function sortAndOutput ( column ){
   sortGrid( column );
   update();
-  saveData();
 }
 
 function removeEmptySlots (){
   globalData = globalData.filter( rec=> rec[2].match( /\w/ ) );
   update();
-  saveData();
 }
 
 function saveTextFile (){
@@ -246,7 +253,7 @@ function parse ( input ){
       name = matches[1]; if(  name == ""  ) name = "\t";
       start = matches[2];
       end = matches[3];
-      notes = matches[4]; //if(  notes == ""  ) notes = "\t";
+      notes = matches[4]; if(  notes == ""  ) notes = "  ";
       output.push( [ loc , pos, name, start, end, notes ] );
     }
   } );
@@ -328,6 +335,12 @@ function updateTable ( data ){
 }
 
 function addGridEditWidgets(){
+  addGridNotesWidgets();
+  addGridLocationWidgets();
+  addGridPositionWidgets();
+}
+
+function addGridNotesWidgets(){
   let notes = document.querySelectorAll(".notes");
   notes.forEach( (note,idx)=>{
     const clickHandler = (event)=>{
@@ -337,76 +350,148 @@ function addGridEditWidgets(){
       //console.log( target );
       target.parentNode.replaceChild( edit, target );
       note.parentNode.removeEventListener( "click", clickHandler );
-      edit.addEventListener( "change", (event)=>{
+      const done = (event)=>{
 	if(  edit.value == ""  ) edit.value = "\t";
 	target.textContent = edit.value;
 	globalData[idx][5] = edit.value;
 	edit.parentNode.replaceChild( target, edit );
 	update();
 	saveData();
-      });
+      };
+      edit.addEventListener( "change", done );
+      edit.addEventListener( "blur", done );
       edit.focus();
     };
     note.parentNode.addEventListener( "click", clickHandler );
   });
 }
 
-function drop( name, idx ){
-  return  function () {
-    //console.log('drop');
-    const draggable = document.querySelector(".dragging");
-    if( draggable === name ){
-      return;
-    }
-    //console.log( name.textContent );
-    //console.log( draggable.textContent );
-    if(  ! name.textContent.match( /\S/ )  ){
-      const src = Array.from( document.querySelectorAll(".name") ).findIndex( x=> x.classList.contains("dragging") );
-      //console.log( idx, src );
-      moveName( idx, src );
-    } else {
-      const src = Array.from( document.querySelectorAll(".name") ).findIndex( x=> x.classList.contains("dragging") );
-      //console.log( idx, src );
-      insertName( idx, src );
-    }
-  };
+function addGridLocationWidgets(){
+  let locations = document.querySelectorAll(".location");
+  locations.forEach( (location,idx)=>{
+    let options = [ "F/B Baby Elephant", "F/B Beatniks", "F/B CopOut", "F/B Lizzard Lounge", "F/B Overflow", "F/B Roof", "F/B Distro", "F/B Cabin", "F/B Grill" ];
+    if(  options.findIndex( e => e == globalData[ idx ][0] ) == -1  ) options.push( globalData[ idx ][0] );
+    const clickHandler = (event)=>{
+      let td = location.parentNode;
+      let d = document.createElement("span");
+      d.classList.add( "options" );
+      td.removeEventListener( "click", clickHandler );
+      td.removeChild( location );
+      td.appendChild( d );
+      options.forEach( (option) => {
+	let opt = document.createElement("span");
+	opt.appendChild( document.createTextNode( option ) );
+	opt.classList.add( "option" );
+	if(  option == globalData[ idx ][0]  ) opt.classList.add( "selected" );
+	opt.addEventListener( "click", e=>{
+	  globalData[ idx ][0] = option;
+          update();
+        });
+	d.appendChild( opt );
+      });
+    };
+    location.parentNode.addEventListener( "click", clickHandler );
+  });
+}
+
+function addGridPositionWidgets(){
+  let positions = document.querySelectorAll(".position");
+  positions.forEach( (position,idx)=>{
+    let options = [ "FOH", "BOH", "BAR", "Support" ];
+    if(  options.findIndex( e => e == globalData[ idx ][1] ) == -1  ) options.push( globalData[ idx ][1] );
+    if(  globalData[ idx ][1] == '16'  ) options = [ "16" ];
+    const clickHandler = (event)=>{
+      let td = position.parentNode;
+      let d = document.createElement("span");
+      d.classList.add( "options" );
+      td.removeEventListener( "click", clickHandler );
+      td.removeChild( position );
+      td.appendChild( d );
+      options.forEach( (option,o) => {
+	let opt = document.createElement("span");
+        opt.appendChild( document.createTextNode( option ) );
+	opt.classList.add( "option" );
+	if(  option == globalData[ idx ][1]  ) opt.classList.add( "selected" );
+	opt.addEventListener( "click", e=>{
+	  globalData[ idx ][1] = option;
+	  update();
+        });
+	d.appendChild( opt );
+      });
+    };
+    position.parentNode.addEventListener( "click", clickHandler );
+  });
 }
 
 function addGridDraggables(){
   let names = document.querySelectorAll(".name");
   names.forEach( (name,idx)=>{
     name.setAttribute( "draggable", "true" );
-    name.addEventListener( "dragstart", ()=>{
+
+    name.addEventListener( "pointerdown", e=>{
       name.classList.add( "dragging" );
-      //console.log("dragstart");
+      e.preventDefault();
+      //console.log( e, name );
     });
-    name.addEventListener( "dragend", ()=>{
-      name.classList.remove( "dragging" );
-      //console.log("dragend");
+
+    name.parentNode.addEventListener( "pointerup", e=>{
+      let it = document.querySelector( ".dragging" );
+      let over = document.elementFromPoint( e.x, e.y );
+      if(  over.nodeName == "TABLE"  ) return;
+      if(  over.nodeName == "TD"  ) over = over.childNodes[0];
+      //console.log( e, name, it, over );
+      if(  it == null  ) return;
+      if(  it == over  ){
+	it.classList.remove( "dragging" );
+        it.style.left = "";
+        it.style.top = "";
+        it.style.position = "";
+	return;
+      }
+      drop( over, it );
+      it.classList.remove( "dragging" );
+      it.style.position = "";
+      it.style.left = "";
+      it.style.top = "";
+      e.preventDefault();
     });
-    name.addEventListener( "touchstart", ()=>{
-      name.classList.add( "dragging" );
-    });
-    name.addEventListener( "touchend", ()=>{
-      drop( name, idx )();
-      name.classList.remove( "dragging" );
-    });
-    name.parentNode.addEventListener( "drop", drop( name, idx ) );
-    name.parentNode.addEventListener( "dragenter", (event)=>{
-      //console.log("dragover");
-      event.preventDefault();
-    });
-    name.parentNode.addEventListener( "dragover", (event)=>{
-      //console.log("dragover");
-      names.forEach( name => name.classList.remove( "dragover" ) );
-      name.classList.add( "dragover" );
-      event.preventDefault();
-    });
+
   });
+    
+  grid.addEventListener( "pointercancel", e=>{
+    let it = document.querySelector( ".dragging" );
+    //console.log( e, it );
+    if(  it == null  ) return;
+    it.classList.remove( "dragging" );
+    it.style.position = "";
+    it.style.left = "";
+    it.style.top = "";
+  });
+
+  grid.addEventListener( "pointermove", e=>{
+    let it = document.querySelector( ".dragging" );
+    let posx = ( e.pageX + 10 //- it.offsetWidth / 2
+	       ).toString() + "px",
+	posy = ( e.pageY + 10 //- it.offsetHeight / 2
+	       ).toString() + "px";
+    //console.log( e, it, posx, posy );
+    if(  it == null  ) return;
+    it.style.position = "absolute";
+    it.style.left = posx;
+    it.style.top = posy;
+  });
+}
+
+function drop( target, src ){
+  let dest = Array.from( document.querySelectorAll(".name") ).findIndex( e => e == target );
+  let srcIdx = Array.from( document.querySelectorAll(".name") ).findIndex( e => e == src );
+  ( globalData[ dest ][2].match( /\S/ ) ? insertName : moveName )( dest, srcIdx );
 }
 
 function moveName( dest, src ){
   if(  dest < 0  ) return;
+  if(  globalData[ dest ][ 1 ] == 'Supervisor'  ) return;
+  if(  globalData[ dest ][ 1 ] == '16'  ) return;
   let sixteen = globalData[ src ][ 1 ] == '16';
   for( var i = 2; i <= 5; i++ ){
     globalData[ dest ][ i ] = globalData[ src ][ i ];
@@ -422,8 +507,10 @@ function moveName( dest, src ){
 }
 
 function insertName( dest, src ){
-  let sixteen = globalData[ src ][ 1 ] == '16';
   if(  dest < 0  ) return;
+  if(  globalData[ dest ][ 1 ] == 'Supervisor'  ) return;
+  if(  globalData[ dest ][ 1 ] == '16'  ) return;
+  let sixteen = globalData[ src ][ 1 ] == '16';
   let destrec = globalData[ dest ];
   let srcrec = Array.from( globalData[ src ] );
   [ 2, 5 ].forEach( i => {
