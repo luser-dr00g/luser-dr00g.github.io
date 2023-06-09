@@ -31,7 +31,6 @@
       margin-right: 20px;
   }
   #text{ width: 90vw; height : 80vh }
-  #grid{ touch-action: none }
   table{
       background-color: white;
       border-style: solid;
@@ -53,7 +52,7 @@
   .options{ display: flex; justify-content: space-around; cursor: pointer }
   .option{ border: none }
   .option.selected{ border: 2px solid black }
-  .name{ cursor: move }
+  .name{ cursor: move; touch-action: none }
   .name.dragging{ opacity: .5 }
   .name.dragover{ border-color: blue }
   .notes{ cursor: pointer }
