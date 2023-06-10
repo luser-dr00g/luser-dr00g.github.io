@@ -49,23 +49,31 @@
     }
   .location{ cursor: pointer }
   .position{ cursor: pointer }
-  .options{ display: flex; justify-content: space-around; cursor: pointer }
+  .options{ display: flex;
+	    justify-content: space-around;
+	    flex-direction: column;
+	    cursor: pointer; }
   .option{ border: none }
   .option.selected{ border: 2px solid black }
-  .name{ cursor: move } 
-	td:has(.name) { touch-action: none }
+  .name{ cursor: move }
+  td:has(.name){ touch-action: none }
   .name.dragging{ opacity: .5 }
   .name.dragover{ border-color: blue }
   .notes{ cursor: pointer }
   .sorted::before{ content: "▲" }
   .sorted.reversed::before{ content: "▼" }
+  .stations{ display: flex;
+	     flex-flow: column wrap;
+	     justify-content: space-evenly;
+	   }
+  .station{ display: inline-table; }
   [data-tab-content]{ display: none }
   .active[data-tab-content]{ display: block }
 </style>
 <body>
 <div class="everything">
   <input type=text id=pasteme autofocus placeholder="-Paste Here-">
-  <input type=text id=filter value="(F/B)|(Food)|(BAR)">
+  <input type=text id=filter value="F/B|Food|BAR">
   <button onclick="deleteData()">delete saved data</button>
   <button onclick="removeEmptySlots()">remove empty slots</button>
   <button onclick="saveTextFile()">save text file</button>
@@ -93,8 +101,12 @@ let milTime = ( x ) => {
   let re = /(1?\d):?(\d\d)?([ap]m)/;
   let matches = re.exec( x );
   if(  matches === null  ) return  0;
-  let result =
-    (Number(matches[1])*100) + Number(matches[2]??=0) + Number(matches[3]=='pm'?1200:0);
+  let result = (Number(matches[1])*100)
+  result += Number(matches[2]??=0);
+  if(  matches[3] == 'pm'  &&  matches[1] != '12'  )
+    result += 1200;
+  if(  matches[3] == 'am'  &&  matches[1] == '12'  )
+    result += 1200;
   //console.log( [ matches, result ] );
   return  result;
 }
@@ -107,7 +119,7 @@ function toSorted( arr, cmpFunc ){
   return  tmp;
 }
 
-let filter = new RegExp( document.querySelector("#filter").value, "" );
+let filter = document.querySelector("#filter")
 const tabContents = document.querySelectorAll('[data-tab-content]');
 const tabs = document.querySelectorAll('[data-tab-target]');
 const paste = document.querySelector("#pasteme");
@@ -238,15 +250,17 @@ function parse ( input ){
   showStatus();
   let nodots = input.replace( /[ \t]+\./g, "" );
   let notrail = nodots.replace( /[ \t]*$/g, "" );
-  var loc = "",
+  var cat = "",
+      loc = "",
       pos = "",
       output = [];
   notrail.split( "\n" ).forEach( e => {
     if(  e.match( /^[A-Z]/ )  ){
       let w = words( e );
+      cat = e;
       pos = w.pop();
       loc = w.join( " " );
-    } else if(  loc.match( filter )  ){
+    } else if(  cat.match(RegExp( filter.value, "" ))  ){
       let re = /(\D*)(1?\d:?\d?\d?[ap]m) *- *(1?\d:?\d?\d?[ap]m)(.*)/;
       let name = "", start = "", end = "", notes = "";
       let matches = re.exec( e );
@@ -338,6 +352,37 @@ function addGridEditWidgets(){
   addGridNotesWidgets();
   addGridLocationWidgets();
   addGridPositionWidgets();
+  addGridTimeWidgets();
+}
+
+function addGridTimeWidgets(){
+  let starts = document.querySelectorAll(".start");
+  let ends = document.querySelectorAll(".end");
+  [ starts, ends ].forEach( (column,col) => {
+    column.forEach( (time,idx) => {
+      const clickHandler = (event)=>{
+	let td = time.parentNode;
+	let edit = document.createElement("input");
+	edit.setAttribute( "maxlength", "8" );
+	edit.value = globalData[idx][3 + col];
+	edit.setSelectionRange( 0, /(.*)[ap]m/.exec( edit.value )[1].length );
+	let target = time.childNodes[0];
+	target.parentNode.replaceChild( edit, target );
+	time.parentNode.removeEventListener( "click", clickHandler );
+	const done = (event)=>{
+	  target.textContent = edit.value;
+          globalData[idx][3 + col] = edit.value;
+	  edit.parentNode.replaceChild( target, edit );
+	  update();
+          saveData();
+        };
+	edit.addEventListener( "change", done );
+        edit.addEventListener( "blur", done );
+	edit.focus();
+      };
+      time.parentNode.addEventListener( "click", clickHandler );
+    });
+  });
 }
 
 function addGridNotesWidgets(){
@@ -535,12 +580,16 @@ function formatStations ( data ){
   let mezz = sorted.filter( rec => rec[0].match( /Lizzard/i ) );
   let cabin = sorted.filter( rec => rec[0].match( /Cabin/i ) );
   let grill = sorted.filter( rec => rec[0].match( /Grill/i ) );
-  let other = Array.from( sorted.filter( rec => ! rec[0].match( /Roof|Distro|Overflow|Beatnik|Elephant|CopOut|Lizzard|Cabin|Grill/i ) ) );
+  let event = sorted.filter( rec => rec[0].match( /EVENT/i ) );
+  let other = Array.from( sorted.filter( rec => ! rec[0].match( /Roof|Distro|Overflow|Beatnik|Elephant|CopOut|Lizzard|Cabin|Grill|EVENT/i ) ) );
   other[0] = Array.from( other[0] );
   other[0][0] = "Other F/B staff";
   //console.log( other );
   let output = "";
-  [ roof, distro, overflow, beatniks, elephant, copout, mezz, cabin, grill, other ].forEach( station=>{
+  let stations = [ roof, distro, overflow, beatniks, elephant, copout, mezz, cabin, grill ];
+  if( event.length > 0 ) stations.push( event );
+  stations.push( other );
+  stations.forEach( station=>{
     if(  station[0]  ){
       let boh = station.filter( rec => rec[1].match( /BOH/ ) ).map( rec => rec.slice(2,5) );
       let foh = station.filter( rec => rec[1].match( /FOH/ ) ).map( rec => rec.slice(2,5) );
@@ -549,20 +598,20 @@ function formatStations ( data ){
       let positions = transpose( [ boh, foh, bar, support ] );
       //console.log( positions );
       output +=
-        "<table>" +
+        "<span><table class='station'>" +
         "<tr><th colspan=12>" + station[0][0] +
 	"<tr><th colspan=3>BOH<th colspan=3>FOH<th colspan=3>BAR<th colspan=3>Support" +
 	positions.map( row =>
 	  "<tr>" + row.map( col => "<td>" + col ).join( " " )
 	) +
-        "</table>";
+        "</table></span>";
     }
   });
   return  output;
 }
   
 function transpose ( tab ){
-  let maxlen = tab.reduce( (acc,cur)=> acc+cur.length, 0 );
+  let maxlen = tab.reduce( (acc,cur)=> acc>cur.length?acc:cur.length, 0 );
   //console.log( maxlen );
   let filled = tab.map( pos=>{
     let len = pos.length;
