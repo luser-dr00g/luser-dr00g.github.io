@@ -53,12 +53,12 @@
 	    justify-content: space-around;
 	    flex-direction: column;
 	    cursor: pointer; }
-  .option{ border: none }
+  .option{ border: dashed 1px; }
   .option.selected{ border: 2px solid black }
   .name{ cursor: move }
   td:has(.name){ touch-action: none }
   .name.dragging{ opacity: .5 }
-  .name.dragover{ border-color: blue }
+  td:has(.dragover){ border-color: blue }
   .notes{ cursor: pointer }
   .sorted::before{ content: "▲" }
   .sorted.reversed::before{ content: "▼" }
@@ -66,7 +66,9 @@
 	     flex-flow: column wrap;
 	     justify-content: space-evenly;
 	   }
-  .station{ display: inline-table; }
+  .hidden td { display: none; }
+  .hidden th.position { display: none }
+  table.station{ display: inline-table; }
   [data-tab-content]{ display: none }
   .active[data-tab-content]{ display: block }
 </style>
@@ -166,6 +168,8 @@ function output(){
     addGridEditWidgets();
     addGridDraggables();
     stations.innerHTML = formatStations( globalData );
+    addStationDraggables();
+    addStationCollapse();
   }
 }
   
@@ -176,6 +180,8 @@ function update(){
   addGridEditWidgets();
   addGridDraggables();
   stations.innerHTML = formatStations( globalData );
+  addStationDraggables();
+  addStationCollapse();
 }
 
 function loadAndOutput (){
@@ -320,7 +326,7 @@ function formatTable ( data ){
     "<th onclick='sortAndOutput(4)' >End" +
     "<th onclick='sortAndOutput(5)' >Notes" +
     data.map( rec =>
-      "<tr>" + rec.map( (col,idx) => "<td><span class='" + classes[idx] + "'>" + col + "</span>" ).join( " " )
+      "<tr>" + rec.map( (col,idx) => "<td><span class='grid " + classes[idx] + "'>" + col + "</span>" ).join( " " )
     ).join( "\n" ) + "</table>";
 }
 
@@ -339,6 +345,7 @@ function updateTable ( data ){
       let e = document.createElement("td");
       let s = document.createElement("span");
       s.classList.add( classes[idx] );
+      s.classList.add( "grid" );
       let t = document.createTextNode( col );
       s.appendChild( t );
       e.appendChild( s );
@@ -469,7 +476,7 @@ function addGridPositionWidgets(){
 }
 
 function addGridDraggables(){
-  let names = document.querySelectorAll(".name");
+  let names = document.querySelectorAll( ".grid.name" );
   names.forEach( (name,idx)=>{
     name.setAttribute( "draggable", "true" );
 
@@ -500,6 +507,9 @@ function addGridDraggables(){
       it.style.top = "";
       e.preventDefault();
     });
+    
+    //name.parentNode.addEventListener( "pointerenter", e=>{name.parentNode.classList.add( "dragover" );});
+    //name.parentNode.addEventListener( "pointerleave", e=>{name.parentNode.classList.remove( "dragover" );});
 
   });
     
@@ -564,13 +574,20 @@ function insertName( dest, src ){
   if(  sixteen  ) globalData[ src ][ 1 ] = destrec[ 1 ];
   let head = globalData.slice( 0, dest+1 );
   let tail = globalData.slice( dest+1 );
+
   head.push( [ destrec[0], (sixteen ? srcrec[1] : destrec[1]), srcrec[2], srcrec[3], srcrec[4], srcrec[5] ] );
   globalData = head.concat( tail );
   update();
 }
 
 function formatStations ( data ){
-  let sorted = toSorted( toSorted( data, cmpColumn( 1 ) ), cmpColumn( 0 ) );
+  let classes = [ "name", "start", "end",
+		  "name", "start", "end",
+		  "name", "start", "end",
+		  "name", "start", "end" ];
+  data = JSON.parse( JSON.stringify( data ) );
+  data.forEach( (row,i) => {row.push( i );});
+  let sorted = toSorted( toSorted( data, cmpColumn( 3 ) ), cmpColumn( 2 ) );
   let roof = sorted.filter( rec => rec[0].match( /Roof/i ) );
   let distro = sorted.filter( rec => rec[0].match( /Distr/i ) );
   let overflow = sorted.filter( rec => rec[0].match( /Overflow/i ) );
@@ -585,7 +602,8 @@ function formatStations ( data ){
   other[0] = Array.from( other[0] );
   other[0][0] = "Other F/B staff";
   //console.log( other );
-  let output = "";
+  let output = "<div><button onclick='collapseAll()'>collapse all</button>" +
+      "<button onclick='expandAll()'>expand all</button></div>";
   let stations = [ roof, distro, overflow, beatniks, elephant, copout, mezz, cabin, grill ];
   if( event.length > 0 ) stations.push( event );
   stations.push( other );
@@ -599,15 +617,101 @@ function formatStations ( data ){
       //console.log( positions );
       output +=
         "<span><table class='station'>" +
-        "<tr><th colspan=12>" + station[0][0] +
-	"<tr><th colspan=3>BOH<th colspan=3>FOH<th colspan=3>BAR<th colspan=3>Support" +
-	positions.map( row =>
-	  "<tr>" + row.map( col => "<td>" + col ).join( " " )
+        "<tr><th class='location' colspan=12>" + station[0][0] +
+	"<tr><th class='position' colspan=3>BOH" +
+	"<th class='position' colspan=3>FOH" +
+	"<th class='position' colspan=3>BAR" +
+	"<th class='position' colspan=3>Support" +
+	positions.map( (row,rowIndex) =>
+	  "<tr>" +
+	  row.map( (col,colIndex) =>
+	    "<td><span class='station " + classes[colIndex] + "'>" + col + "</span>"
+	  ).join( " " )
 	) +
         "</table></span>";
     }
   });
   return  output;
+}
+
+function addStationCollapse(){
+  stations.querySelectorAll( "th" ).forEach( (header) => {
+    header.addEventListener( "click", e=>{
+      let up = header.parentNode;
+      while(  up.nodeName != "TABLE"  ) up = up.parentNode;
+      up.classList.toggle( "hidden" );
+    });
+  });
+}
+
+function collapseAll(){
+  stations.querySelectorAll( "table" ).forEach( table => {
+    table.classList.add( "hidden" );
+  });
+}
+
+function expandAll(){
+  stations.querySelectorAll( "table" ).forEach( table => {
+    table.classList.remove( "hidden" );
+  });
+}
+
+function addStationDraggables(){
+  let names = document.querySelectorAll( ".station.name" );
+  names.forEach( (name)=>{
+    name.setAttribute( "draggable", "true" );
+
+    name.addEventListener( "pointerdown", e=>{
+      name.classList.add( "dragging" );
+      e.preventDefault();
+    });
+  });
+
+
+  const pointerup = e => {
+    let it = document.querySelector( ".dragging" );
+    let over = document.elementFromPoint( e.x, e.y );
+    console.log( e, it, over );
+    if(  it == null  ) return;
+    if(  it == over  ){
+      it.classList.remove( "dragging" );
+      it.style.left = "";
+      it.style.top = "";
+      it.style.position = "";
+      return;
+    }
+    it.classList.remove( "dragging" );
+    it.style.left = "";
+    it.style.top = "";
+    it.style.position = "";
+    e.preventDefault();
+  };
+  let headers = stations.querySelectorAll( "th" );
+  headers.forEach( header => {
+    header.addEventListener( "pointerup", pointerup );
+  });
+  let cells = stations.querySelectorAll( "td" );
+  cells.forEach( cell => {
+    cell.addEventListener( "pointerup", pointerup );
+  });
+
+  stations.addEventListener( "pointercancel", e=>{
+    let it = document.querySelector( ".dragging" );
+    if(  it == null  ) return;
+    it.classList.remove( "dragging" );
+    it.style.position = "";
+    it.style.left = "";
+    it.style.top = "";
+  });
+  stations.addEventListener( "pointermove", e=>{
+    let it = document.querySelector( ".dragging" );
+    let posx = ( e.pageX + 10 ).toString() + "px",
+        posy = ( e.pageY + 10 ).toString() + "px";
+    if(  it == null  ) return;
+    it.style.position = "absolute";
+    it.style.left = posx;
+    it.style.top = posy;
+  });
 }
   
 function transpose ( tab ){
