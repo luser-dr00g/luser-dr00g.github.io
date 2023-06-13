@@ -2,6 +2,7 @@
 <meta http-equiv="content-type" content="text/html" charset="UTF-8">
 <meta name="viewport" content="width=device-width">
 <html>
+<title>CM F/B Deployment Tool</title>
 <style type="text/css">
   body{ padding: 0;
 	margin: 0;
@@ -170,6 +171,7 @@ function output(){
     stations.innerHTML = formatStations( globalData );
     addStationDraggables();
     addStationCollapse();
+    addStationEditWidgets();
   }
 }
   
@@ -179,9 +181,17 @@ function update(){
   updateTable( globalData );
   addGridEditWidgets();
   addGridDraggables();
+  let hiddenStations = Array.from( stations.querySelectorAll( ".hidden" ) ).map(
+    s => s.firstChild.firstChild.firstChild.textContent
+  );
+  //console.log( hiddenStations );
   stations.innerHTML = formatStations( globalData );
   addStationDraggables();
   addStationCollapse();
+  stations.querySelectorAll( "table" ).forEach( table => {
+    if(  hiddenStations.findIndex( x => x == table.firstChild.firstChild.firstChild.textContent ) != -1  )
+      table.classList.add( "hidden" );
+  });
 }
 
 function loadAndOutput (){
@@ -250,9 +260,17 @@ function sortGrid ( column ){
 		     cmpColumn( column ) );
 }
 
+function findStationNotes( input ){
+  let re = /station notes:/
+  re.exec( input );
+  let json = RegExp.rightContext.split( "\n" )[0];
+  return  JSON.parse( json );
+}
+
 function parse ( input ){
   let date = findDate( input );
-  globalInfo = { date: date };
+  let stationNotes = findStationNotes( input ); //globalInfo.stationNotes ??= {};
+  globalInfo = { date: date, stationNotes: stationNotes };
   showStatus();
   let nodots = input.replace( /[ \t]+\./g, "" );
   let notrail = nodots.replace( /[ \t]*$/g, "" );
@@ -300,9 +318,14 @@ function dateToEnglish( date ){
   return  mon + " " + day + ", " + year;
 }
 
+function nonemptyValues( obj ){
+  return  Object.fromEntries( Object.entries(obj).filter(([key,value]) => value != "") );
+}
+
 function formatText ( data ){
   var cat = "";
   return  "data for " + dateToEnglish( globalInfo.date ) + "\n" +
+    "station notes: " + JSON.stringify( nonemptyValues( globalInfo.stationNotes ) ) + "\n" +
     data.map( rec =>{
       let pre = rec.slice(0,2).join( " " );
       let [ name, start, end, notes ] = rec.slice(2);
@@ -363,8 +386,8 @@ function addGridEditWidgets(){
 }
 
 function addGridTimeWidgets(){
-  let starts = document.querySelectorAll(".start");
-  let ends = document.querySelectorAll(".end");
+  let starts = grid.querySelectorAll(".start");
+  let ends = grid.querySelectorAll(".end");
   [ starts, ends ].forEach( (column,col) => {
     column.forEach( (time,idx) => {
       const clickHandler = (event)=>{
@@ -393,7 +416,7 @@ function addGridTimeWidgets(){
 }
 
 function addGridNotesWidgets(){
-  let notes = document.querySelectorAll(".notes");
+  let notes = grid.querySelectorAll(".notes");
   notes.forEach( (note,idx)=>{
     const clickHandler = (event)=>{
       let edit = document.createElement("input");
@@ -419,7 +442,7 @@ function addGridNotesWidgets(){
 }
 
 function addGridLocationWidgets(){
-  let locations = document.querySelectorAll(".location");
+  let locations = grid.querySelectorAll(".location");
   locations.forEach( (location,idx)=>{
     let options = [ "F/B Baby Elephant", "F/B Beatniks", "F/B CopOut", "F/B Lizzard Lounge", "F/B Overflow", "F/B Roof", "F/B Distro", "F/B Cabin", "F/B Grill" ];
     if(  options.findIndex( e => e == globalData[ idx ][0] ) == -1  ) options.push( globalData[ idx ][0] );
@@ -447,7 +470,7 @@ function addGridLocationWidgets(){
 }
 
 function addGridPositionWidgets(){
-  let positions = document.querySelectorAll(".position");
+  let positions = grid.querySelectorAll(".position");
   positions.forEach( (position,idx)=>{
     let options = [ "FOH", "BOH", "BAR", "Support" ];
     if(  options.findIndex( e => e == globalData[ idx ][1] ) == -1  ) options.push( globalData[ idx ][1] );
@@ -609,28 +632,57 @@ function formatStations ( data ){
   stations.push( other );
   stations.forEach( station=>{
     if(  station[0]  ){
-      let boh = station.filter( rec => rec[1].match( /BOH/ ) ).map( rec => rec.slice(2,5) );
-      let foh = station.filter( rec => rec[1].match( /FOH/ ) ).map( rec => rec.slice(2,5) );
-      let bar = station.filter( rec => rec[1].match( /BAR/ ) ).map( rec => rec.slice(2,5) );
-      let support = station.filter( rec => ! rec[1].match( /BOH|FOH|BAR/ ) ).map( rec => rec.slice(2,5) );
-      let positions = transpose( [ boh, foh, bar, support ] );
+      let foh = station.filter( rec => rec[1].match( /FOH/ ) ).map( rec => [...rec.slice(2,5),rec[6]] );
+      let boh = station.filter( rec => rec[1].match( /BOH/ ) ).map( rec => [...rec.slice(2,5),rec[6]] );
+      let bar = station.filter( rec => rec[1].match( /BAR/ ) ).map( rec => [...rec.slice(2,5),rec[6]] );
+      let support = station.filter( rec => ! rec[1].match( /BOH|FOH|BAR/ ) ).map( rec => [...rec.slice(2,5),rec[6]] );
+      let positions = transpose( [ foh, boh, bar, support ] );
       //console.log( positions );
       output +=
         "<span><table class='station'>" +
-        "<tr><th class='location' colspan=12>" + station[0][0] +
-	"<tr><th class='position' colspan=3>BOH" +
+        "<tr><th class='location' colspan=3>" + station[0][0] +
+	"<td colspan=9><span class='notes'>" +
+	  (globalInfo.stationNotes[ station[0][0] ] ??= "") +
+	  "</span>" +
+	"<tr>" +
 	"<th class='position' colspan=3>FOH" +
+	"<th class='position' colspan=3>BOH" +
 	"<th class='position' colspan=3>BAR" +
 	"<th class='position' colspan=3>Support" +
 	positions.map( (row,rowIndex) =>
 	  "<tr>" +
-	  row.map( (col,colIndex) =>
-	    "<td><span class='station " + classes[colIndex] + "'>" + col + "</span>"
-	  ).join( " " )
+	  mapTuple( row, 4, (rec,recIndex) =>
+	    rec.slice(0,3).map( (col,colIndex) =>
+	      "<td><span class='station " + classes[colIndex] + "' " +
+		"data-index='" + rec[3] + "' " +
+		"data-rec-index='" + recIndex + "' " +
+		">" + col + "</span>"
+            ).join( " " )
+          ).join( " " )
 	) +
         "</table></span>";
     }
   });
+  return  output;
+}
+
+function forTuple( arr, n, proc ){
+  let i;
+  for(  i = 0; i < arr.length; i += n  ){
+    proc( arr.slice( i, i+n ) );
+  }
+}
+
+function mapTuple( arr, n, proc ){
+  let i, output = [];
+  //console.log( arr );
+  for(  i = 0; i < arr.length; i += n  ){
+    let inp = arr.slice( i, i+n );
+    let out = proc( inp, Math.floor(i/n) );
+    //console.log( i, i+n, inp, out );
+    output.push( out );
+  }
+  //console.log( output );
   return  output;
 }
 
@@ -656,6 +708,34 @@ function expandAll(){
   });
 }
 
+function addStationEditWidgets(){
+  stations.querySelectorAll( ".notes" ).forEach( note => {
+    let td = note.parentNode;
+    const clickHandler = (event)=>{
+      let location = note.parentNode.parentNode.firstChild.textContent;
+      //console.log( location );
+      let edit = document.createElement("input");
+      edit.value = globalInfo.stationNotes[ location ] ??= "";
+      let target = note;
+      target.parentNode.replaceChild( edit, target );
+      note.removeEventListener( "click", clickHandler );
+      td.removeEventListener( "click", clickHandler );
+      const done = (event)=>{
+	//if(  edit.value == ""  ) edit.value = "\t";
+	target.textContent = edit.value;
+	globalInfo.stationNotes[ location ] = edit.value;
+	edit.parentNode.replaceChild( target, edit );
+	update();
+      };
+      edit.addEventListener( "change", done );
+      edit.addEventListener( "blur", done );
+      edit.focus();
+    };
+    note.addEventListener( "click", clickHandler );
+    td.addEventListener( "click", clickHandler );
+  });
+}
+
 function addStationDraggables(){
   let names = document.querySelectorAll( ".station.name" );
   names.forEach( (name)=>{
@@ -671,7 +751,6 @@ function addStationDraggables(){
   const pointerup = e => {
     let it = document.querySelector( ".dragging" );
     let over = document.elementFromPoint( e.x, e.y );
-    console.log( e, it, over );
     if(  it == null  ) return;
     if(  it == over  ){
       it.classList.remove( "dragging" );
@@ -680,6 +759,7 @@ function addStationDraggables(){
       it.style.position = "";
       return;
     }
+    assumeLocationAndOrPosition( over, it );
     it.classList.remove( "dragging" );
     it.style.left = "";
     it.style.top = "";
@@ -713,6 +793,42 @@ function addStationDraggables(){
     it.style.top = posy;
   });
 }
+
+function assumeLocationAndOrPosition( over, it ){
+  //console.log( it.dataset.index, over );
+  if(  over.nodeName == "SPAN"  ){
+    //console.log( it.dataset.index, over.dataset.index );
+    globalData.push( [ ...globalData[ it.dataset.index ].slice(0, 2), "\t", "", "", "  " ] );
+    if(  globalData[ it.dataset.index ][1] != '16'  )
+      globalData[ it.dataset.index ][1] = globalData[ over.dataset.index ][1];
+    globalData[ it.dataset.index ][0] = globalData[ over.dataset.index ][0];
+    update();
+  } else if(  over.nodeName == "TD"  ){
+    let pos = [ "FOH", "BOH", "BAR", "Support" ];
+    //console.log( it.dataset.index, pos[ over.firstChild.dataset.recIndex ], over.parentNode.parentNode.firstChild.firstChild.textContent );
+    globalData.push( [ ...globalData[ it.dataset.index ].slice(0, 2), "\t", "", "", "  " ] );
+    if(  globalData[ it.dataset.index ][1] != '16'  )
+      globalData[ it.dataset.index ][1] = pos[ over.firstChild.dataset.recIndex ];
+    globalData[ it.dataset.index ][0] = over.parentNode.parentNode.firstChild.firstChild.textContent;
+    update();
+  } else if(  over.nodeName == "TH"  ){
+    if(  over.classList.contains( "position" )  ){
+      //console.log( it.dataset.index, over.textContent, over.parentNode.previousSibling.firstChild.textContent );
+      if(  it.dataset.index == -1  ) return;
+      globalData.push( [ ...globalData[ it.dataset.index ].slice(0, 2), "\t", "", "", "  " ] );
+      if(  globalData[ it.dataset.index ][1] != '16'  )
+        globalData[ it.dataset.index ][1] = over.textContent;
+      globalData[ it.dataset.index ][0] = over.parentNode.previousSibling.firstChild.textContent;
+      update();
+    } else if(  over.classList.contains( "location" )  ){
+      //console.log( it.dataset.index, over.textContent );
+      if(  it.dataset.index == -1  ) return;
+      globalData.push( [ ...globalData[ it.dataset.index ].slice(0, 2), "\t", "", "", "  " ] );
+      globalData[ it.dataset.index ][0] = over.textContent;
+      update();
+    }
+  }
+}
   
 function transpose ( tab ){
   let maxlen = tab.reduce( (acc,cur)=> acc>cur.length?acc:cur.length, 0 );
@@ -720,7 +836,7 @@ function transpose ( tab ){
   let filled = tab.map( pos=>{
     let len = pos.length;
     pos.length = maxlen;
-    pos.fill( ["","",""], len, maxlen );
+    pos.fill( ["","","",-1], len, maxlen );
     return pos;
   } );
   //console.log( filled );
