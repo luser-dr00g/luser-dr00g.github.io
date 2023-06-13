@@ -262,9 +262,10 @@ function sortGrid ( column ){
 
 function findStationNotes( input ){
   let re = /station notes:/
-  re.exec( input );
-  let json = RegExp.rightContext.split( "\n" )[0];
-  if(  json != ""  ) return  JSON.parse( json );
+  if(  re.test( input )  ){
+    let json = RegExp.rightContext.split( "\n" )[0];
+    if(  json != ""  ) return  JSON.parse( json );
+  }
   return  {};
 }
 
