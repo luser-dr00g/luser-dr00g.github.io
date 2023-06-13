@@ -264,7 +264,8 @@ function findStationNotes( input ){
   let re = /station notes:/
   re.exec( input );
   let json = RegExp.rightContext.split( "\n" )[0];
-  return  JSON.parse( json );
+  if(  json != ""  ) return  JSON.parse( json );
+  return  {};
 }
 
 function parse ( input ){
