@@ -192,6 +192,7 @@ function update(){
     if(  hiddenStations.findIndex( x => x == table.firstChild.firstChild.firstChild.textContent ) != -1  )
       table.classList.add( "hidden" );
   });
+  addStationEditWidgets();
 }
 
 function loadAndOutput (){
