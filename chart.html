@@ -624,8 +624,10 @@ function formatStations ( data ){
   let grill = sorted.filter( rec => rec[0].match( /Grill/i ) );
   let event = sorted.filter( rec => rec[0].match( /EVENT/i ) );
   let other = Array.from( sorted.filter( rec => ! rec[0].match( /Roof|Distro|Overflow|Beatnik|Elephant|CopOut|Lizzard|Cabin|Grill|EVENT/i ) ) );
-  other[0] = Array.from( other[0] );
-  other[0][0] = "Other F/B staff";
+  if(  other[0]  ){
+    other[0] = Array.from( other[0] );
+    other[0][0] = "Other F/B staff";
+  }
   //console.log( other );
   let output = "<div><button onclick='collapseAll()'>collapse all</button>" +
       "<button onclick='expandAll()'>expand all</button></div>";
