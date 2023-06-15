@@ -105,7 +105,7 @@ let milTime = ( x ) => {
   let matches = re.exec( x );
   if(  matches === null  ) return  0;
   let result = (Number(matches[1])*100)
-  result += Number(matches[2]??=0);
+  result += Number(matches[2]??0);
   if(  matches[3] == 'pm'  &&  matches[1] != '12'  )
     result += 1200;
   if(  matches[3] == 'am'  &&  matches[1] == '12'  )
@@ -272,7 +272,7 @@ function findStationNotes( input ){
 
 function parse ( input ){
   let date = findDate( input );
-  let stationNotes = findStationNotes( input ); //globalInfo.stationNotes ??= {};
+  let stationNotes = findStationNotes( input ); //globalInfo.stationNotes ?? {};
   globalInfo = { date: date, stationNotes: stationNotes };
   showStatus();
   let nodots = input.replace( /[ \t]+\./g, "" );
@@ -308,9 +308,9 @@ function showStatus(){
 }
 
 function findDate ( input ){
-  let re = /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d\d?), (\d\d\d\d)/;
+  let re = /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday) - (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d\d?), (\d\d\d\d)/;
   let matches = re.exec( input );
-  let mon = matches[1], day = matches[2], year = matches[3];
+  let mon = matches[2], day = matches[3], year = matches[4];
   return  year + "-" + mon + "-" + day;
 }
 
@@ -614,9 +614,12 @@ function formatStations ( data ){
   data = JSON.parse( JSON.stringify( data ) );
   data.forEach( (row,i) => {row.push( i );});
   let sorted = toSorted( toSorted( data, cmpColumn( 3 ) ), cmpColumn( 2 ) );
+  let supervisor = sorted.filter( rec => rec[1].match( /Supervisor/i ) );
   let roof = sorted.filter( rec => rec[0].match( /Roof/i ) );
-  let distro = sorted.filter( rec => rec[0].match( /Distr/i ) );
+  let prep = sorted.filter( rec => rec[0].match( /Prep/i ) );
+  let distro = sorted.filter( rec => rec[0].match( /Distr/i ) || rec[1].match( /Distr/i ) );
   let overflow = sorted.filter( rec => rec[0].match( /Overflow/i ) );
+  let cowboy = sorted.filter( rec => rec[0].match( /Cowboy|Arch/i ) );
   let beatniks = sorted.filter( rec => rec[0].match( /Beatnik/i ) );
   let elephant = sorted.filter( rec => rec[0].match( /Elephant/i ) );
   let copout = sorted.filter( rec => rec[0].match( /CopOut/i ) );
@@ -624,17 +627,30 @@ function formatStations ( data ){
   let cabin = sorted.filter( rec => rec[0].match( /Cabin/i ) );
   let grill = sorted.filter( rec => rec[0].match( /Grill/i ) );
   let event = sorted.filter( rec => rec[0].match( /EVENT/i ) );
-  let other = Array.from( sorted.filter( rec => ! rec[0].match( /Roof|Distro|Overflow|Beatnik|Elephant|CopOut|Lizzard|Cabin|Grill|EVENT/i ) ) );
+  let stations = [ supervisor, roof, prep, distro, overflow, cowboy, beatniks, elephant, copout, mezz, cabin, grill, event ];
+
+  let other = Array.from( sorted.filter( rec => {
+    return  ! stations.reduce( (acc,cur,i)=>{
+      return acc||cur.findIndex( x => x == rec ) != -1;
+    }, false );
+  }) );
   if(  other[0]  ){
     other[0] = Array.from( other[0] );
     other[0][0] = "Other F/B staff";
+    stations.push( other );
   }
+  if(  distro[0]  ){
+    distro[0] = Array.from( distro[0] );
+    distro[0][0] = "F/B Distro";
+  }
+  if(  supervisor[0]  ){
+    supervisor[0] = Array.from( supervisor[0] );
+    supervisor[0][0] = "F/B Supervisor";
+  }
+
   //console.log( other );
   let output = "<div><button onclick='collapseAll()'>collapse all</button>" +
       "<button onclick='expandAll()'>expand all</button></div>";
-  let stations = [ roof, distro, overflow, beatniks, elephant, copout, mezz, cabin, grill ];
-  if( event.length > 0 ) stations.push( event );
-  stations.push( other );
   stations.forEach( station=>{
     if(  station[0]  ){
       let foh = station.filter( rec => rec[1].match( /FOH/ ) ).map( rec => [...rec.slice(2,5),rec[6]] );
@@ -647,7 +663,7 @@ function formatStations ( data ){
         "<span><table class='station'>" +
         "<tr><th class='location' colspan=3>" + station[0][0] +
 	"<td colspan=9><span class='notes'>" +
-	  (globalInfo.stationNotes[ station[0][0] ] ??= "  ") +
+	  (globalInfo.stationNotes[ station[0][0] ] ?? "  ") +
 	  "</span>" +
 	"<tr>" +
 	"<th class='position' colspan=3>FOH" +
@@ -720,7 +736,7 @@ function addStationEditWidgets(){
       let location = note.parentNode.parentNode.firstChild.textContent;
       //console.log( location );
       let edit = document.createElement("input");
-      edit.value = globalInfo.stationNotes[ location ] ??= "";
+      edit.value = globalInfo.stationNotes[ location ] ?? "";
       let target = note;
       target.parentNode.replaceChild( edit, target );
       note.removeEventListener( "click", clickHandler );
