@@ -11,7 +11,7 @@
 	       background-color: #DDD }
   .tabs{
       display: flex;
-      justify-content: space-around;
+      justify-content: flex-start;
       list-style-type: none;
       margin: 0;
       padding: 0;
@@ -19,6 +19,7 @@
   }
   .tab{
       cursor: pointer;
+      margin: 10px;
       padding: 10px;
   }
   .tab:hover{
@@ -26,6 +27,7 @@
   }
   .tab.active{
       background-color: #CCC;
+      border: 1px solid black;
   }
   .tab-content{
       margin-left: 20px;
@@ -85,11 +87,30 @@
     <li data-tab-target="#text" class="tab">text
     <li data-tab-target="#grid" class="active tab">grid
     <li data-tab-target="#stations" class="tab">stations
+    <li data-tab-target="#help" class="tab">help
   </ul>
   <div class="tab-content">
     <textarea id="text" data-tab-content></textarea>
     <div id="grid" data-tab-content class="active"></div>
     <div id="stations" data-tab-content></div>
+    <div id="help" data-tab-content>
+    <h3>Usage</h3>
+      <p>Open <a href="https://whentowork.com/">Whentowork</a> in a separate tab and Login.
+      <p>Navigate to "Everybody's Schedule" &gt; "Day".
+      <p><em>Select All</em> the text on the page and <em>Copy</em>.
+      <p>Then return to this page and <em>Paste</em> into the box that says "-Paste here-".
+    <h3>Known quirks</h3>
+      <p>Dragging a person to a new location may create an empty slot to fill in the old space.
+	This is to prevent a station from immediately disappearing when you attempt
+	to drag the last person out of it.
+      <p>Clicking "remove empty slots" will remove these slots of course, but also cause
+	empty stations to disappear. You can use the Grid or Text views
+	to recreate the station and move people back into it.
+    <h3>Save text file</h3>
+      <p>The "save text file" button hasn't been reliable for me on my phone, although it works
+	on a desktop machine. But you can save the data for archiving by selecting and copying
+	the Text view. You can then Paste into Word or email etc.
+    </div>
   </div>
 </div>
 </body>
@@ -226,11 +247,12 @@ function removeEmptySlots (){
 
 function saveTextFile (){
   let textData = formatText( globalData )
-  textData = [...textData].map( c => c=='\n' ? "\r\n" : c ).join("");
-  let yourDate = Date.parse( globalInfo.date );
-  const offset = yourDate.getTimezoneOffset()
-  yourDate = new Date(yourDate.getTime() - (offset*60*1000))
-  const filename = yourDate.toISOString().split('T')[0] + ".txt";
+  //textData = [...textData].map( c => c=='\n' ? "\r\n" : c ).join("");
+  //let yourDate = Date.parse( globalInfo.date );
+  //const offset = yourDate.getTimezoneOffset()
+  //yourDate = new Date(yourDate.getTime() - (offset*60*1000))
+  //const filename = yourDate.toISOString().split('T')[0] + ".txt";
+  const filename = globalInfo.date + ".txt";
   downloadToFile( textData, filename, "text/plain" );
 }
 
@@ -322,7 +344,7 @@ function dateToEnglish( date ){
 }
 
 function nonemptyValues( obj ){
-  return  Object.fromEntries( Object.entries(obj).filter(([key,value]) => value != "") );
+  return  Object.fromEntries( Object.entries(obj).filter(([key,value]) => /\S/.test( value )) );
 }
 
 function formatText ( data ){
@@ -680,7 +702,7 @@ function formatStations ( data ){
 		">" + col + "</span>"
             ).join( " " )
           ).join( " " )
-	) +
+	).join( " " ) +
         "</table></span>";
     }
   });
@@ -857,7 +879,7 @@ function transpose ( tab ){
   let filled = tab.map( pos=>{
     let len = pos.length;
     pos.length = maxlen;
-    pos.fill( ["","","",-1], len, maxlen );
+    pos.fill( ["","","",""], len, maxlen );
     return pos;
   } );
   //console.log( filled );
