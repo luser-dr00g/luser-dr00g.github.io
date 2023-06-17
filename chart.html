@@ -332,15 +332,15 @@ function showStatus(){
 function findDate ( input ){
   let re = /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday) - (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d\d?), (\d\d\d\d)/;
   let matches = re.exec( input );
-  let mon = matches[2], day = matches[3], year = matches[4];
-  return  year + "-" + mon + "-" + day;
+  let mon = matches[2], day = matches[3], year = matches[4], dow = matches[1];
+  return  year + "-" + mon + "-" + day + "-" + dow;
 }
 
 function dateToEnglish( date ){
-  let re = /(....)-(...)-(..?)/;
+  let re = /(....)-(...)-(..?)-(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/;
   let matches = re.exec( date );
-  let mon = matches[2], day = matches[3], year = matches[1];
-  return  mon + " " + day + ", " + year;
+  let mon = matches[2], day = matches[3], year = matches[1], dow = matches[4];
+  return  dow + " - " + mon + " " + day + ", " + year;
 }
 
 function nonemptyValues( obj ){
