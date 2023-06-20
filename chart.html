@@ -79,6 +79,7 @@
 <div class="everything">
   <input type=text id=pasteme autofocus placeholder="-Paste Here-">
   <input type=text id=filter value="F/B|Food|BAR">
+  <input type=checkbox id=invertFilter><label for=invertFilter>Invert Filter</label>
   <button onclick="deleteData()">delete saved data</button>
   <button onclick="removeEmptySlots()">remove empty slots</button>
   <button onclick="saveTextFile()">save text file</button>
@@ -300,23 +301,31 @@ function parse ( input ){
       pos = "",
       output = [];
   notrail.split( "\n" ).forEach( e => {
-    if(  e.match( /^[A-Z]/ )  ){
-      let w = words( e );
-      cat = e;
-      pos = w.pop();
-      loc = w.join( " " );
-    } else if(  cat.match(RegExp( filter.value, "" ))  ){
-      let re = /(\D*)(1?\d:?\d?\d?[ap]m) *- *(1?\d:?\d?\d?[ap]m)(.*)/;
-      let name = "", start = "", end = "", notes = "";
-      let matches = re.exec( e );
-      name = matches[1]; if(  name == ""  ) name = "\t";
-      start = matches[2];
-      end = matches[3];
-      notes = matches[4]; if(  notes == ""  ) notes = "  ";
-      output.push( [ loc , pos, name, start, end, notes ] );
+    if(  e != ""  ) {
+      if(  e.match( /^[A-Z]/ )  ){
+        let w = words( e );
+        cat = e;
+        pos = w.pop();
+        loc = w.join( " " );
+      } else if(  invertIfChecked( cat.match(RegExp( filter.value, "" )) )  ){
+        let re = /(\D*)(1?\d:?\d?\d?[ap]m) *- *(1?\d:?\d?\d?[ap]m)(.*)/;
+        let name = "", start = "", end = "", notes = "";
+        let matches = re.exec( e );
+	if(  matches  ){
+          name = matches[1]; if(  name == ""  ) name = "\t";
+          start = matches[2];
+          end = matches[3];
+          notes = matches[4]; if(  notes == ""  ) notes = "  ";
+          output.push( [ loc , pos, name, start, end, notes ] );
+	}
+      }
     }
   } );
   return  output;
+}
+
+function invertIfChecked( b ){
+  return  document.querySelector("#invertFilter").checked ? !!!b : b;
 }
 
 function showStatus(){
