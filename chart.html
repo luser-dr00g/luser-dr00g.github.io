@@ -106,10 +106,6 @@
       <p>Clicking "remove empty slots" will remove these slots of course, but also cause
 	empty stations to disappear. You can use the Grid or Text views
 	to recreate the station and move people back into it.
-    <h3>Save text file</h3>
-      <p>The "save text file" button hasn't been reliable for me on my phone, although it works
-	on a desktop machine. But you can save the data for archiving by selecting and copying
-	the Text view. You can then Paste into Word or email etc.
     </div>
   </div>
 </div>
@@ -332,11 +328,48 @@ function showStatus(){
 function findDate ( input ){
   let re = /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday) - (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d\d?), (\d\d\d\d)/;
   let matches = re.exec( input );
+  if(  ! matches  ) return  findLaxDate( input );
   let mon = matches[2], day = matches[3], year = matches[4], dow = matches[1];
   return  year + "-" + mon + "-" + day + "-" + dow;
 }
 
-function dateToEnglish( date ){
+function findLaxDate ( input ){
+  let re = /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d\d?), (\d\d\d\d)/;
+  let matches = re.exec( input );
+  let mon = matches[1], day = matches[2], year = matches[3], dow = dayOfWeek( mon, day, year );
+  return  year + "-" + mon + "-" + day + "-" + dow;
+}
+  
+function dayOfWeek ( mon, day, year ){
+  let days = [ "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ];
+  let months = "Jan1Feb4Mar4Apr0May2Jun5Jul0Aug3Sep6Oct1Nov4Dec6";
+  RegExp( mon ).exec( months );
+  let m = parseInt( RegExp.rightContext.charAt(0) );
+  console.log( m );
+  let t = Math.floor( (parseInt(year) % 100) / 4 ) + parseInt(day) + m;
+  console.log( t );
+  if(  (mon == "Jan" || mon == "Feb") && isLeapYear( year )  ) t -= 1;
+  console.log( t );
+  t += 6; //Gregorian date in the 2000s
+  console.log( t );
+  t += parseInt(year) % 100;
+  console.log( t );
+  t %= 7;
+  console.log( t );
+  return  days[ t ];
+}
+  
+function isLeapYear( year ){
+  let y = parseInt( year );
+  return  ( divisibleBy(y,4) && ! divisibleBy(y,100) ) ||
+          ( divisibleBy(y,4) && divisibleBy(y,400) );
+}
+  
+function divisibleBy( x, y ){
+  return  ( x % y ) == 0;
+}
+
+function dateToEnglish ( date ){
   let re = /(....)-(...)-(..?)-(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/;
   let matches = re.exec( date );
   let mon = matches[2], day = matches[3], year = matches[1], dow = matches[4];
