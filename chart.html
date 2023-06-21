@@ -39,6 +39,12 @@
       border-style: solid;
       border-radius: 10px;
        }
+  table:not(.station) tr:nth-child(2n){
+      background-color: #DDD;
+  }
+  table.station tr:nth-child(3n){
+      background-color: #DDD;
+  }
   th{
       text-align: left;
       border-bottom: groove;
@@ -79,10 +85,16 @@
 <div class="everything">
   <input type=text id=pasteme autofocus placeholder="-Paste Here-">
   <input type=text id=filter value="F/B|Food|BAR">
-  <input type=checkbox id=invertFilter><label for=invertFilter>Invert Filter</label>
+  <label for=invertFilter>Invert Filter</label>
+  <input type=checkbox id=invertFilter>
+  <br>
   <button onclick="deleteData()">delete saved data</button>
   <button onclick="removeEmptySlots()">remove empty slots</button>
   <button onclick="saveTextFile()">save text file</button>
+  <br>
+  <label for=openme>Load txt file</label>
+  <input type=file id=openme accept=".txt" onchange="loadTextFile()">
+  <br>
   <span id=status></span>
   <ul class="tabs">
     <li data-tab-target="#text" class="tab">text
@@ -107,6 +119,23 @@
       <p>Clicking "remove empty slots" will remove these slots of course, but also cause
 	empty stations to disappear. You can use the Grid or Text views
 	to recreate the station and move people back into it.
+      <p>The Text view reflects your most recent sort order chosen from the Grid view.
+	For a somewhat "normal" ordering, click 'end' then 'start' then 'position' then
+	'location'. It may not be exactly the original ordering but it should make for a useful,
+	logical grouping.
+      <p>While the "invert filter" checkbox allows for grabbing non-Food&Bev personnel, most of
+	of the interactions and popups are currently tailored towards Food&Bev locations. 
+    <h3>Peace of Mind</h3>
+      <p>This tool operates entirely off-line and does not require an internet connection after
+        loading the single .HTML file from github.io. No private data is ever uploaded to any
+	server or processed remotely. Data is stored in your browser's cache and by clicking
+        "delete data" and then reloading, you should see that it's all gone at that point.
+      <p>The "save text file" button saves a local file on your device named by the date, for
+	easy archiving just before you hit "delete" in the morning. Your device ought to have
+	some kind of File Manager or File Browser that will allow you to search through these
+	files since they are stored as standard UTF-8 encoded text which is understood on any
+	modern computational device. The contents of a saved file can be copy/pasted or
+	reloaded back into the tool to re-sort or whatever.
     </div>
   </div>
 </div>
@@ -140,7 +169,8 @@ function toSorted( arr, cmpFunc ){
   return  tmp;
 }
 
-let filter = document.querySelector("#filter")
+let filter = document.querySelector("#filter");
+let status = document.querySelector("#status");
 const tabContents = document.querySelectorAll('[data-tab-content]');
 const tabs = document.querySelectorAll('[data-tab-target]');
 const paste = document.querySelector("#pasteme");
@@ -168,6 +198,7 @@ loadAndOutput();
 function saveData(){
   localStorage.setItem( "globalData", JSON.stringify( globalData ) );
   localStorage.setItem( "globalInfo", JSON.stringify( globalInfo ) );
+  appendStatus( "...changes saved" );
 }
   
 function deleteData(){
@@ -233,22 +264,31 @@ function reparseText( event ){
 }
 
 function sortAndOutput ( column ){
+  appendStatus( "...sorting" );
   sortGrid( column );
   update();
 }
 
 function removeEmptySlots (){
-  globalData = globalData.filter( rec=> rec[2].match( /\w/ ) );
+  globalData = globalData.filter( rec=> rec[2].match( /\w/ ) || rec[5].match( /\w/ ) );
   update();
+}
+    
+function loadTextFile (){
+  let openme = document.querySelector( "#openme" );
+  //console.log( openme );
+  let file = openme.files[0];
+  //console.log( file );
+  let fr = new FileReader();
+  fr.onload = function() {
+    text.value = fr.result;
+    reparseText( {} );
+  }
+  fr.readAsText( file );
 }
 
 function saveTextFile (){
   let textData = formatText( globalData )
-  //textData = [...textData].map( c => c=='\n' ? "\r\n" : c ).join("");
-  //let yourDate = Date.parse( globalInfo.date );
-  //const offset = yourDate.getTimezoneOffset()
-  //yourDate = new Date(yourDate.getTime() - (offset*60*1000))
-  //const filename = yourDate.toISOString().split('T')[0] + ".txt";
   const filename = globalInfo.date + ".txt";
   downloadToFile( textData, filename, "text/plain" );
 }
@@ -290,10 +330,10 @@ function findStationNotes( input ){
 }
 
 function parse ( input ){
+  appendStatus( "...reading data" );
   let date = findDate( input );
   let stationNotes = findStationNotes( input ); //globalInfo.stationNotes ?? {};
   globalInfo = { date: date, stationNotes: stationNotes };
-  showStatus();
   let nodots = input.replace( /[ \t]+\./g, "" );
   let notrail = nodots.replace( /[ \t]*$/g, "" );
   var cat = "",
@@ -330,15 +370,31 @@ function invertIfChecked( b ){
 
 function showStatus(){
   if(  globalInfo === null  ) return;
-  let status = document.querySelector("#status");
   status.textContent = "data for " + globalInfo.date;
+}
+    
+function appendStatus( msg ){
+  if(  status.textContent.length > 150  ){
+    showStatus();
+  }
+  status.textContent += msg;
 }
 
 function findDate ( input ){
-  let re = /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday) - (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d\d?), (\d\d\d\d)/;
+  let re = /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday) [--] (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d\d?), (\d\d\d\d)/;
   let matches = re.exec( input );
   if(  ! matches  ) return  findLaxDate( input );
   let mon = matches[2], day = matches[3], year = matches[4], dow = matches[1];
+/*
+  console.log( dow, dayOfWeek( mon, day, year ),
+    dow == dayOfWeek( mon, day, year ),
+    dow === dayOfWeek( mon, day, year ),
+    dow != dayOfWeek( mon, day, year),
+    dow !== dayOfWeek( mon, day, year ) );
+    */
+  if(  dow !== dayOfWeek( mon, day, year )  ){
+    appendStatus( "...day of week looks wrong" );
+  }
   return  year + "-" + mon + "-" + day + "-" + dow;
 }
 
@@ -354,18 +410,20 @@ function dayOfWeek ( mon, day, year ){
   let months = "Jan1Feb4Mar4Apr0May2Jun5Jul0Aug3Sep6Oct1Nov4Dec6";
   RegExp( mon ).exec( months );
   let m = parseInt( RegExp.rightContext.charAt(0) );
-  console.log( m );
+  //console.log( m );
   let t = Math.floor( (parseInt(year) % 100) / 4 ) + parseInt(day) + m;
-  console.log( t );
+  //console.log( t );
   if(  (mon == "Jan" || mon == "Feb") && isLeapYear( year )  ) t -= 1;
-  console.log( t );
+  //console.log( t );
   t += 6; //Gregorian date in the 2000s
-  console.log( t );
+  //console.log( t );
   t += parseInt(year) % 100;
-  console.log( t );
+  //console.log( t );
   t %= 7;
-  console.log( t );
-  return  days[ t ];
+  //console.log( t );
+  let result = days[ t ];
+  //console.log( result );
+  return result;
 }
   
 function isLeapYear( year ){
@@ -471,7 +529,6 @@ function addGridTimeWidgets(){
           globalData[idx][3 + col] = edit.value;
 	  edit.parentNode.replaceChild( target, edit );
 	  update();
-          saveData();
         };
 	edit.addEventListener( "change", done );
         edit.addEventListener( "blur", done );
@@ -498,7 +555,6 @@ function addGridNotesWidgets(){
 	globalData[idx][5] = edit.value;
 	edit.parentNode.replaceChild( target, edit );
 	update();
-	saveData();
       };
       edit.addEventListener( "change", done );
       edit.addEventListener( "blur", done );
@@ -648,6 +704,7 @@ function moveName( dest, src ){
     globalData[ src ][ 1 ] = globalData[ dest ][ 1 ];
     globalData[ dest ][ 1 ] = '16';
   }
+  appendStatus( "...move" );
   update();
 }
 
@@ -667,6 +724,7 @@ function insertName( dest, src ){
 
   head.push( [ destrec[0], (sixteen ? srcrec[1] : destrec[1]), srcrec[2], srcrec[3], srcrec[4], srcrec[5] ] );
   globalData = head.concat( tail );
+  appendStatus( "...insert" );
   update();
 }
 
@@ -679,37 +737,64 @@ function formatStations ( data ){
   data.forEach( (row,i) => {row.push( i );});
   let sorted = toSorted( toSorted( data, cmpColumn( 3 ) ), cmpColumn( 2 ) );
   let supervisor = sorted.filter( rec => rec[1].match( /Supervisor/i ) );
+  let ferris = sorted.filter( rec => rec[0].match( /Ferris/i ) );
   let roof = sorted.filter( rec => rec[0].match( /Roof/i ) );
+  let slide = sorted.filter( rec => rec[0].match( /Slide/i ) || rec[1].match( /Slide/i ) );
   let prep = sorted.filter( rec => rec[0].match( /Prep/i ) );
   let distro = sorted.filter( rec => rec[0].match( /Distr/i ) || rec[1].match( /Distr/i ) );
   let overflow = sorted.filter( rec => rec[0].match( /Overflow/i ) );
+  let art = sorted.filter( rec => rec[0].match( /Art/i ) );
   let cowboy = sorted.filter( rec => rec[0].match( /Cowboy|Arch/i ) );
   let beatniks = sorted.filter( rec => rec[0].match( /Beatnik/i ) );
+  let pinball = sorted.filter( rec => rec[0].match( /Pinball/i ) );
   let elephant = sorted.filter( rec => rec[0].match( /Elephant/i ) );
   let copout = sorted.filter( rec => rec[0].match( /CopOut/i ) );
+  let house = sorted.filter( rec => rec[0].match( /House/i ) || rec[1].match( /House/i ) );
   let mezz = sorted.filter( rec => rec[0].match( /Lizzard/i ) );
+  let sixteen = sorted.filter( rec => rec[0].match( /16/ ) || rec[1].match( /16/ ) );
+  let front = sorted.filter( rec => rec[0].match( /Front/i ) );
+  let floor = sorted.filter( rec => rec[0].match( /Floor/i ) || rec[1].match( /Floor/i ) );
+  let gift = sorted.filter( rec => rec[0].match( /Gift/i ) );
   let cabin = sorted.filter( rec => rec[0].match( /Cabin/i ) );
   let grill = sorted.filter( rec => rec[0].match( /Grill/i ) );
+  let parking = sorted.filter( rec => rec[0].match( /Parking/i ) );
+  let grounds = sorted.filter( rec => rec[0].match( /Grounds/i ) );
+  let project = sorted.filter( rec => rec[0].match( /Project/i ) || rec[1].match( /Project/i ) );
   let event = sorted.filter( rec => rec[0].match( /EVENT/i ) );
-  let stations = [ supervisor, roof, prep, distro, overflow, cowboy, beatniks, elephant, copout, mezz, cabin, grill, event ];
+  let stations = [ supervisor, ferris, roof,
+		   prep, distro, slide,
+		   overflow, art,
+		   cowboy, beatniks, pinball, elephant,
+		   copout, house,
+		   mezz, sixteen,
+		   front, floor, gift,
+		   cabin, grill,
+		   parking, grounds,
+		   project,
+		   event ];
 
   let other = Array.from( sorted.filter( rec => {
     return  ! stations.reduce( (acc,cur,i)=>{
       return acc||cur.findIndex( x => x == rec ) != -1;
     }, false );
   }) );
+  stations.forEach( station => station.sort( cmpColumn( 3 ) ) );
   if(  other[0]  ){
     other[0] = Array.from( other[0] );
-    other[0][0] = "Other F/B staff";
+    other[0][0] = "Other";
     stations.push( other );
   }
   if(  distro[0]  ){
     distro[0] = Array.from( distro[0] );
     distro[0][0] = "F/B Distro";
   }
+  if(  project[0]  ){
+    project[0] = Array.from( project[0] );
+    project[0][0] = "Project";
+  }
   if(  supervisor[0]  ){
     supervisor[0] = Array.from( supervisor[0] );
-    supervisor[0][0] = "F/B Supervisor";
+    supervisor[0][0] = "Supervisor";
   }
 
   //console.log( other );
