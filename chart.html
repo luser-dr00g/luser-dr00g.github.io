@@ -342,28 +342,32 @@ function parse ( input ){
       output = [];
   let lines = input.split( "\n" );
   let start = lines.findIndex( line => line.match( /2\s+3\s+4\s+5\s+6\s+7\s+8a/ ) );
+  function perPerson( line ){
+    let re = /(\D*)(1?\d:?\d?\d?[ap]m) *- *(1?\d:?\d?\d?[ap]m)(.*)/;
+    let name = "", start = "", end = "", notes = "";
+    let matches = re.exec( line );
+    //console.log( "  " + line, matches );
+    if(  matches  ){
+      name = matches[1]; if(  name == ""  ) name = "\t";
+      start = matches[2];
+      end = matches[3];
+      notes = matches[4]; if(  notes == ""  ) notes = "  ";
+      if(  invertIfChecked( cat.match( RegExp( filter.value ) ) )  ){
+        output.push( [ loc , pos, name, start, end, notes ] );
+      }
+    }
+  }
   var i;
   for( i = start+1; i<lines.length; ++i ){
     let line = lines[i];
     if(  line.match( /^\s+.\s+.\s+./ )  ){
       ++i;
-      line = lines[i];
-      let re = /(\D*)(1?\d:?\d?\d?[ap]m) *- *(1?\d:?\d?\d?[ap]m)(.*)/;
-      let name = "", start = "", end = "", notes = "";
-      let matches = re.exec( line );
-      console.log( "  " + line, matches );
-      if(  matches  ){
-        name = matches[1]; if(  name == ""  ) name = "\t";
-        start = matches[2];
-        end = matches[3];
-        notes = matches[4]; if(  notes == ""  ) notes = "  ";
-	if(  invertIfChecked( cat.match( RegExp( filter.value ) ) )  ){
-          output.push( [ loc , pos, name, start, end, notes ] );
-	}
-      }
+      perPerson( lines[i] );
       if(  end != "12am"  ) ++i;
+    } else if(  line.match( /^\s+/ )  ){
+      perPerson( lines[i] );
     } else {
-      console.log( line );
+      //console.log( line );
       let w = words( line );
       cat = line;
       pos = w.pop();
@@ -487,6 +491,7 @@ function formatText ( data ){
       let pre = rec.slice(0,2).join( " " );
       let [ name, start, end, notes ] = rec.slice(2);
       let person = name + start + "-" + end + notes;
+      if(  ! name.match( /^\s/ )  ) person = "\t" + person;
       if(  pre == cat  ){
         return  person;
       } else {
