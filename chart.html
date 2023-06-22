@@ -341,7 +341,7 @@ function parse ( input ){
       pos = "",
       output = [];
   let lines = input.split( "\n" );
-  let start = lines.findIndex( line => line.match( /2\s+3\s+4\s+5\s+6\s+7\s+8a/ ) );
+  let startIndex = lines.findIndex( line => line.match( /2\s+3\s+4\s+5\s+6\s+7\s+8a/ ) );
   let name = "", start = "", end = "", notes = "";
   function perPerson( line ){
     let re = /(\D*)(1?\d:?\d?\d?[ap]m) *- *(1?\d:?\d?\d?[ap]m)(.*)/;
@@ -358,7 +358,7 @@ function parse ( input ){
     }
   }
   var i;
-  for( i = start+1; i<lines.length; ++i ){
+  for( i = startIndex + 1; i<lines.length; ++i ){
     let line = lines[i];
     if(  line.match( /^\s+.\s+.\s+./ )  ){
       ++i;
