@@ -88,7 +88,7 @@
   <label for=invertFilter>Invert Filter</label>
   <input type=checkbox id=invertFilter>
   <br>
-  <button onclick="deleteData()">delete saved data</button>
+  <button onclick="deleteData()">delete stored data</button>
   <button onclick="removeEmptySlots()">remove empty slots</button>
   <button onclick="saveTextFile()">save text file</button>
   <br>
@@ -334,33 +334,64 @@ function parse ( input ){
   let date = findDate( input );
   let stationNotes = findStationNotes( input ); //globalInfo.stationNotes ?? {};
   globalInfo = { date: date, stationNotes: stationNotes };
-  let nodots = input.replace( /[ \t]+\./g, "" );
-  let notrail = nodots.replace( /[ \t]*$/g, "" );
+  //let nodots = input;//.replace( /\.[ \t]/g, "" );
+  //let notrail = nodots;//.replace( /[ \t]+$/g, "" );
   var cat = "",
       loc = "",
       pos = "",
       output = [];
-  notrail.split( "\n" ).forEach( e => {
-    if(  e != ""  ) {
-      if(  e.match( /^[A-Z]/ )  ){
-        let w = words( e );
-        cat = e;
-        pos = w.pop();
-        loc = w.join( " " );
-      } else if(  invertIfChecked( cat.match(RegExp( filter.value, "" )) )  ){
-        let re = /(\D*)(1?\d:?\d?\d?[ap]m) *- *(1?\d:?\d?\d?[ap]m)(.*)/;
-        let name = "", start = "", end = "", notes = "";
-        let matches = re.exec( e );
-	if(  matches  ){
-          name = matches[1]; if(  name == ""  ) name = "\t";
-          start = matches[2];
-          end = matches[3];
-          notes = matches[4]; if(  notes == ""  ) notes = "  ";
+  let lines = input.split( "\n" );
+  let start = lines.findIndex( line => line.match( /2\s+3\s+4\s+5\s+6\s+7\s+8a/ ) );
+  var i;
+  for( i = start+1; i<lines.length; ++i ){
+    let line = lines[i];
+    if(  line.match( /^\s+.\s+.\s+./ )  ){
+      ++i;
+      line = lines[i];
+      let re = /(\D*)(1?\d:?\d?\d?[ap]m) *- *(1?\d:?\d?\d?[ap]m)(.*)/;
+      let name = "", start = "", end = "", notes = "";
+      let matches = re.exec( line );
+      console.log( "  " + line, matches );
+      if(  matches  ){
+        name = matches[1]; if(  name == ""  ) name = "\t";
+        start = matches[2];
+        end = matches[3];
+        notes = matches[4]; if(  notes == ""  ) notes = "  ";
+	if(  invertIfChecked( cat.match( RegExp( filter.value ) ) )  ){
           output.push( [ loc , pos, name, start, end, notes ] );
 	}
       }
+      if(  end != "12am"  ) ++i;
+    } else {
+      console.log( line );
+      let w = words( line );
+      cat = line;
+      pos = w.pop();
+      loc = w.join( " " );
     }
-  } );
+  }
+  //notrail.split( "\n" ).forEach( e => {
+    //if(  e.match( /\S/ )  ) {
+      //console.log( "'" + e + "'" );
+      //if(  e.match( /^[A-Z]/ )  ){
+        //let w = words( e );
+        //cat = e;
+        //pos = w.pop();
+        //loc = w.join( " " );
+      //} else if(  invertIfChecked( cat.match(RegExp( filter.value, "" )) )  ){
+        //let re = /(\D*)(1?\d:?\d?\d?[ap]m) *- *(1?\d:?\d?\d?[ap]m)(.*)/;
+        //let name = "", start = "", end = "", notes = "";
+        //let matches = re.exec( e );
+	//if(  matches  ){
+          //name = matches[1]; if(  name == ""  ) name = "\t";
+          //start = matches[2];
+          //end = matches[3];
+          //notes = matches[4]; if(  notes == ""  ) notes = "  ";
+          //output.push( [ loc , pos, name, start, end, notes ] );
+	//}
+      //}
+    //}
+  //} );
   return  output;
 }
 
@@ -392,6 +423,7 @@ function findDate ( input ){
     dow != dayOfWeek( mon, day, year),
     dow !== dayOfWeek( mon, day, year ) );
     */
+  appendStatus( "..." + dow );
   if(  dow !== dayOfWeek( mon, day, year )  ){
     appendStatus( "...day of week looks wrong" );
   }
