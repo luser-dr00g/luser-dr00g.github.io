@@ -40,10 +40,10 @@
       border-radius: 10px;
        }
   table:not(.station) tr:nth-child(2n){
-      background-color: #DDD;
+      background-color: #E0E0E0;
   }
   table.station tr:nth-child(3n){
-      background-color: #DDD;
+      background-color: #E0E0E0;
   }
   th{
       text-align: left;
@@ -788,7 +788,7 @@ function formatStations ( data ){
   let copout = sorted.filter( rec => rec[0].match( /CopOut/i ) );
   let house = sorted.filter( rec => rec[0].match( /House/i ) || rec[1].match( /House/i ) );
   let mezz = sorted.filter( rec => rec[0].match( /Lizzard/i ) );
-  let sixteen = sorted.filter( rec => rec[0].match( /16/ ) || rec[1].match( /16/ ) );
+  //let sixteen = sorted.filter( rec => rec[0].match( /16/ ) || rec[1].match( /16/ ) );
   let front = sorted.filter( rec => rec[0].match( /Front/i ) );
   let floor = sorted.filter( rec => rec[0].match( /Floor/i ) || rec[1].match( /Floor/i ) );
   let gift = sorted.filter( rec => rec[0].match( /Gift/i ) );
@@ -803,7 +803,7 @@ function formatStations ( data ){
 		   overflow, art,
 		   cowboy, beatniks, pinball, elephant,
 		   copout, house,
-		   mezz, sixteen,
+		   mezz, //sixteen,
 		   front, floor, gift,
 		   cabin, grill,
 		   parking, grounds,
