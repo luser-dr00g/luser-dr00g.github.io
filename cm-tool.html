@@ -430,7 +430,7 @@ function parse( input ){
   for(  i = startIndex + 1;  i < lines.length;  ++i  ){
     let line = lines[i];
     //console.log( i, line );
-    if(  line.match( /^(\s+\.)*\s*$/ )  ){
+    if(  line.match( /^[\s.]+$/ )  ){
       //console.log( i, line, "dots");
       continue;
     }
