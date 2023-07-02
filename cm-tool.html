@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<meta http-equiv="content-type" content="text/html" charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<html>
+<title> CM Deployment tool </title>
+<style type="text/css">
+  :root{
+      --body-bg: hsl(0 0% 90%);
+      --table-bg: hsl(0 0% 100%);
+      --text: hsl(0 0% 15%);
+      --heading: hsl(0 0% 25%);
+  }
+  body{ padding: 0;
+	margin: 0;
+	overscroll-behavior: none;
+	background-color: var(--body-bg);
+	color: var(--text);
+	font-size: normal;
+	display: flex;
+	flex-flow: row wrap;
+      }
+  .darkmode{
+      --body-bg: hsl(0 0% 15%);
+      --table-bg: hsl(0 0% 25%);
+      --text: hsl(0 0% 100%);
+      --heading: hsl(0 0% 90%);
+  }
+  hr{
+      margin: .25ex;
+  }
+  button{
+      margin: 0 1ex;
+  }
+  input[type="checkbox"]{
+      width: 20px;
+      height: 10px;
+      -webkit-appearance: none;
+      background: #c6c6c6;
+      outline: none;
+      border-radius: 20px;
+      transition: .5s;
+      box-shadow: inset 0 0 5px rgba(0,0,0,.2);
+  }
+  input:checked[type="checkbox"]{
+      background: #03a9f4;
+  }
+  //.everything{ background-color: #DDD; }
+  .panel{
+      display: flex;
+      flex-flow: row wrap;
+      align-items: flex-start;
+      justify-content: flex-start;
+  }
+  more-panel{
+      display: inline-flex;
+      flex-flow: row wrap;
+  }
+  .row{
+      display: flex;
+      flex-flow: row wrap;
+      align-items: center;
+      justify-content: flex-start;
+  }
+  label{
+      font-size: x-small;
+  }
+  .panel-name{
+      font-size: x-small;
+      //color: var(--heading);
+  }
+  .vert{
+      display: inline-flex;
+      flex-flow: column wrap;
+  }
+  .shortcut{
+             cursor: pointer;
+	     text-decoration: underline;
+	     padding: .5em;
+	   }
+  .tabs{ display: flex;
+	 justify-content: flex-start;
+	 list-style-type: none;
+	 margin: 0;
+	 padding: 0;
+	 border-bottom: 2px solid; }
+  .tab{ cursor: pointer;
+	margin: 10px;
+	padding: 10px; }
+  .tab:hover{
+      background-color: #777;
+  }
+  .tab.active{
+      border: 2px solid;
+  }
+  .tab-content{
+      margin-left: 20px;
+      margin-right: 20px;
+  }
+  [data-tab-content]{ display: none }
+  .active[data-tab-content]{ display: block }
+  #text{ width: 70ex;
+	 height: 80vh; }
+  table{
+      border-style: solid;
+      border-radius: 10px;
+  }
+  table tr:nth-child(2n+1){
+      background-color: var(--table-bg);
+  }
+  th{
+      border-bottom: groove;
+      text-align: left;
+  }
+  #grid th{
+      cursor: pointer;
+  }
+  td{
+      border-bottom: dashed 1px;
+      border-left: dashed 1px;
+      border-collapse: collapse;
+      margin: 0;
+  }
+
+</style>
+<body>
+<div class="everything">
+  <div class="badge panel-name"><a id="badge">CM Deployment Tool</a></div>
+  <div class="panel">
+    <more-panel id="style" class="more style"><span class="panel-name">style</span>
+      <div class="more">
+        <input type=checkbox id="darkmode"><label for="darkmode">Dark</label>
+      </div>
+    </more-panel>
+    <more-panel id="undo" class="undo">
+      <div class="row"><span class="less">&nbsp;&#x2939;</span>
+	               <span class="less">&#x2938;&nbsp;</span></div>
+      <div class="row"><span class="more">Undo 1</span></div>
+      <div><hr class="more"></div>
+      <div class="row"><span class="more">Redo 1</span></div>
+    </more-panel>
+    <more-panel class="controls"><span class="panel-name">controls</span>
+      <div class="row">
+        <input id="pasteme" class="more less" type=text autofocus placeholder="-Paste here-">
+        <span class="more">
+          <button id="load" onClick="showFileInput()">Load</button>
+        </span>
+        <span class="more">
+          <button onclick="saveTextFile()">Save</button>
+        </span>
+        <span class="more">
+          <a id="share">Share</a>
+        </span>
+      </div>
+      <div class="more row">
+        <div class="vert">
+        <label for="invertFilter">Invert</label>
+        <input type=checkbox id="invertFilter">
+        </div>
+        <div class="vert">
+        <label for="filter" >Filter</label>
+        <input id="filter" type=text value="">
+        </div>
+      </div>
+      <div class="more row">
+        <span class="shortcut" onclick="nofilter()">everyone</span>
+        <span class="shortcut" onclick="fbfilter()">F/B</span>
+        <span class="shortcut" onclick="floorfilter()">Floor</span>
+	<span class="shortcut" onclick="facfilter()">Facilities</span>
+        <span class="shortcut" onclick="nonfbfilter()">non-F/B</span>
+	<span class="shortcut" onclick="plusPinball()">&pm;Pinball</span>
+      </div>
+    </more-panel>
+    <more-panel id="rules"><span class="panel-name">rules</span>
+      <div class="more">
+	<input type=checkbox id="sixteen" checked><label for="sixteen">fixed position=16</label>
+	<input type=checkbox id="movesuper"><label for="movesuper">move supervisors</label>
+	<input type=checkbox id="movelead" checked><label for="movelead">move leads</label>
+      </div>
+    </more-panel>
+  </div>
+  <div class="vert">
+    <div class="row">
+      <label for="status" >Status: </label>
+      <span id="status"></span>
+    </div><br>
+    <div class="row">
+      <span id="date"></span>
+    </div>
+  </div>
+  <ul class="tabs">
+    <li data-tab-target="#text" class="tab">text
+    <li data-tab-target="#grid" class="tab active">grid
+    <li data-tab-target="#stations" class="tab">stations
+    <li data-tab-target="#help" class="tab">help
+  </ul>
+  <div class="tab-content">
+    <textarea id="text" data-tab-content></textarea>
+    <div id="grid" data-tab-content class="active">
+      <div> sort order: <i>{<span id="sort-order"></span>}</i> </div>
+      <div id="grid-table"></div>
+    </div>
+    <div id="stations" data-tab-content></div>
+    <div id="help" data-tab-content>
+      <p><em>Select All</em> and <em>Copy</em> all the text from the
+	Whentowork.com &gt; Everybody &gt; Day webpage. Then <em>Paste</em>
+	into the "-Paste here-" box under (more) controls or into the Text view.
+      <p>To report bugs or for other assistance, contact
+	<a href="mailto:MRyan@citymuseum.org">MRyan@citymuseum.org</a>
+    </div>
+  </div>
+</div>
+</body>
+<script src="more.js"></script>
+<script>
+  
+var badge = document.querySelector("#badge");
+var darkmode = document.querySelector("#darkmode");
+var paste = document.querySelector("#pasteme");
+var filter = document.querySelector("#filter");
+var invertFilter = document.querySelector("#invertFilter");
+var share = document.querySelector("#share");
+var date = document.querySelector("#date");
+var tabs = document.querySelectorAll("[data-tab-target]");
+var tabContents = document.querySelectorAll("[data-tab-content]");
+var text = document.querySelector("#text");
+var grid = document.querySelector("#grid-table");
+var stations = document.querySelector("#stations");
+
+var global;
+var undoStack = [];
+var redoStack = [];
+var sortOrder = [];
+main();
+
+function main(){
+  badge.href = window.location.pathname;
+  initDarkmode();
+  paste.addEventListener( "paste", fetchAndOutput );
+  text.addEventListener( "change", reparseText );
+  initTabHandlers();
+  loadAndOutput();
+}
+  
+function fbfilter(){
+  filter.value = "F/B|Food|BAR";
+  invertFilter.checked = false;
+}
+  
+function floorfilter(){
+  filter.value = "Operations|Floor|Front|Ferris|Slide";
+  invertFilter.checked = false;
+}
+
+function facfilter(){
+  filter.value = "Project|keeping|Parking|Art";
+  invertFilter.checked = false;
+}
+
+function nonfbfilter(){
+  fbfilter();
+  invertFilter.checked = true;
+}
+  
+function nofilter(){
+  filter.value = "";
+  invertFilter.checked = false;
+}
+
+function plusPinball(){
+  if(  ! filter.value  ){
+    filter.value = "Pinball";
+  } else {
+    if(  filter.value == "Pinball"  ){
+      filter.value = "";
+    } else if(  filter.value.match( /\|Pinball/ )  ){
+      filter.value = filter.value.replace( /\|Pinball/, "" );
+    } else {
+      filter.value = filter.value + "|Pinball";
+    }
+  }
+}
+
+function initDarkmode(){
+  function click(){
+    if(  darkmode.checked  ) document.body.classList.add("darkmode");
+    else document.body.classList.remove("darkmode");
+  }
+  darkmode.addEventListener( "click", click );
+  click();
+  click();
+}
+
+function initTabHandlers(){
+  tabs.forEach( tab =>
+    tab.addEventListener( 'click', () => {
+      const target = document.querySelector( tab.dataset.tabTarget );
+      tabContents.forEach( tab => tab.classList.remove( "active" ) );
+      target.classList.add( "active" );
+      tabs.forEach( tab => tab.classList.remove( "active" ) );
+      tab.classList.add( "active" );
+    })
+  );
+}
+
+function createData( data ){
+  undoStack.push(
+    { type: 'CREATE',
+      next: JSON.parse( JSON.stringify( data ) ),
+      prev: global  ? JSON.parse( JSON.stringify( global ) )  : global }
+  );
+  global = data;
+  //console.log( global );
+}
+
+function editData( data ){
+  undoStack.push(
+    { type: 'EDIT-TEXT',
+      next: JSON.parse( JSON.stringify( data ) ),
+      prev: global  ? JSON.parse( JSON.stringify( global ) )  : global }
+  );
+  global = data;
+}
+
+function loadData(){
+  var data = JSON.parse( localStorage.getItem( "global" ) )
+  //console.log( data );
+  createData( data );
+}
+
+function saveData(){
+  appendStatus( " ...saved" );
+  localStorage.setItem( "global", JSON.stringify( global ) );
+}
+
+function saveTextFile(){
+  let textData = formatText( global );
+  const filename = global.date + ".txt";
+  downloadToFile( textData, filename, "text/plain" );
+}
+
+function downloadToFile ( content, filename, contentType ){
+  const a = document.createElement( "a" );
+  const file = new Blob( [ content ], { type: contentType } );
+  a.href = URL.createObjectURL( file );
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+
+function showFileInput(){
+  var load = document.querySelector( "#load" );
+  var parent = load.parentNode;
+  parent.removeChild( load );
+  var input = document.createElement( "input" );
+  input.setAttribute( "type", "file" );
+  input.setAttribute( "id", "openme" );
+  input.setAttribute( "accept", ".txt" );
+  input.onchange = loadTextFile;
+  parent.appendChild( input );
+  function loadTextFile(){
+    let file = input.files[0];
+    let fr = new FileReader();
+    fr.onload = function(){
+      text.value = fr.result;
+      reparseText( );
+    }
+    fr.readAsText( file );
+    parent.removeChild( input );
+    parent.appendChild( load );
+  }
+}
+
+function loadAndOutput(){
+  if(  window.location.search  ){
+    appendStatus( "...reading query" );
+    let s = window.location.search;
+    let q = decodeURIComponent( s.slice( s.indexOf( "=" ) + 1 ) );
+    //console.log( q );
+    createData( JSON.parse( q ) );
+    appendStatus( "...done" );
+    saveData();
+  } else {
+    appendStatus( " ...loading" );
+    loadData();
+    appendStatus( " ...done" );
+  }
+  output();
+}
+
+function fetchAndOutput( event ){
+  event.preventDefault();
+  createData( parse( event.clipboardData.getData("text/plain") ) );
+  saveData();
+  output();
+}
+
+function reparseText(){
+  editData( parse( text.value ) );
+  saveData();
+  output();
+}
+
+function parse( input ){
+  appendStatus( " ...parsing" );
+  let date = findDate( input );
+  let stationNotes = findStationNotes( input );
+  var cat = "",
+      loc = "",
+      pos = "",
+      output = [];
+  let lines = input.split( "\n" );
+  let startIndex = lines.findIndex( line => line.match( /2\s+3\s+4\s+5\s+6\s+7/ ) );
+  //console.log( startIndex );
+  let name = "", start = "", end = "", notes = "";
+  function perPerson( line ){
+    let re = /(\D*)(1?\d:?\d?\d?[ap]m) *[--] *(1?\d:?\d?\d?[ap]m)(.*)/;
+    let matches = re.exec( line );
+    if(  matches  ){
+      name = matches[1]; if(  name == ""  ) name = "\t";
+      start = matches[2];
+      end = matches[3];
+      notes = matches[4]; if(  notes == ""  ) notes = "   ";
+      if(  invertIfChecked( cat.match( RegExp( filter.value ) ) )  ){
+	output.push( [ loc, pos, name, start, end, notes ] );
+      }
+    }
+  }
+  var i;
+  for(  i = startIndex + 1;  i < lines.length;  ++i  ){
+    let line = lines[i];
+    //console.log( i, line );
+    if(  line.match( /^(\s+\.)*\s*$/ )  ){
+      //console.log( i, line, "dots");
+      continue;
+    }
+    if(  line.match( /1?\d:?\d?\d?[ap]m *- *1?\d:?\d?\d?[ap]m/ )  ){
+      //console.log( i, line, "person" );
+      perPerson( line );
+    } else {
+      //console.log( i, line, "category" );
+      let w = line.split( " " );
+      cat = line;
+      pos = w.pop();
+      loc = w.join( " " );
+    }
+  }
+  appendStatus( " ...finished" );
+  return  { date, stationNotes, data: output };
+}
+  
+function invertIfChecked( b ){
+  return  invertFilter.checked  ? !!!b  : b;
+}
+
+function findDate( input ){
+  let re = /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d\d?), (\d\d\d\d)/g;
+  let matches = [ ...input.matchAll( re ) ];
+  return  matches.map( match =>
+    match[3] + "-" + match[1] + "-" + match[2] + "-" +
+      dayOfWeek( match[1], match[2], match[3] )
+  ).pop();
+}
+
+function dayOfWeek( mon, day, year ){
+  let days = [ "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ];
+  let months = "Jan1Feb4Mar4Apr0May2Jun5Jul0Aug3Sep6Oct1Nov4Dec6";
+  RegExp( mon ).exec( months );
+  let m = parseInt( RegExp.rightContext.charAt(0) );
+  let t = Math.floor( (parseInt(year) % 100) / 4 ) + parseInt(day) + m;
+  if(  (mon == "Jan" || mon == "Feb") && isLeapYear( year )  ) t -= 1;
+  t += 6; //Gregorian date in the 2000s
+  t += parseInt(year) % 100;
+  t %= 7;
+  let result = days[ t ];
+  return result;
+}
+  
+function findStationNotes( input ){
+  let re = /station notes:/;
+  if(  re.test( input )  ){
+    let json = RegExp.rightContext.split( "\n" )[0];
+    if(  json != ""  ) return  JSON.parse( json );
+  }
+  return {};
+}
+
+function showStatus(){
+  var status = document.querySelector("#status");
+  status.textContent = "";
+}
+
+function appendStatus( msg ){
+  var status = document.querySelector("#status");
+  if(  status.textContent && (status.textContent.length > 60)  ){
+    showStatus();
+  }
+  status.textContent = status.textContent + msg;
+}
+  
+function output(){
+  //console.log( global );
+  if(  global  ){
+    pasteme.classList.remove("less");
+    share.href = window.location.pathname +
+      "?q=" + encodeURIComponent( JSON.stringify( global ) );
+    date.textContent = dateToEnglish( global.date );
+    text.value = formatText( global );
+    grid.innerHTML = formatTable( global );
+    updateSortOrder();
+    stations.innerHTML = formatStations( global );
+  } else {
+    pasteme.classList.add("less");
+    share.href = "";
+    date.textContent = "";
+    text.value = "";
+    grid.innerHTML = "";
+    stations.innerHTML = "";
+  }
+  let toggle = document.querySelector( ".controls" ).shadowRoot.querySelector( "#toggle" );
+  toggle.click();
+  toggle.click();
+  updateUndoRedo();
+}
+
+function updateSortOrder(){
+  let names = [ "location", "position", "name", "start", "end", "notes" ];
+  let s = document.querySelector( "#sort-order" );
+  s.textContent = "";
+  sortOrder.forEach( col =>
+    s.textContent +=
+      " " + (col < 0 ? "▼" : "") + names[ Math.abs(col) - 1 ] + " " );
+}
+  
+function updateUndoRedo(){
+  function makeButton( txt ){
+    let s = document.createElement("button");
+    s.innerHTML = txt;
+    return  s;
+  }
+  let undo = document.querySelector("#undo");
+  let kids = Array.from(undo.childNodes);
+  kids.forEach( kid => undo.removeChild( kid ) );
+  let br = document.createElement("br");
+  br.classList.add("more");
+  undo.appendChild( br );
+  if(  undoStack.length == 0  ){
+    let s = makeButton( "&nbsp;&#x2939;&nbsp;" );
+    s.classList.add( "less" );
+    s.setAttribute( "disabled", "disabled" );
+    undo.appendChild( s );
+    let r = makeButton( "-nothing to undo-" );
+    r.classList.add( "more" );
+    r.setAttribute( "disabled", "disabled" );
+    undo.appendChild( r );
+  } else {
+    let s = makeButton( "&nbsp;&#x2939;&nbsp;" )
+    s.classList.add( "less" );
+    s.onclick = () => undoN(1);
+    undo.appendChild( s );
+    undoStack.forEach( (rec,idx) => {
+      let i = undoStack.length - 1 - idx;
+      let r = makeButton( "" + (i + 1) + " undo " + rec.type );
+      r.classList.add( "more" );
+      r.onclick = () => undoN( i + 1 );
+      undo.appendChild( r );
+    });
+  }
+  let hr = document.createElement("hr");
+  hr.classList.add( "more" );
+  undo.appendChild( hr );
+  if(  redoStack.length == 0  ){
+    let s = makeButton( "&nbsp;&#x2938;&nbsp;" );
+    s.classList.add( "less" );
+    s.setAttribute( "disabled", "disabled" );
+    undo.appendChild( s );
+    let r = makeButton( "-nothing to redo-" );
+    r.classList.add( "more" );
+    r.setAttribute( "disabled", "disabled" );
+    undo.appendChild( r );
+  } else {
+    let s = makeButton( "&nbsp;&#x2938;&nbsp;" )
+    s.classList.add( "less" );
+    s.onclick = () => redoN(1);
+    undo.appendChild( s );
+    redoStack.slice().reverse().forEach( (rec,idx) => {
+      let r = makeButton( "" + (idx + 1) + " redo " + rec.type );
+      r.classList.add( "more" );
+      r.onclick = () => redoN( idx + 1 );
+      undo.appendChild( r );
+    });
+  }
+  let toggle = undo.shadowRoot.querySelector( "#toggle" );
+  toggle.click();
+  toggle.click();
+}
+  
+function undo1(){
+  appendStatus( "...undo!" );
+  let rec = undoStack.pop();
+  redoStack.push( rec );
+  switch(  rec.type  ){
+  case 'CREATE':
+  case 'EDIT-TEXT':
+    if(  undoStack.length > 0  ){
+      global = undoStack[ undoStack.length - 1 ].next;
+    } else {
+      global = rec.prev;
+    }
+    break;
+  }
+}
+
+function undoN( n ){
+  for( var i = 0; i < n; i++ )
+    undo1();
+  output();
+  saveData();
+}
+
+function redo1(){
+  appendStatus( "...redo!" );
+  let rec = redoStack.pop();
+  undoStack.push( rec );
+  switch(  rec.type  ){
+  case 'CREATE':
+  case 'EDIT-TEXT':
+    global = rec.next;
+    break;
+  }
+}
+
+function redoN( n ){
+  for( var i = 0; i < n; i++ )
+    redo1();
+  output();
+  saveData();
+}
+
+function dateToEnglish( date ){
+  let re = /(....)-(...)-(..?)-(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/;
+  let matches = re.exec( date );
+  let mon = matches[2], day = matches[3], year = matches[1], dow = matches[4];
+  return  dow + " - " + mon + " " + day + ", " + year;
+}
+
+function formatText( it ){
+  if(  !it || !it.data  ) return  "";
+  var cat = "";
+  return  "data for " + dateToEnglish( it.date ) + "\n" +
+    "station notes: " + JSON.stringify( global.stationNotes ) + "\n" +
+    it.data.map( rec =>{
+      let pre = rec.slice(0,2).join( " " );
+      let [ name, start, end, notes ] = rec.slice(2);
+      let person = name + start + "-" + end + notes;
+      if(  ! name.match( /^\s/ )  ) person = "\t" + person;
+      if(  pre == cat  ){
+	return  person;
+      } else {
+	cat = pre;
+	return  pre + "\n" + person;
+      }
+    } ).join( "\n" );
+}
+
+function formatTable( it ){
+  let classes = [ "location", "position", "name", "start", "end", "notes" ];
+  return  `<table>
+  <tr><th onclick="sortBy(1)">Location
+  <th onclick="sortBy(2)">Position
+  <th onclick="sortBy(3)">Name
+  <th onclick="sortBy(4)">Start
+  <th onclick="sortBy(5)">End
+  <th onclick="sortBy(6)">Notes ` +
+    it.data.map( rec =>
+    "<tr>" + rec.map( (col,colIdx) =>
+      `<td><span class='grid ${classes[colIdx]}'>${col}</span>`
+    ).join( " " )
+  ).join( "\n" ) + "</table>";
+}
+
+function sortBy( col ){
+  if(  sortOrder.includes( col )  ){
+    shuffleOrCycle( col );
+  } else if(  sortOrder.includes( -col )  ){
+    shuffleOrCycle( -col );
+  } else {
+    sortOrder.unshift( col );
+  }
+  updateSortOrder();
+}
+
+function shuffleOrCycle( col ){
+  if(  sortOrder[0] == col  ){
+    if(  col > 0  ) sortOrder[0] = -col;
+    else sortOrder.shift();
+  } else {
+    let idx = sortOrder.findIndex( x => x == col );
+    let tail = sortOrder.slice( idx );
+    let head = sortOrder.slice( 0, idx );
+    sortOrder = [ ...tail, ...head ];
+  }
+}
+
+function formatStations( it ){
+  let classes = [ "name", "start", "end" ];
+  it = JSON.parse( JSON.stringify( it ) );
+  let data = it.data;
+  data.forEach( (row,i) => row.push( i ) );
+}
+
+</script>
+</html>
+
