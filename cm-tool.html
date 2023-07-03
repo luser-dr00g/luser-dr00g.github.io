@@ -196,7 +196,9 @@
   <div class="tab-content">
     <textarea id="text" data-tab-content></textarea>
     <div id="grid" data-tab-content class="active">
-      <div> sort order: <i>{<span id="sort-order"></span>}</i> </div>
+      <div> sort order: <i>{<span id="sort-order"></span>}</i>
+	<button onclick="clearSortOrder()">clear sort order</button>
+      </div>
       <div id="grid-table"></div>
     </div>
     <div id="stations" data-tab-content></div>
@@ -430,7 +432,7 @@ function parse( input ){
   for(  i = startIndex + 1;  i < lines.length;  ++i  ){
     let line = lines[i];
     //console.log( i, line );
-    if(  line.match( /^[\s.]+$/ )  ){
+    if(  line.match( /^[\s.]*$/ )  ){
       //console.log( i, line, "dots");
       continue;
     }
@@ -672,11 +674,16 @@ function formatTable( it ){
   <th onclick="sortBy(4)">Start
   <th onclick="sortBy(5)">End
   <th onclick="sortBy(6)">Notes ` +
-    it.data.map( rec =>
+    toSorted( it.data, cmpColumns( sortOrder ) ).map( rec =>
     "<tr>" + rec.map( (col,colIdx) =>
       `<td><span class='grid ${classes[colIdx]}'>${col}</span>`
     ).join( " " )
   ).join( "\n" ) + "</table>";
+}
+
+function clearSortOrder(){
+  sortOrder = [];
+  output();
 }
 
 function sortBy( col ){
@@ -687,7 +694,7 @@ function sortBy( col ){
   } else {
     sortOrder.unshift( col );
   }
-  updateSortOrder();
+  output();//updateSortOrder();
 }
 
 function shuffleOrCycle( col ){
@@ -707,6 +714,57 @@ function formatStations( it ){
   it = JSON.parse( JSON.stringify( it ) );
   let data = it.data;
   data.forEach( (row,i) => row.push( i ) );
+}
+
+function sieve( arr, pred ){
+  return  [ arr.filter( pred ), arr.filter( x => ! pred( x ) ) ];
+}
+
+function isTime( s ){
+  return  /^\d/.test( s ) && /[ap]m$/.test( s );
+}
+
+function cmpString( a, b ){
+  return  a < b  ? -1  : a > b  ? 1  : 0;
+}
+  
+function cmpTime( a, b ){
+  return  milTime( a ) - milTime( b );
+}
+
+function milTime( x ){
+  let re = /(1?\d):?(\d\d)?([ap]m)/;
+  let matches = re.exec( x );
+  if(  matches === null  ) return  0;
+  let result = (Number(matches[1])*100)
+  result += Number(matches[2]??0);
+  if(  matches[3] == 'pm'  &&  matches[1] != '12'  )
+    result += 1200;
+  if(  matches[3] == 'am'  &&  matches[1] == '12'  )
+    result += 1200;
+  //console.log( [ matches, result ] );
+  return  result;
+}
+
+function cmpColumns( cols ){
+  function cmp(x, y){
+    let columns = Array.from( cols );
+    while(  columns.length > 0  ){
+      let a = x[ Math.abs(columns[0])-1 ], b = y[ Math.abs(columns[0])-1 ];
+      //console.log( columns[0], a, b );
+      let result = ( isTime( a ) ? cmpTime : cmpString )( a, b );
+      if(  result != 0  ) return  columns[0] > 0  ? result  : -result;
+      columns.shift();
+    }
+    return  0;
+  }
+  return  cmp;
+}
+
+function toSorted( arr, cmpFunc ){
+  let tmp = Array.from( arr );
+  tmp.sort( cmpFunc )
+  return  tmp;
 }
 
 </script>
