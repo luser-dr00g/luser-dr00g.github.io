@@ -715,7 +715,8 @@ function formatStations( it ){
   let data = it.data;
   data.forEach( (row,i) => row.push( i ) );
   data.sort( cmpColumns( [ 3, 4 ] ) );
-  let [ supervisor, notsuper ] = sift( data, /Supervisor/i );
+  let [ event, notevent ] = sift( data, /EVENT/i );
+  let [ supervisor, notsuper ] = sift( notevent, /Supervisor/i );
   let [ ferris, notferris ] = sift( notsuper, /Ferris/i );
   let [ roof, notroof ] = sift( notferris, /Roof/i );
   let [ slide, notslide ] = sift( notroof, /Slide/i );
@@ -739,7 +740,7 @@ function formatStations( it ){
   let [ parking, notparking ] = sift( notgrill, /Parking/i );
   let [ grounds, notgrounds ] = sift( notparking, /Grounds/i );
   let [ project, notproject ] = sift( notgrounds, /Project/i );
-  let [ event, other ] = sift( notproject, /EVENT/i );
+  let other = notproject;
   let stations = [ supervisor, leads, ferris, roof, 
 		   prep, distro, slide,
 		   overflow, art,
