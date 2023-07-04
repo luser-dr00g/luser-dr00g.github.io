@@ -714,6 +714,125 @@ function formatStations( it ){
   it = JSON.parse( JSON.stringify( it ) );
   let data = it.data;
   data.forEach( (row,i) => row.push( i ) );
+  data.sort( cmpColumns( [ 3, 4 ] ) );
+  let [ supervisor, notsuper ] = sift( data, /Supervisor/i );
+  let [ ferris, notferris ] = sift( notsuper, /Ferris/i );
+  let [ roof, notroof ] = sift( notferris, /Roof/i );
+  let [ slide, notslide ] = sift( notroof, /Slide/i );
+  let [ distro, notdistro ] = sift( notslide, /Distr/i );
+  let [ prep, notprep ] = sift( notdistro, /Prep/i );
+  let [ overflow, notoverflow ] = sift( notprep, /Overflow/i );
+  let [ art, notart ] = sift( notoverflow, /Art/i );
+  let [ cowboy, notcowboy ] = sift( notart, /Cowboy|Arch/i );
+  let [ beatniks, notbeatniks ] = sift( notcowboy, /Beatnik/i );
+  let [ pinball, notpinball ] = sift( notbeatniks, /Pinball/i );
+  let [ elephant, notelephant ] = sift( notpinball, /Elephant/i );
+  let [ copout, notcopout ] = sift( notelephant, /CopOut|Guard/i );
+  let [ house, nothouse ] = sift( notcopout, /House/i );
+  let [ mezz, notmezz ] = sift( nothouse, /Lizzard/i );
+  let [ front, notfront ] = sift( notmezz, /Front/i );
+  let [ floor, notfloor ] = sift( notfront, /Floor/i );
+  let [ gift, notgift ] = sift( notfloor, /Gift/i );
+  let [ leads, notleads ] = sift( notgift, /Lead/i );
+  let [ cabin, notcabin ] = sift( notleads, /Cabin/i );
+  let [ grill, notgrill ] = sift( notcabin, /Grill/i );
+  let [ parking, notparking ] = sift( notgrill, /Parking/i );
+  let [ grounds, notgrounds ] = sift( notparking, /Grounds/i );
+  let [ project, notproject ] = sift( notgrounds, /Project/i );
+  let [ event, other ] = sift( notproject, /EVENT/i );
+  let stations = [ supervisor, leads, ferris, roof, 
+		   prep, distro, slide,
+		   overflow, art,
+		   cowboy, beatniks, pinball, elephant,
+		   copout, house,
+		   mezz,
+		   front, floor, gift,
+		   cabin, grill,
+		   parking, grounds,
+		   project, event, other ];
+  if(  other.length > 0  ){
+    other[0] = Array.from( other[0] );
+    other[0][0] = "Other";
+  }
+  if(  distro.length > 0  ){
+    distro[0] = Array.from( distro[0] );
+    distro[0][0] = "F/B Distro";
+  }
+  if(  project.length > 0  ){
+    project[0] = Array.from( project[0] );
+    project[0][0] = "Project";
+  }
+  if(  leads.length > 0  ){
+    leads[0] = Array.from( leads[0] );
+    leads[0][0] = "F/B Team Lead";
+  }
+  if(  supervisor.length > 0  ){
+    supervisor[0] = Array.from( supervisor[0] );
+    supervisor[0][0] = "F/B Supervisor";
+  }
+
+  let output = `<div><button onclick="collapseAll()">collapse all</button>
+                     <button onclick="expandAll()">expand all</button>   </div>`;
+  stations.forEach( station => {
+    if(  station.length > 0  ){
+      let location = station[0][0];
+      let [ foh, notfoh ] = sift( station, /FOH/i );
+      let [ boh, notboh ] = sift( notfoh, /BOH/i );
+      let [ bar, support ] = sift( notboh, /BAR/i );
+      let positions = [ foh, boh, bar, support ];
+      let poses = transposeStationTableData(
+	positions.map( pos =>
+	  toSorted( pos.map( rec => [...rec.slice(2,5),rec[6]] ), cmpColumns( [2,3] ) )
+	)
+      );
+      console.log( poses );
+      output +=
+`<span><table class="station">
+       <tr><th colspan=12>${location}
+       <tr><th colspan=3>FOH
+           <th colspan=3>BOH
+           <th colspan=3>BAR
+           <th colspan=3>Support
+` + poses.map( row => "<tr>" +
+      mapTuple( row, 4, rec =>
+	rec.slice(0,3).map( (col,colIndex) =>
+          `<td><span class="station ${classes[colIndex]}"
+                     data-index="${rec[3]}"> ${col} </span>`
+	).join( " " )
+      ).join( " " )
+    ).join( " " ) +
+`</table></span>`;
+    }
+  });
+  return  output;
+}
+
+function mapTuple( arr, n, proc ){
+  let i, output = [];
+  for(  i = 0; i < arr.length; i += n  ){
+    let inp = arr.slice( i, i+n );
+    let out = proc( inp, Math.floor(i/n) );
+    output.push( out );
+  }
+  return  output;
+}
+  
+function transposeStationTableData( tab ){
+  let maxlen = tab.reduce( (acc,cur)=> acc>cur.length?acc:cur.length, 0 );
+  let filled = tab.map( pos=>{
+    let len = pos.length;
+    pos.length = maxlen;
+    pos.fill( ["","","",-1], len, maxlen );
+    return pos;
+  } );
+  return  filled.reduce( (acc,cur)=>{
+    cur.forEach( (row,i)=>acc[i]=acc[i].concat(row) );
+    return acc;
+  } );
+}
+
+function sift( data, re ){
+  return  sieve( data, rec => rec[0].match( re ) || rec[1].match( re ) );
 }
 
 function sieve( arr, pred ){
