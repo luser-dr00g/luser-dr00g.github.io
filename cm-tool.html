@@ -120,6 +120,9 @@
       border-collapse: collapse;
       margin: 0;
   }
+  .hidden td { display: none }
+  .hidden th.position { display: none }
+  table.station{ display: inline-table; }
 
 </style>
 <body>
@@ -511,6 +514,7 @@ function output(){
     grid.innerHTML = formatTable( global );
     updateSortOrder();
     stations.innerHTML = formatStations( global );
+    addStationCollapse();
   } else {
     pasteme.classList.add("less");
     share.href = "";
@@ -791,10 +795,10 @@ function formatStations( it ){
       output +=
 `<span><table class="station">
        <tr><th colspan=12>${location}
-       <tr><th colspan=3>FOH
-           <th colspan=3>BOH
-           <th colspan=3>BAR
-           <th colspan=3>Support
+       <tr><th class="position" colspan=3>FOH
+           <th class="position" colspan=3>BOH
+           <th class="position" colspan=3>BAR
+           <th class="position" colspan=3>Support
 ` + poses.map( row => "<tr>" +
       mapTuple( row, 4, rec =>
 	rec.slice(0,3).map( (col,colIndex) =>
@@ -807,6 +811,28 @@ function formatStations( it ){
     }
   });
   return  output;
+}
+
+function addStationCollapse(){
+  stations.querySelectorAll( "th" ).forEach( (header) => {
+    header.addEventListener( "click", e => {
+      let up = header.parentNode;
+      while(  up.nodeName != "TABLE"  ) up = up.parentNode;
+      up.classList.toggle( "hidden" );
+    });
+  });
+}
+
+function collapseAll(){
+  stations.querySelectorAll( "table" ).forEach( table => {
+    table.classList.add( "hidden" );
+  })
+}
+
+function expandAll(){
+  stations.querySelectorAll( "table" ).forEach( table => {
+    table.classList.remove( "hidden" );
+  })
 }
 
 function mapTuple( arr, n, proc ){
