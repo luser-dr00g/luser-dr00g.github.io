@@ -489,7 +489,7 @@ function findStationNotes( input ){
 
 function showStatus(){
   var status = document.querySelector("#status");
-  status.textContent = "";
+  status.textContent = status.textContent.split( "..." ).slice(-1)[0];
 }
 
 function appendStatus( msg ){
@@ -704,8 +704,9 @@ function shuffleOrCycle( col ){
   } else {
     let idx = sortOrder.findIndex( x => x == col );
     let tail = sortOrder.slice( idx );
+    let it = tail.shift();
     let head = sortOrder.slice( 0, idx );
-    sortOrder = [ ...tail, ...head ];
+    sortOrder = [ it, ...head, ...tail ];
   }
 }
 
@@ -786,7 +787,7 @@ function formatStations( it ){
 	  toSorted( pos.map( rec => [...rec.slice(2,5),rec[6]] ), cmpColumns( [2,3] ) )
 	)
       );
-      console.log( poses );
+      //console.log( poses );
       output +=
 `<span><table class="station">
        <tr><th colspan=12>${location}
