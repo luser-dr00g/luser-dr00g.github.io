@@ -120,8 +120,16 @@
       border-collapse: collapse;
       margin: 0;
   }
-  .hidden td { display: none }
-  .hidden th.position { display: none }
+  .location{ cursor: pointer }
+  .position{ cursor: pointer }
+  .options{ display: flex;
+	    justify-content: space-around;
+	    flex-direction: column;
+	    cursor: pointer; }
+  .option{ border: dashed 1px; }
+  .option.selected{ border: 2px solid; }
+  .hidden td{ display: none }
+  .hidden th.position{ display: none }
   table.station{ display: inline-table; }
 
 </style>
@@ -230,11 +238,14 @@ var tabContents = document.querySelectorAll("[data-tab-content]");
 var text = document.querySelector("#text");
 var grid = document.querySelector("#grid-table");
 var stations = document.querySelector("#stations");
+var sixteen = document.querySelector("#sixteen");
+var movesuper = document.querySelector("#movesuper");
+var movelead = document.querySelector("#movelead");
 
-var global;
-var undoStack = [];
-var redoStack = [];
-var sortOrder = [];
+var global;  // saved to/reloaded from localStorage
+var undoStack = [];  // save these to sessionStorage??
+var redoStack = [];  // "
+var sortOrder = [];  // <-- save this one definitely!
 main();
 
 function main(){
@@ -324,6 +335,18 @@ function editData( data ){
       prev: global  ? JSON.parse( JSON.stringify( global ) )  : global }
   );
   global = data;
+}
+
+function changeLocation( idx, loc ){
+  if(  global.data[ idx ][1] == 'Supervisor'  &&  ! movesuper.checked  ) return;
+  if(  global.data[ idx ][1] == 'Lead'  &&  ! movelead.checked  ) return;
+  undoStack.push(
+    { type: 'Location',
+      idx: idx,
+      next: loc,
+      prev: global.data[ idx ][0] }
+  );
+  global.data[ idx ][0] = loc;
 }
 
 function loadData(){
@@ -502,6 +525,7 @@ function appendStatus( msg ){
   }
   status.textContent = status.textContent + msg;
 }
+
   
 function output(){
   //console.log( global );
@@ -513,6 +537,7 @@ function output(){
     text.value = formatText( global );
     grid.innerHTML = formatTable( global );
     updateSortOrder();
+    addGridEditWidgets();
     stations.innerHTML = formatStations( global );
     addStationCollapse();
   } else {
@@ -528,6 +553,7 @@ function output(){
   toggle.click();
   updateUndoRedo();
 }
+
 
 function updateSortOrder(){
   let names = [ "location", "position", "name", "start", "end", "notes" ];
@@ -614,6 +640,9 @@ function undo1(){
       global = rec.prev;
     }
     break;
+  case 'Location':
+    global.data[ rec.idx ][0] = rec.prev;
+    break;
   }
 }
 
@@ -632,6 +661,9 @@ function redo1(){
   case 'CREATE':
   case 'EDIT-TEXT':
     global = rec.next;
+    break;
+  case 'Location':
+    global.data[ rec.idx ][0] = rec.next;
     break;
   }
 }
@@ -683,6 +715,80 @@ function formatTable( it ){
       `<td><span class='grid ${classes[colIdx]}'>${col}</span>`
     ).join( " " )
   ).join( "\n" ) + "</table>";
+}
+
+function addGridEditWidgets(){
+  addGridLocationWidgets();
+  addGridPositionWidgets();
+}
+  
+function addGridLocationWidgets(){
+  let locations = grid.querySelectorAll( ".location" );
+  locations.forEach( (location, idx) => {
+    let options = [ "F/B Baby Elephant", "F/B Beatniks", "F/B CopOut",
+		    "F/B Lizzard Lounge", "F/B Overflow", "F/B Roof",
+		    "F/B Distro", "F/B Cabin", "F/B Grill" ];
+    let supplement = [ "F/B", "F/B Team", "F/B Under", "Food & Beverage" ];
+    if(  options.findIndex( e => e == global.data[ idx ][0] ) == -1  ){
+      if(  supplement.findIndex( e => e == global.data[ idx ][0] ) >= 0  ){
+	options.push( global.data[ idx ][0] );
+      } else {
+        options = global.data[ idx ].slice(0, 1);
+      }
+    }
+    const clickHandler = (event) => {
+      let td = location.parentNode;
+      let d = document.createElement( "span" );
+      d.classList.add( "options" );
+      td.removeEventListener( "click", clickHandler );
+      td.removeChild( location );
+      td.appendChild( d );
+      options.forEach( (option) => {
+	let opt = document.createElement( "span" );
+	opt.appendChild( document.createTextNode( option ) );
+        opt.classList.add( "option" );
+	if(  option == global.data[ idx ][0]  ) opt.classList.add( "selected" );
+	opt.addEventListener( "click", e => {
+	  changeLocation( idx, option );
+	  //global.data[ idx ][0] = option;
+	  output();
+        });
+	d.appendChild( opt );
+      });
+    };
+    location.parentNode.addEventListener( "click", clickHandler );
+  });
+}
+
+function addGridPositionWidgets(){
+  let positions = grid.querySelectorAll( ".position" );
+  positions.forEach( (position,idx)=>{
+    let options = [ "FOH", "BOH", "BAR", "Support" ];
+    if(  options.findIndex( e => e == global.data[ idx ][1] ) == -1  )
+      options.push( global.data[ idx ][1] );
+    if(  global.data[ idx ][1] == "16" && sixteen.checked  )
+      options = [ "16" ];
+    const clickHandler = (event) => {
+      let td = position.parentNode;
+      let d = document.createElement( "span" );
+      d.classList.add( "option" );
+      td.removeEventListener( "click", clickHandler );
+      td.removeChild( position );
+      td.appendChild( d );
+      options.forEach( (option, o) => {
+	let opt = document.createElement( "span" );
+	opt.appendChild( document.createTextNode( option ) );
+	opt.classList.add( "option" );
+	if(  option == global.data[ idx ][1]  ) opt.classList.add( "selected" );
+	opt.addEventListener( "click", e => {
+	  global.data[ idx ][1] = option;
+	  output();
+	});
+	d.appendChild( opt );
+      });
+    };
+    position.parentNode.addEventListener( "click", clickHandler );
+  });
 }
 
 function clearSortOrder(){
