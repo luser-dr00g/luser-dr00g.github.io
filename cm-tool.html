@@ -349,6 +349,19 @@ function changeLocation( idx, loc ){
   global.data[ idx ][0] = loc;
 }
 
+function changePosition( idx, pos ){
+  if(  global.data[ idx ][1] == '16'  &&  sixteen.checked  ) return;
+  if(  global.data[ idx ][1] == 'Supervisor'  &&  ! movesuper.checked  ) return;
+  if(  global.data[ idx ][1] == 'Lead'  &&  ! movelead.checked  ) return;
+  undoStack.push(
+    { type: 'Position',
+      idx: idx,
+      next: pos,
+      prev: global.data[ idx ][1] }
+  );
+  global.data[ idx ][1] = pos;
+}
+
 function loadData(){
   var data = JSON.parse( localStorage.getItem( "global" ) )
   //console.log( data );
@@ -643,6 +656,9 @@ function undo1(){
   case 'Location':
     global.data[ rec.idx ][0] = rec.prev;
     break;
+  case 'Position':
+    global.data[ rec.idx ][1] = rec.prev;
+    break;
   }
 }
 
@@ -664,6 +680,9 @@ function redo1(){
     break;
   case 'Location':
     global.data[ rec.idx ][0] = rec.next;
+    break;
+  case 'Position':
+    global.data[ rec.idx ][1] = rec.next;
     break;
   }
 }
@@ -781,7 +800,8 @@ function addGridPositionWidgets(){
 	opt.classList.add( "option" );
 	if(  option == global.data[ idx ][1]  ) opt.classList.add( "selected" );
 	opt.addEventListener( "click", e => {
-	  global.data[ idx ][1] = option;
+	  //global.data[ idx ][1] = option;
+	  changePosition( idx, option );
 	  output();
 	});
 	d.appendChild( opt );
