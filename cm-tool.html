@@ -113,6 +113,8 @@
       border-bottom: groove;
       text-align: left;
   }
+  #star{ cursor: pointer }
+  #favs{ cursor: pointer }
   #grid th{
       cursor: pointer;
   }
@@ -215,8 +217,10 @@
   <div class="tab-content">
     <textarea id="text" data-tab-content></textarea>
     <div id="grid" data-tab-content class="active">
-      <div> sort order: <i>{<span id="sort-order"></span>}</i>
+      <div> sort order: <i><span id="sort-order"></span></i>
+	<span id="star" onclick="toggleFavoriteSort()"></span>
 	<button onclick="clearSortOrder()">clear sort order</button>
+	<span id="favs"></span>
       </div>
       <div id="grid-table"></div>
     </div>
@@ -254,6 +258,7 @@ var global = null;  // saved to/reloaded from localStorage
 var undoStack = [];  // save these to sessionStorage??
 var redoStack = [];  // "
 var sortOrder = [];  // <-- save this one definitely!
+var favoriteSorts = [];
 main();
 
 function main(){
@@ -269,17 +274,35 @@ function main(){
 function loadPreferences(){
   let prefs = JSON.parse( localStorage.getItem( "preferences" ) );
   if(  prefs  ){
-    darkmode.checked = prefs.darkmode;
-    sortOrder = prefs.sortOrder;
+    darkmode.checked = prefs.darkmode ?? false;
+    sortOrder = prefs.sortOrder ?? [];
+    favoriteSorts = prefs.favoriteSorts ?? [];
   }
 }
 
 function savePreferences(){
   let prefs = {
     darkmode: darkmode.checked,
-    sortOrder: sortOrder
+    sortOrder: sortOrder,
+    favoriteSorts: favoriteSorts
   };
   localStorage.setItem( "preferences", JSON.stringify( prefs ) );
+}
+
+function toggleFavoriteSort(){
+  let idx = favoriteSorts.findIndex( x =>
+    x.length == sortOrder.length &&
+      x.map( (e,i) => e == sortOrder[i] ).reduce( (x,y) => x & y ) );
+  //console.log( idx );
+  if(  idx != -1  ){
+    let head = favoriteSorts.slice( 0, idx );
+    let tail = favoriteSorts.slice( idx + 1 );
+    favoriteSorts = head.concat( tail );
+  } else {
+    favoriteSorts.push( sortOrder );
+  }
+  updateSortOrder();
+  savePreferences();
 }
   
 function fbfilter(){
@@ -641,15 +664,43 @@ function output(){
   if(  global == null  ) pasteme.focus();
 }
 
-
 function updateSortOrder(){
   let names = [ "location", "position", "name", "start", "end", "notes" ];
   let s = document.querySelector( "#sort-order" );
-  s.textContent = "";
+  s.textContent = "{";
   sortOrder.forEach( col =>
     s.textContent +=
       " " + (col < 0 ? "▼" : "") + names[ Math.abs(col) - 1 ] + " " );
+  s.textContent += "}";
+
+  let idx = favoriteSorts.findIndex( x =>
+    x.length == sortOrder.length &&
+      x.map( (e,i) => e == sortOrder[i] ).reduce( (x,y) => x & y ) );
+  if(  idx != -1  ){
+    document.querySelector( "#star" ).innerHTML = "★";
+  } else {
+    document.querySelector( "#star" ).innerHTML = "☆";
+  }
+
+  let favs = document.querySelector( "#favs" );
+  Array.from( favs.childNodes ).forEach( child => favs.removeChild( child ) );
+
+  favoriteSorts.forEach( (sort, idx) => {
+    let s = document.createElement( "span" );
+    s.textContent = "{";
+    sort.forEach( col =>
+      s.textContent +=
+        " " + (col < 0 ? "▼" : "") + names[ Math.abs(col) - 1 ] + " " );
+    s.textContent += "}";
+    s.addEventListener( "click", event => useFavorite( idx ) );
+    favs.appendChild( s );
+  });
+}
+
+function useFavorite( idx ){
+  sortOrder = favoriteSorts[ idx ];
   savePreferences();
+  output();
 }
   
 function updateUndoRedo(){
@@ -1028,6 +1079,7 @@ function moveTo( it, left, top, pos ){
 
 function clearSortOrder(){
   sortOrder = [];
+  savePreferences();
   output();
 }
 
@@ -1039,6 +1091,7 @@ function sortBy( col ){
   } else {
     sortOrder.unshift( col );
   }
+  savePreferences();
   output();
 }
 
