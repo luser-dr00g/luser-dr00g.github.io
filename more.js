@@ -23,7 +23,6 @@ class MorePanel extends HTMLElement {
     super();
     this.attachShadow( {mode:"open"} );
     this.shadowRoot.appendChild( morePanelTemplate.content.cloneNode(true) );
-    let content = this.shadowRoot.querySelector(".content");
     this.showStuff();
   }
 
