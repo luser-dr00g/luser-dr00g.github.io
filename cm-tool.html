@@ -66,7 +66,6 @@
   }
   .panel-name{
       font-size: x-small;
-      //color: var(--heading);
   }
   .vert{
       display: inline-flex;
@@ -259,11 +258,28 @@ main();
 
 function main(){
   badge.href = window.location.pathname;
+  loadPreferences();
   initDarkmode();
   paste.addEventListener( "paste", fetchAndOutput );
   text.addEventListener( "change", reparseText );
   initTabHandlers();
   loadAndOutput();
+}
+
+function loadPreferences(){
+  let prefs = JSON.parse( localStorage.getItem( "preferences" ) );
+  if(  prefs  ){
+    darkmode.checked = prefs.darkmode;
+    sortOrder = prefs.sortOrder;
+  }
+}
+
+function savePreferences(){
+  let prefs = {
+    darkmode: darkmode.checked,
+    sortOrder: sortOrder
+  };
+  localStorage.setItem( "preferences", JSON.stringify( prefs ) );
 }
   
 function fbfilter(){
@@ -309,6 +325,7 @@ function initDarkmode(){
   function click(){
     if(  darkmode.checked  ) document.body.classList.add("darkmode");
     else document.body.classList.remove("darkmode");
+    savePreferences();
   }
   darkmode.addEventListener( "click", click );
   click();
@@ -632,6 +649,7 @@ function updateSortOrder(){
   sortOrder.forEach( col =>
     s.textContent +=
       " " + (col < 0 ? "▼" : "") + names[ Math.abs(col) - 1 ] + " " );
+  savePreferences();
 }
   
 function updateUndoRedo(){
