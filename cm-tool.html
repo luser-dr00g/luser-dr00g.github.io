@@ -341,6 +341,7 @@ function editData( data ){
 }
 
 function changeLocation( idx, loc ){
+  if(  global.data[ idx ][0] == loc  ) return;
   if(  global.data[ idx ][1] == 'Supervisor'  &&  ! movesuper.checked  ) return;
   if(  global.data[ idx ][1] == 'Lead'  &&  ! movelead.checked  ) return;
   undoStack.push(
@@ -353,6 +354,7 @@ function changeLocation( idx, loc ){
 }
 
 function changePosition( idx, pos ){
+  if(  global.data[ idx ][1] == pos  ) return;
   if(  global.data[ idx ][1] == '16'  &&  sixteen.checked  ) return;
   if(  global.data[ idx ][1] == 'Supervisor'  &&  ! movesuper.checked  ) return;
   if(  global.data[ idx ][1] == 'Lead'  &&  ! movelead.checked  ) return;
@@ -365,7 +367,15 @@ function changePosition( idx, pos ){
   global.data[ idx ][1] = pos;
 }
 
+function changeLocationAndPosition( idx, src ){
+  let loc = global.data[ src ][0];
+  let pos = global.data[ src ][1];
+  changeLocation( idx, loc );
+  changePosition( idx, pos );
+}
+
 function changeTime( idx, col, value ){
+  if(  global.data[ idx ][ 3 + col ] == value  ) return;
   undoStack.push(
     { type: 'Time',
       idx: idx,
@@ -377,6 +387,7 @@ function changeTime( idx, col, value ){
 }
 
 function changeNotes( idx, note ){
+  if(  global.data[ idx ][5] == note  ) return;
   undoStack.push(
     { type: 'Note',
       idx: idx,
@@ -387,6 +398,7 @@ function changeNotes( idx, note ){
 }
 
 function changeStationNote( location, value ){
+  if(  global.stationNotes[ location ] == value  ) return;
   undoStack.push(
     { type: 'Station-note',
       location: location,
@@ -586,6 +598,7 @@ function output(){
     grid.innerHTML = formatTable( global );
     updateSortOrder();
     addGridEditWidgets();
+    addGridDraggables();
     stations.innerHTML = formatStations( global );
     addStationCollapse();
     addStationEditWidgets();
@@ -711,8 +724,8 @@ function undo1(){
 function undoN( n ){
   for( var i = 0; i < n; i++ )
     undo1();
-  output();
   saveData();
+  output();
 }
 
 function redo1(){
@@ -745,8 +758,8 @@ function redo1(){
 function redoN( n ){
   for( var i = 0; i < n; i++ )
     redo1();
-  output();
   saveData();
+  output();
 }
 
 function dateToEnglish( date ){
@@ -777,6 +790,8 @@ function formatText( it ){
 
 function formatTable( it ){
   let classes = [ "location", "position", "name", "start", "end", "notes" ];
+  let data = JSON.parse( JSON.stringify( it.data ) );
+  data.forEach( (row, i) => row.push( i ) );
   return  `<table>
   <tr><th onclick="sortBy(1)">Location
   <th onclick="sortBy(2)">Position
@@ -784,9 +799,9 @@ function formatTable( it ){
   <th onclick="sortBy(4)">Start
   <th onclick="sortBy(5)">End
   <th onclick="sortBy(6)">Notes ` +
-    toSorted( it.data, cmpColumns( sortOrder ) ).map( rec =>
-    "<tr>" + rec.map( (col,colIdx) =>
-      `<td><span class='grid ${classes[colIdx]}'>${col}</span>`
+    toSorted( data, cmpColumns( sortOrder ) ).map( rec =>
+    "<tr>" + rec.slice(0,6).map( (col,colIdx) =>
+      `<td><span class='grid ${classes[colIdx]}' data-index="${rec[6]}">${col}</span>`
     ).join( " " )
   ).join( "\n" ) + "</table>";
 }
@@ -827,6 +842,7 @@ function addGridLocationWidgets(){
 	opt.addEventListener( "click", e => {
 	  changeLocation( idx, option );
 	  //global.data[ idx ][0] = option;
+	  saveData();
 	  output();
         });
 	d.appendChild( opt );
@@ -856,6 +872,7 @@ function addGridPositionWidgets(){
 	if(  option == global.data[ idx ][1]  ) opt.classList.add( "selected" );
 	opt.addEventListener( "click", e => {
 	  changePosition( idx, option );
+	  saveData();
 	  output();
 	});
 	d.appendChild( opt );
@@ -883,6 +900,7 @@ function addGridTimeWidgets(){
 	  target.textContent = edit.value;
 	  changeTime( idx, col, edit.value );
 	  edit.parentNode.replaceChild( target, edit );
+	  saveData();
 	  output();
 	};
 	edit.addEventListener( "change", done );
@@ -908,6 +926,7 @@ function addGridNotesWidgets(){
 	target.textContent = edit.value;
 	changeNotes( idx, edit.value );
 	edit.parentNode.replaceChild( target, edit );
+	saveData();
 	output();
       };
       edit.addEventListener( "change", done );
@@ -916,6 +935,67 @@ function addGridNotesWidgets(){
     };
     note.parentNode.addEventListener( "click", clickHandler );
   });
+}
+
+function addGridDraggables(){
+  let names = document.querySelectorAll( ".grid.name" );
+  names.forEach( (name, idx) => {
+    name.setAttribute( "draggable", "true" );
+
+    name.addEventListener( "pointerdown", e=>{
+      name.classList.add( "dragging" );
+      e.preventDefault();
+    });
+
+    name.parentNode.addEventListener( "pointerup", e=>{
+      let it = document.querySelector( ".dragging" );
+      let over = document.elementFromPoint( e.x, e.y );
+      if(  over.nodeName == "TABLE"  ) return;
+      if(  over.nodeName == "TD"  ) over = over.childNodes[0];
+      if(  it == null  ) return;
+      if(  it == over  ){
+        it.classList.remove( "dragging" );
+	moveTo( it, "", "", "" );
+	return;
+      }
+      drop( over, it );
+      it.classList.remove( "dragging" );
+      moveTo( it, "", "", "" );
+      e.preventDefault();
+    });
+  });
+
+  grid.addEventListener( "pointercancel", e=>{
+    let it = document.querySelector( ".dragging" );
+    if(  it == null  ) return;
+    it.classList.remove( "dragging" );
+    moveTo( it, "", "", "" );
+  });
+  
+  grid.addEventListener( "pointermove", e=>{
+    let it = document.querySelector( ".dragging" );
+    if(  it == null  ) return;
+    let posx = ( e.pageX + 10 //- it.offsetWidth / 2
+	       ).toString() + "px",
+	posy = ( e.pageY + 10 //- it.offsetHeight / 2
+	       ).toString() + "px";
+    moveTo( it, posx, posy, "absolute" );
+  });
+}
+
+function drop( target, src ){
+  let names = Array.from( document.querySelectorAll(".name") );
+  let dest = target.dataset.index; //names.findIndex( e => e == target );
+  let srcIdx = src.dataset.index; //names.findIndex( e => e == src );
+  changeLocationAndPosition( srcIdx, dest );
+  saveData();
+  output();
+}
+
+function moveTo( it, left, top, pos ){
+  it.style.left = left;
+  it.style.top = top;
+  it.style.position = pos;
 }
 
 function clearSortOrder(){
@@ -1084,6 +1164,7 @@ function addStationEditWidgets(){
 	target.textContent = edit.value;
 	changeStationNote( location, edit.value );
 	edit.parentNode.replaceChild( target, edit );
+	saveData();
 	output();
       };
       edit.addEventListener( "change", done );
