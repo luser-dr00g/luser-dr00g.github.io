@@ -72,6 +72,9 @@
       display: inline-flex;
       flex-flow: column wrap;
   }
+  .undo{
+      display: inline-flex;
+  }
   .shortcut{
              cursor: pointer;
 	     text-decoration: underline;
@@ -242,7 +245,7 @@ var sixteen = document.querySelector("#sixteen");
 var movesuper = document.querySelector("#movesuper");
 var movelead = document.querySelector("#movelead");
 
-var global;  // saved to/reloaded from localStorage
+var global = null;  // saved to/reloaded from localStorage
 var undoStack = [];  // save these to sessionStorage??
 var redoStack = [];  // "
 var sortOrder = [];  // <-- save this one definitely!
@@ -322,7 +325,7 @@ function createData( data ){
   undoStack.push(
     { type: 'Create',
       next: JSON.parse( JSON.stringify( data ) ),
-      prev: global  ? JSON.parse( JSON.stringify( global ) )  : global }
+      prev: global === null  ? null  : JSON.parse( JSON.stringify( global ) ) }
   );
   global = data;
   //console.log( global );
@@ -332,7 +335,7 @@ function editData( data ){
   undoStack.push(
     { type: 'Edit-Text',
       next: JSON.parse( JSON.stringify( data ) ),
-      prev: global  ? JSON.parse( JSON.stringify( global ) )  : global }
+      prev: global  ? JSON.parse( JSON.stringify( global ) )  : undefined }
   );
   global = data;
 }
@@ -574,7 +577,7 @@ function appendStatus( msg ){
   
 function output(){
   //console.log( global );
-  if(  global  ){
+  if(  global !== null  ){
     pasteme.classList.remove("less");
     share.href = window.location.pathname +
       "?q=" + encodeURIComponent( JSON.stringify( global ) );
@@ -676,15 +679,14 @@ function updateUndoRedo(){
 function undo1(){
   appendStatus( "...undo!" );
   let rec = undoStack.pop();
+  //console.log( rec, global );
   redoStack.push( rec );
   switch(  rec.type  ){
-  case 'CREATE':
-  case 'EDIT-TEXT':
-    if(  undoStack.length > 0  ){
-      global = undoStack[ undoStack.length - 1 ].next;
-    } else {
-      global = rec.prev;
-    }
+  case 'Create':
+  case 'Edit-Text':
+    //console.log( "wtf", rec.prev, global );
+    global = rec.prev;
+    //console.log( "wtf", rec.prev, global );
     break;
   case 'Location':
     global.data[ rec.idx ][0] = rec.prev;
@@ -702,6 +704,7 @@ function undo1(){
     global.stationNotes[ rec.location ] = rec.prev;
     break;
   }
+  //console.log( global );
 }
 
 function undoN( n ){
@@ -716,8 +719,8 @@ function redo1(){
   let rec = redoStack.pop();
   undoStack.push( rec );
   switch(  rec.type  ){
-  case 'CREATE':
-  case 'EDIT-TEXT':
+  case 'Create':
+  case 'Edit-Text':
     global = rec.next;
     break;
   case 'Location':
