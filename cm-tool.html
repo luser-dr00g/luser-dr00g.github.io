@@ -320,7 +320,7 @@ function initTabHandlers(){
 
 function createData( data ){
   undoStack.push(
-    { type: 'CREATE',
+    { type: 'Create',
       next: JSON.parse( JSON.stringify( data ) ),
       prev: global  ? JSON.parse( JSON.stringify( global ) )  : global }
   );
@@ -330,7 +330,7 @@ function createData( data ){
 
 function editData( data ){
   undoStack.push(
-    { type: 'EDIT-TEXT',
+    { type: 'Edit-Text',
       next: JSON.parse( JSON.stringify( data ) ),
       prev: global  ? JSON.parse( JSON.stringify( global ) )  : global }
   );
@@ -381,6 +381,16 @@ function changeNotes( idx, note ){
       prev: global.data[ idx ][5] }
   );
   global.data[ idx ][5] = note;
+}
+
+function changeStationNote( location, value ){
+  undoStack.push(
+    { type: 'Station-note',
+      location: location,
+      next: value,
+      prev: global.stationNotes[ location ] }
+  );
+  global.stationNotes[ location ] = value;
 }
 
 function loadData(){
@@ -575,6 +585,7 @@ function output(){
     addGridEditWidgets();
     stations.innerHTML = formatStations( global );
     addStationCollapse();
+    addStationEditWidgets();
   } else {
     pasteme.classList.add("less");
     share.href = "";
@@ -687,6 +698,9 @@ function undo1(){
   case 'Note':
     global.data[ rec.idx ][5] = rec.prev;
     break;
+  case 'Station-note':
+    global.stationNotes[ rec.location ] = rec.prev;
+    break;
   }
 }
 
@@ -717,6 +731,9 @@ function redo1(){
     break;
   case 'Note':
     global.data[ rec.idx ][5] = rec.next;
+    break;
+  case 'Station-note':
+    global.stationNotes[ rec.location ] = rec.next;
     break;
   }
 }
@@ -1006,7 +1023,8 @@ function formatStations( it ){
       //console.log( poses );
       output +=
 `<span><table class="station">
-       <tr><th colspan=12>${location}
+       <tr><th colspan=3>${location}<td colspan=9>
+           <span class="notes">${global.stationNotes[ location ] ?? "  "}</span>
        <tr><th class="position" colspan=3>FOH
            <th class="position" colspan=3>BOH
            <th class="position" colspan=3>BAR
@@ -1045,6 +1063,32 @@ function expandAll(){
   stations.querySelectorAll( "table" ).forEach( table => {
     table.classList.remove( "hidden" );
   })
+}
+
+function addStationEditWidgets(){
+  stations.querySelectorAll( ".notes" ).forEach( note => {
+    let td = note.parentNode;
+    const clickHandler = (event) => {
+      let location = note.parentNode.parentNode.firstChild.textContent;
+      let edit = document.createElement( "input" );
+      edit.value = global.stationNotes[ location ] ?? "";
+      let target = note;
+      target.parentNode.replaceChild( edit, target );
+      note.removeEventListener( "click", clickHandler );
+      td.removeEventListener( "click", clickHandler );
+      const done = (event) => {
+	target.textContent = edit.value;
+	changeStationNote( location, edit.value );
+	edit.parentNode.replaceChild( target, edit );
+	output();
+      };
+      edit.addEventListener( "change", done );
+      edit.addEventListener( "blur", done );
+      edit.focus();
+    };
+    note.addEventListener( "click", clickHandler );
+    td.addEventListener( "click", clickHandler );
+  });
 }
 
 function mapTuple( arr, n, proc ){
