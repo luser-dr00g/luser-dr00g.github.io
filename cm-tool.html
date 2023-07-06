@@ -125,6 +125,12 @@
   }
   .location{ cursor: pointer }
   .position{ cursor: pointer }
+  .name{ cursor: move }
+  td:has(.name){ touch-action: none }
+  .name.dragging{ opacity: .5 }
+  .start{ cursor: pointer }
+  .end{ cursor: pointer }
+  .notes{ cursor: pointer }
   .options{ display: flex;
 	    justify-content: space-around;
 	    flex-direction: column;
@@ -602,6 +608,7 @@ function output(){
     stations.innerHTML = formatStations( global );
     addStationCollapse();
     addStationEditWidgets();
+    addStationDraggables();
   } else {
     pasteme.classList.add("less");
     share.href = "";
@@ -984,9 +991,12 @@ function addGridDraggables(){
 }
 
 function drop( target, src ){
+  console.log( target, src );
   let names = Array.from( document.querySelectorAll(".name") );
   let dest = target.dataset.index; //names.findIndex( e => e == target );
   let srcIdx = src.dataset.index; //names.findIndex( e => e == src );
+  if(  srcIdx == -1  ) return;
+  if(  dest == -1  ) return;
   changeLocationAndPosition( srcIdx, dest );
   saveData();
   output();
@@ -1099,6 +1109,7 @@ function formatStations( it ){
       let [ boh, notboh ] = sift( notfoh, /BOH/i );
       let [ bar, support ] = sift( notboh, /BAR/i );
       let positions = [ foh, boh, bar, support ];
+      let posNames = [ "FOH", "BOH", "BAR", "Support" ];
       let poses = transposeStationTableData(
 	positions.map( pos =>
 	  toSorted( pos.map( rec => [...rec.slice(2,5),rec[6]] ), cmpColumns( [2,3] ) )
@@ -1114,9 +1125,11 @@ function formatStations( it ){
            <th class="position" colspan=3>BAR
            <th class="position" colspan=3>Support
 ` + poses.map( row => "<tr>" +
-      mapTuple( row, 4, rec =>
-	rec.slice(0,3).map( (col,colIndex) =>
+      mapTuple( row, 4, (rec, recIndex) =>
+	rec.slice(0,3).map( (col, colIndex) =>
           `<td><span class="station ${classes[colIndex]}"
+                     data-location="${location}"
+                     data-position="${posNames[recIndex]}"
                      data-index="${rec[3]}"> ${col} </span>`
 	).join( " " )
       ).join( " " )
@@ -1173,6 +1186,69 @@ function addStationEditWidgets(){
     };
     note.addEventListener( "click", clickHandler );
     td.addEventListener( "click", clickHandler );
+  });
+}
+
+function addStationDraggables(){
+  let names = document.querySelectorAll( ".station.name" );
+  names.forEach( (name) => {
+    name.setAttribute( "draggable", "true" );
+    
+    name.addEventListener( "pointerdown", e=>{
+      name.classList.add( "dragging" );
+      e.preventDefault();
+    });
+  });
+
+  const pointerup = e => {
+    e.preventDefault();
+    let it = document.querySelector( ".dragging" );
+    if(  it == null  ) return;
+    let over = document.elementFromPoint( e.x, e.y );
+    if(  over.nodeName == "TD"  ) over = over.childNodes[0];
+    if(  over.nodeName == "TH"  ){
+      if(  over.textContent.match( /FOH|BOH|BAR|Support/ )  )
+        changePosition( it.dataset.index, over.textContent );
+      else
+	changeLocation( it.dataset.index, over.textContent );
+      it.classList.remove( "dragging" );
+      moveTo( it, "", "", "" );
+      output();
+      return;
+    }
+    if(  it == over  ){
+      it.classList.remove( "dragging" );
+      moveTo( it, "", "", "" );
+      return;
+    }
+    if(  over.dataset.index != -1  ){
+      drop( over, it );
+    } else {
+      changeLocation( it.dataset.index, over.dataset.location );
+      changePosition( it.dataset.index, over.dataset.position );
+    }
+    it.classList.remove( "dragging" );
+    moveTo( it, "", "", "" );
+    output();
+  };
+  let headers = stations.querySelectorAll( "th" );
+  headers.forEach( header => header.addEventListener( "pointerup", pointerup ) );
+  let cells = stations.querySelectorAll( "td" );
+  cells.forEach( cell => cell.addEventListener( "pointerup", pointerup ) );
+
+  stations.addEventListener( "pointercancel", e => {
+    let it = document.querySelector( ".dragging" );
+    if(  it == null  ) return;
+    it.classList.remove( "dragging" );
+    moveTo( it, "", "", "" );
+  });
+  
+  stations.addEventListener( "pointermove", e => {
+    let it = document.querySelector( ".dragging" );
+    if(  it == null  ) return;
+    let posx = ( e.pageX + 10 ).toString() + "px",
+        posy = ( e.pageY + 10 ).toString() + "px";
+    moveTo( it, posx, posy, "absolute" );
   });
 }
 
