@@ -362,6 +362,27 @@ function changePosition( idx, pos ){
   global.data[ idx ][1] = pos;
 }
 
+function changeTime( idx, col, value ){
+  undoStack.push(
+    { type: 'Time',
+      idx: idx,
+      col: col,
+      next: value,
+      prev: global.data[ idx ][ 3 + col ] }
+  );
+  global.data[ idx ][ 3 + col ] = value;
+}
+
+function changeNotes( idx, note ){
+  undoStack.push(
+    { type: 'Note',
+      idx: idx,
+      next: note,
+      prev: global.data[ idx ][5] }
+  );
+  global.data[ idx ][5] = note;
+}
+
 function loadData(){
   var data = JSON.parse( localStorage.getItem( "global" ) )
   //console.log( data );
@@ -504,7 +525,8 @@ function findDate( input ){
 }
 
 function dayOfWeek( mon, day, year ){
-  let days = [ "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ];
+  let days = [ "Saturday", "Sunday",
+	       "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ];
   let months = "Jan1Feb4Mar4Apr0May2Jun5Jul0Aug3Sep6Oct1Nov4Dec6";
   RegExp( mon ).exec( months );
   let m = parseInt( RegExp.rightContext.charAt(0) );
@@ -659,6 +681,12 @@ function undo1(){
   case 'Position':
     global.data[ rec.idx ][1] = rec.prev;
     break;
+  case 'Time':
+    global.data[ rec.idx ][ 3 + rec.col ] = rec.prev;
+    break;
+  case 'Note':
+    global.data[ rec.idx ][5] = rec.prev;
+    break;
   }
 }
 
@@ -683,6 +711,12 @@ function redo1(){
     break;
   case 'Position':
     global.data[ rec.idx ][1] = rec.next;
+    break;
+  case 'Time':
+    global.data[ rec.idx ][ 3 + rec.col ] = rec.next;
+    break;
+  case 'Note':
+    global.data[ rec.idx ][5] = rec.next;
     break;
   }
 }
@@ -739,6 +773,8 @@ function formatTable( it ){
 function addGridEditWidgets(){
   addGridLocationWidgets();
   addGridPositionWidgets();
+  addGridTimeWidgets();
+  addGridNotesWidgets();
 }
   
 function addGridLocationWidgets(){
@@ -757,7 +793,7 @@ function addGridLocationWidgets(){
     }
     const clickHandler = (event) => {
       let td = location.parentNode;
-      let d = document.createElement( "span" );
+      let d = document.createElement( "div" );
       d.classList.add( "options" );
       td.removeEventListener( "click", clickHandler );
       td.removeChild( location );
@@ -785,11 +821,9 @@ function addGridPositionWidgets(){
     let options = [ "FOH", "BOH", "BAR", "Support" ];
     if(  options.findIndex( e => e == global.data[ idx ][1] ) == -1  )
       options.push( global.data[ idx ][1] );
-    if(  global.data[ idx ][1] == "16" && sixteen.checked  )
-      options = [ "16" ];
     const clickHandler = (event) => {
       let td = position.parentNode;
-      let d = document.createElement( "span" );
+      let d = document.createElement( "div" );
       d.classList.add( "option" );
       td.removeEventListener( "click", clickHandler );
       td.removeChild( position );
@@ -800,7 +834,6 @@ function addGridPositionWidgets(){
 	opt.classList.add( "option" );
 	if(  option == global.data[ idx ][1]  ) opt.classList.add( "selected" );
 	opt.addEventListener( "click", e => {
-	  //global.data[ idx ][1] = option;
 	  changePosition( idx, option );
 	  output();
 	});
@@ -808,6 +841,59 @@ function addGridPositionWidgets(){
       });
     };
     position.parentNode.addEventListener( "click", clickHandler );
+  });
+}
+
+function addGridTimeWidgets(){
+  let starts = grid.querySelectorAll( ".start" );
+  let ends = grid.querySelectorAll( ".end" );
+  [ starts, ends ].forEach( (column, col) => {
+    column.forEach( (time, idx) => {
+      const clickHandler = (event) => {
+	let td = time.parentNode;
+	let edit = document.createElement( "input" );
+	edit.setAttribute( "maxlength", "8" );
+	edit.value = global.data[ idx ][ 3 + col ];
+	edit.setSelectionRange( 0, /(.*)[ap]m/.exec( edit.value )[1].length );
+	let target = time.childNodes[0];
+	target.parentNode.replaceChild( edit, target );
+	time.parentNode.removeEventListener( "click", clickHandler );
+	const done = (event) => {
+	  target.textContent = edit.value;
+	  changeTime( idx, col, edit.value );
+	  edit.parentNode.replaceChild( target, edit );
+	  output();
+	};
+	edit.addEventListener( "change", done );
+	edit.addEventListener( "blur", done );
+	edit.focus();
+      };
+      time.parentNode.addEventListener( "click", clickHandler );
+    });
+  });
+}
+
+function addGridNotesWidgets(){
+  let notes = grid.querySelectorAll( ".notes" );
+  notes.forEach( (note, idx) => {
+    const clickHandler = (event) => {
+      let edit = document.createElement( "input" );
+      edit.value = global.data[ idx ][5];
+      let target = note.childNodes[0];
+      note.replaceChild( edit, target );
+      note.parentNode.removeEventListener( "click", clickHandler );
+      const done = (event) => {
+	if(  edit.value == ""  ) edit.value = "\t";
+	target.textContent = edit.value;
+	changeNotes( idx, edit.value );
+	edit.parentNode.replaceChild( target, edit );
+	output();
+      };
+      edit.addEventListener( "change", done );
+      edit.addEventListener( "blur", done );
+      edit.focus();
+    };
+    note.parentNode.addEventListener( "click", clickHandler );
   });
 }
 
@@ -824,7 +910,7 @@ function sortBy( col ){
   } else {
     sortOrder.unshift( col );
   }
-  output();//updateSortOrder();
+  output();
 }
 
 function shuffleOrCycle( col ){
