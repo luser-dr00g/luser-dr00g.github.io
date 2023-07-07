@@ -903,7 +903,8 @@ function addGridEditWidgets(){
   
 function addGridLocationWidgets(){
   let locations = grid.querySelectorAll( ".location" );
-  locations.forEach( (location, idx) => {
+  locations.forEach( (location) => {
+    let idx = location.dataset.index;
     let options = [ "F/B Baby Elephant", "F/B Beatniks", "F/B CopOut",
 		    "F/B Lizzard Lounge", "F/B Overflow", "F/B Roof",
 		    "F/B Distro", "F/B Cabin", "F/B Grill" ];
@@ -942,7 +943,8 @@ function addGridLocationWidgets(){
 
 function addGridPositionWidgets(){
   let positions = grid.querySelectorAll( ".position" );
-  positions.forEach( (position,idx)=>{
+  positions.forEach( (position)=>{
+    let idx = position.dataset.index;
     let options = [ "FOH", "BOH", "BAR", "Support" ];
     if(  options.findIndex( e => e == global.data[ idx ][1] ) == -1  )
       options.push( global.data[ idx ][1] );
@@ -974,7 +976,8 @@ function addGridTimeWidgets(){
   let starts = grid.querySelectorAll( ".start" );
   let ends = grid.querySelectorAll( ".end" );
   [ starts, ends ].forEach( (column, col) => {
-    column.forEach( (time, idx) => {
+    column.forEach( (time) => {
+      let idx = time.dataset.index;
       const clickHandler = (event) => {
 	let td = time.parentNode;
 	let edit = document.createElement( "input" );
@@ -1002,7 +1005,8 @@ function addGridTimeWidgets(){
 
 function addGridNotesWidgets(){
   let notes = grid.querySelectorAll( ".notes" );
-  notes.forEach( (note, idx) => {
+  notes.forEach( (note) => {
+    let idx = note.dataset.index;
     const clickHandler = (event) => {
       let edit = document.createElement( "input" );
       edit.value = global.data[ idx ][5];
