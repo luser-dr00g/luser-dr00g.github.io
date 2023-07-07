@@ -136,7 +136,9 @@
 	    justify-content: space-around;
 	    flex-direction: column;
 	    cursor: pointer; }
-  .option{ border: dashed 1px; }
+  .option{ border: dashed 1px;
+           padding: 3px;
+           cursor: pointer; }
   .option.selected{ border: 2px solid; }
   .hidden td{ display: none }
   .hidden th.position{ display: none }
@@ -647,8 +649,8 @@ function output(){
     addGridDraggables();
     let hiddenStations = Array.from( stations.querySelectorAll( ".hidden" ) ).map(
       s => {
-        console.log( s );
-        return  s.firstChild.firstChild.firstChild.textContent;
+        //console.log( s.querySelector( "th" ) );
+        return  s.querySelector( "th" ).textContent;
       }
     );
     stations.innerHTML = formatStations( global );
@@ -656,8 +658,7 @@ function output(){
     addStationEditWidgets();
     addStationDraggables();
     stations.querySelectorAll( "table" ).forEach( table => {
-      if(  hiddenStations.findIndex( x =>
-         x == table.firstChild.firstChild.firstChild.textContent ) != -1  )
+      if(  hiddenStations.includes( table.querySelector( "th" ).textContent )  )
         table.classList.add( "hidden" );
     });
   } else {
@@ -1295,6 +1296,7 @@ function addStationDraggables(){
 	changeLocation( it.dataset.index, over.textContent );
       it.classList.remove( "dragging" );
       moveTo( it, "", "", "" );
+      saveData();
       output();
       return;
     }
@@ -1311,6 +1313,7 @@ function addStationDraggables(){
     }
     it.classList.remove( "dragging" );
     moveTo( it, "", "", "" );
+    saveData();
     output();
   };
   let headers = stations.querySelectorAll( "th" );
