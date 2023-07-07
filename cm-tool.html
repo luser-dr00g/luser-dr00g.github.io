@@ -645,10 +645,21 @@ function output(){
     updateSortOrder();
     addGridEditWidgets();
     addGridDraggables();
+    let hiddenStations = Array.from( stations.querySelectorAll( ".hidden" ) ).map(
+      s => {
+        console.log( s );
+        return  s.firstChild.firstChild.firstChild.textContent;
+      }
+    );
     stations.innerHTML = formatStations( global );
     addStationCollapse();
     addStationEditWidgets();
     addStationDraggables();
+    stations.querySelectorAll( "table" ).forEach( table => {
+      if(  hiddenStations.findIndex( x =>
+         x == table.firstChild.firstChild.firstChild.textContent ) != -1  )
+        table.classList.add( "hidden" );
+    });
   } else {
     pasteme.classList.add("less");
     share.href = "";
@@ -1188,9 +1199,9 @@ function formatStations( it ){
       );
       //console.log( poses );
       output +=
-`<span><table class="station">
-       <tr><th colspan=3>${location}<td colspan=9>
-           <span class="notes">${global.stationNotes[ location ] ?? "  "}</span>
+`<span><table class="station"><tr><th
+  colspan=3>${location}<td colspan=9><span
+  class="notes">${global.stationNotes[ location ] ?? "  "}</span>
        <tr><th class="position" colspan=3>FOH
            <th class="position" colspan=3>BOH
            <th class="position" colspan=3>BAR
