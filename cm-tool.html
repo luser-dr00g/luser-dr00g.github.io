@@ -1018,6 +1018,7 @@ function addGridTimeWidgets(){
 	let td = time.parentNode;
 	let edit = document.createElement( "input" );
 	edit.setAttribute( "maxlength", "8" );
+	edit.setAttribute( "size", "8" );
 	edit.value = global.data[ idx ][ 3 + col ];
 	edit.setSelectionRange( 0, /(.*)[ap]m/.exec( edit.value )[1].length );
 	let target = time.childNodes[0];
@@ -1309,6 +1310,35 @@ function addStationEditWidgets(){
     };
     note.addEventListener( "click", clickHandler );
     td.addEventListener( "click", clickHandler );
+  });
+  let starts = stations.querySelectorAll( ".start" );
+  let ends = stations.querySelectorAll( ".end" );
+  [ starts, ends ].forEach( (column, col) => {
+    column.forEach( (time) => {
+      let idx = time.dataset.index;
+      let td = time.parentNode;
+      const clickHandler = (event) => {
+	let edit = document.createElement( "input" );
+	edit.setAttribute( "maxlength", "8" );
+	edit.setAttribute( "size", "8" );
+	edit.value = global.data[ idx ][ 3 + col ];
+	edit.setSelectionRange( 0, /(.*)[ap]m/.exec( edit.value )[1].length );
+	let target = time.childNodes[0];
+	time.replaceChild( edit, target );
+	td.removeEventListener( "click", clickHandler );
+	const done = (event) => {
+	  target.textContent = edit.value;
+	  changeTime( idx, col, edit.value );
+	  edit.parentNode.replaceChild( target, edit );
+	  saveData();
+	  output();
+	};
+	edit.addEventListener( "change", done );
+	edit.addEventListener( "blur", done );
+	edit.focus();
+      };
+      td.addEventListener( "click", clickHandler );
+    });
   });
 }
 
