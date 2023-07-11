@@ -228,11 +228,46 @@
     </div>
     <div id="stations" data-tab-content></div>
     <div id="help" data-tab-content>
+      
+      <p><em>Important!</em> If you have loaded your personnel data via a "Share" link,
+	it is a good idea to reload the page using the "<a id="badge">CM Deployment Tool</a>" link
+	so that any edits you make will not be discarded if/when
+	your browser chooses to refresh the page.
+	If the URL for the page has the "?q=..." string on it, refreshing the page will
+	reload that exact data. Whereas without this query string from the Share link,
+	a refresh should pick up right where you left off
+	by reloading the saved state from the browser's local storage. 
+
       <p><em>Select All</em> and <em>Copy</em> all the text from the
-	Whentowork.com &gt; Everybody &gt; Day webpage. Then <em>Paste</em>
-	into the "-Paste here-" box under (more) controls or into the Text view.
+	Whentowork.com &gt; Everybody &gt; Day webpage
+	(if necessary, choose the "Graphical" view).
+	Then <em>Paste</em> into the "-Paste here-" box under
+	(more) controls or into the Text view.
+
+      <p>Sorting works by building up a list of columns in highest to
+	lowest priority which is used to control the sort.
+	To build this list, tap the column names in reverse order of importance.
+	Clicking a column name pulls it to the front of the priority list.
+	If the name is already at the front,
+	clicking cycles through the states: "on", "reverse", "off".
+
+      <p>You can click the star to save a sorting order as a favorite,
+	and then click on it again to apply that sort.
+	
+      <p>In the Grid view, you can edit all the fields except names.
+	Whereas in the Text view you can, in fact, edit names too.
+	You can even add new people in the Text view,
+	just type a new line that starts with at least one space, then the name,
+	then a start time, dash, end time. There should be no spaces in the times
+	but minutes are allowed, eg. "<tt> &nbsp; &nbsp;John Doe 4pm-7:30pm</tt>"
+
+      <p>Unlike the previous version of this tool, the Text view is not re-sorted
+	according to the sort order selected in the grid view. The order in the
+	Text view matches the Grid view only if the sort order is cleared.
+
       <p>To report bugs or for other assistance, contact
 	<a href="mailto:MRyan@citymuseum.org">MRyan@citymuseum.org</a>
+
     </div>
   </div>
 </div>
@@ -265,6 +300,7 @@ main();
 
 function main(){
   badge.href = window.location.pathname;
+  document.querySelector("#help").querySelector("#badge").href = window.location.pathname;
   loadPreferences();
   initDarkmode();
   paste.addEventListener( "paste", fetchAndOutput );
@@ -1422,4 +1458,3 @@ function toSorted( arr, cmpFunc ){
 
 </script>
 </html>
-
