@@ -236,7 +236,7 @@
 	If the URL for the page has the "?q=..." string on it, refreshing the page will
 	reload that exact data. Whereas without this query string from the Share link,
 	a refresh should pick up right where you left off
-	by reloading the saved state from the browser's local storage. 
+	by reloading the saved state from the browser&apos;s local storage. 
 
       <p><em>Select All</em> and <em>Copy</em> all the text from the
 	Whentowork.com &gt; Everybody &gt; Day webpage
@@ -1461,6 +1461,8 @@ function milTime( x ){
     result += 1200;
   if(  matches[3] == 'am'  &&  matches[1] == '12'  )
     result += 1200;
+  if(  matches[3] == 'am'  &&  matches[1] < 5  )
+    result += 2400;
   //console.log( [ matches, result ] );
   return  result;
 }
