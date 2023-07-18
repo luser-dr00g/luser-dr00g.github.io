@@ -585,7 +585,7 @@ function parse( input ){
   //console.log( startIndex );
   let name = "", start = "", end = "", notes = "";
   function perPerson( line ){
-    let re = /(\D*)(1?\d:?\d?\d?[ap]m) *[--] *(1?\d:?\d?\d?[ap]m)(.*)/;
+    let re = /(\D*)(1?\d:?\d?\d? ?[ap]m) *[--] *(1?\d:?\d?\d? ?[ap]m)(.*)/;
     let matches = re.exec( line );
     if(  matches  ){
       name = matches[1]; if(  name == ""  ) name = "\t";
@@ -605,7 +605,7 @@ function parse( input ){
       //console.log( i, line, "dots");
       continue;
     }
-    if(  line.match( /1?\d:?\d?\d?[ap]m *- *1?\d:?\d?\d?[ap]m/ )  ){
+    if(  line.match( /1?\d:?\d?\d? ?[ap]m *- *1?\d:?\d?\d? ?[ap]m/ )  ){
       //console.log( i, line, "person" );
       perPerson( line );
     } else {
@@ -625,7 +625,7 @@ function invertIfChecked( b ){
 }
 
 function findDate( input ){
-  let re = /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d\d?), (\d\d\d\d)/g;
+  let re = /(Jan|Feb|Mar|Apr|May|Jun|Jul|July|Aug|Sep|Oct|Nov|Dec) (\d\d?), (\d\d\d\d)/g;
   let matches = [ ...input.matchAll( re ) ];
   return  matches.map( match =>
     match[3] + "-" + match[1] + "-" + match[2] + "-" +
@@ -636,7 +636,7 @@ function findDate( input ){
 function dayOfWeek( mon, day, year ){
   let days = [ "Saturday", "Sunday",
 	       "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ];
-  let months = "Jan1Feb4Mar4Apr0May2Jun5Jul0Aug3Sep6Oct1Nov4Dec6";
+  let months = "Jan1Feb4Mar4Apr0May2Jun5Jul0Aug3Sep6Oct1Nov4Dec6July0";
   RegExp( mon ).exec( months );
   let m = parseInt( RegExp.rightContext.charAt(0) );
   let t = Math.floor( (parseInt(year) % 100) / 4 ) + parseInt(day) + m;
@@ -887,7 +887,7 @@ function redoN( n ){
 }
 
 function dateToEnglish( date ){
-  let re = /(....)-(...)-(..?)-(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/;
+  let re = /(....)-(...+)-(..?)-(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/;
   let matches = re.exec( date );
   let mon = matches[2], day = matches[3], year = matches[1], dow = matches[4];
   return  dow + " - " + mon + " " + day + ", " + year;
