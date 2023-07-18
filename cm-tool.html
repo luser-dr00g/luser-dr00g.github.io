@@ -1182,7 +1182,7 @@ function formatStations( it ){
   let [ elephant, notelephant ] = sift( notpinball, /Elephant/i );
   let [ copout, notcopout ] = sift( notelephant, /CopOut|Guard/i );
   let [ house, nothouse ] = sift( notcopout, /House/i );
-  let [ mezz, notmezz ] = sift( nothouse, /Lizzard/i );
+  let [ mezz, notmezz ] = sift( nothouse, /Lizz?ard/i );
   let [ front, notfront ] = sift( notmezz, /Front/i );
   let [ floor, notfloor ] = sift( notfront, /Floor/i );
   let [ gift, notgift ] = sift( notfloor, /Gift/i );
