@@ -1452,7 +1452,7 @@ function cmpTime( a, b ){
 }
 
 function milTime( x ){
-  let re = /(1?\d):?(\d\d)?([ap]m)/;
+  let re = /(1?\d):?(\d\d)? ?([ap]m)/;
   let matches = re.exec( x );
   if(  matches === null  ) return  0;
   let result = (Number(matches[1])*100)
