@@ -124,13 +124,17 @@
       border-collapse: collapse;
       margin: 0;
   }
-  .location{ cursor: pointer }
-  .position{ cursor: pointer }
-  .name{ cursor: move }
+  .location{ cursor: pointer;
+	   white-space: nowrap }
+  .position{ cursor: pointer;
+	   white-space: nowrap }
+  .name{ cursor: move;
+       white-space: nowrap }
   td:has(.name){ touch-action: none }
   .name.dragging{ opacity: .5 }
-  .start{ cursor: pointer }
-  .end{ cursor: pointer }
+  .start{ cursor: pointer;
+	white-space: nowrap }
+  .end{ cursor: pointer; }
   .notes{ cursor: pointer }
   .options{ display: flex;
 	    justify-content: space-around;
