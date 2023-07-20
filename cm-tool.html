@@ -191,10 +191,10 @@
       </div>
       <div class="more row">
         <span class="shortcut" onclick="nofilter()">everyone</span>
-        <span class="shortcut" onclick="fbfilter()">F/B</span>
+        <span class="shortcut" onclick="fbfilter()">Food</span>
         <span class="shortcut" onclick="floorfilter()">Floor</span>
 	<span class="shortcut" onclick="facfilter()">Facilities</span>
-        <span class="shortcut" onclick="nonfbfilter()">non-F/B</span>
+        <span class="shortcut" onclick="nonfbfilter()">non-Food</span>
 	<span class="shortcut" onclick="plusPinball()">&pm;Pinball</span>
       </div>
     </more-panel>
@@ -349,7 +349,7 @@ function toggleFavoriteSort(){
 }
   
 function fbfilter(){
-  filter.value = "F/B|Food|BAR";
+  filter.value = "Food|BAR";
   invertFilter.checked = false;
 }
   
@@ -946,10 +946,11 @@ function addGridLocationWidgets(){
   let locations = grid.querySelectorAll( ".location" );
   locations.forEach( (location) => {
     let idx = location.dataset.index;
-    let options = [ "F/B Baby Elephant", "F/B Beatniks", "F/B CopOut",
-		    "F/B Lizzard Lounge", "F/B Overflow", "F/B Roof",
-		    "F/B Distro", "F/B Cabin", "F/B Grill" ];
-    let supplement = [ "F/B", "F/B Team", "F/B Under", "Food & Beverage" ];
+    let options = [ "Food Service Baby Elephant", "Food Service Beatniks",
+		    "Food Service CopOut", "Food Service Lizzard Lounge", 
+		    "Food Service Overflow", "Food Service Roof",
+		    "Food Service Distro", "Food Service Cabin", "Food Service Grill" ];
+    let supplement = [ "Food Service", "Food Service Team", "Food Service Under", "Food & Beverage" ];
     if(  options.findIndex( e => e == global.data[ idx ][0] ) == -1  ){
       if(  supplement.findIndex( e => e == global.data[ idx ][0] ) >= 0  ){
 	options.push( global.data[ idx ][0] );
@@ -1214,7 +1215,7 @@ function formatStations( it ){
   }
   if(  distro.length > 0  ){
     distro[0] = Array.from( distro[0] );
-    distro[0][0] = "F/B Distro";
+    distro[0][0] = "Food Service Distro";
   }
   if(  project.length > 0  ){
     project[0] = Array.from( project[0] );
@@ -1222,11 +1223,11 @@ function formatStations( it ){
   }
   if(  leads.length > 0  ){
     leads[0] = Array.from( leads[0] );
-    leads[0][0] = "F/B Team Lead";
+    leads[0][0] = "Food Service Team Lead";
   }
   if(  supervisor.length > 0  ){
     supervisor[0] = Array.from( supervisor[0] );
-    supervisor[0][0] = "F/B Supervisor";
+    supervisor[0][0] = "Food Service Supervisor";
   }
 
   let output = `<div><button onclick="collapseAll()">collapse all</button>
