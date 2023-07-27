@@ -1002,7 +1002,7 @@ function addGridLocationWidgets(){
       td.appendChild( d );
       options.forEach( (option) => {
 	let opt = document.createElement( "span" );
-	opt.appendChild( document.createTextNode( option ) );
+	opt.appendChild( document.createTextNode( abbreviateFoodService( option ) ) );
         opt.classList.add( "option" );
 	if(  option == global.data[ idx ][0]  ) opt.classList.add( "selected" );
 	opt.addEventListener( "click", e => {
