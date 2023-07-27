@@ -125,17 +125,16 @@
       margin: 0;
   }
   .location{ cursor: pointer;
-	   white-space: nowrap }
-  .position{ cursor: pointer;
-	   white-space: nowrap }
-  .name{ cursor: move;
-       white-space: nowrap }
+          white-space: nowrap }
+  .position{ cursor: pointer
+          white-space: nowrap }
+  .name{ cursor: move }
   td:has(.name){ touch-action: none }
   .name.dragging{ opacity: .5 }
-  .start{ cursor: pointer;
-	white-space: nowrap }
-  .end{ cursor: pointer;
-      white-space: nowrap }
+  .start{ cursor: pointer
+          white-space: nowrap }
+  .end{ cursor: pointer
+          white-space: nowrap }
   .notes{ cursor: pointer }
   .options{ display: flex;
 	    justify-content: space-around;
@@ -156,7 +155,12 @@
   <div class="panel">
     <more-panel id="style" class="more style"><span class="panel-name">style</span>
       <div class="more">
-        <input type=checkbox id="darkmode"><label for="darkmode">Dark</label>
+        <input type=checkbox id="darkmode">
+          <label for="darkmode">Dark</label>
+	<input type=checkbox id="abbreviatefoodservice">
+          <label for="abbreviatefoodservice">Abbreviate Food Service</label>
+	<input type=checkbox id="suppressmiddlenames">
+          <label for="suppressmiddlenames">Suppress Middle Names</label>
       </div>
     </more-panel>
     <more-panel id="undo" class="undo">
@@ -282,6 +286,8 @@
   
 var badge = document.querySelector("#badge");
 var darkmode = document.querySelector("#darkmode");
+var abbreviatefoodservice = document.querySelector("#abbreviatefoodservice");
+var suppressmiddlenames = document.querySelector("#suppressmiddlenames");
 var paste = document.querySelector("#pasteme");
 var filter = document.querySelector("#filter");
 var invertFilter = document.querySelector("#invertFilter");
@@ -307,7 +313,7 @@ function main(){
   badge.href = window.location.pathname;
   document.querySelector("#help").querySelector("#badge").href = window.location.pathname;
   loadPreferences();
-  initDarkmode();
+  initStyles();
   paste.addEventListener( "paste", fetchAndOutput );
   text.addEventListener( "change", reparseText );
   initTabHandlers();
@@ -342,7 +348,7 @@ function toggleFavoriteSort(){
     let tail = favoriteSorts.slice( idx + 1 );
     favoriteSorts = head.concat( tail );
   } else {
-    favoriteSorts.push( sortOrder );
+    favoriteSorts.push( Array.from( sortOrder ) );
   }
   updateSortOrder();
   savePreferences();
@@ -385,6 +391,34 @@ function plusPinball(){
       filter.value = filter.value + "|Pinball";
     }
   }
+}
+
+function abbreviateFoodService( str ){
+  if(  abbreviatefoodservice.checked  )
+    return  str.replace( /Food Service/, "FS" );
+  else
+    return  str;
+}
+
+function suppressMiddleNames( str ){
+  if(  suppressmiddlenames.checked  ){
+    let names = str.replace( /\s*$/, "" ).split( " " );
+    console.log( str, names );
+    let first = names.shift();
+    if(  names.length != 0  ){
+      let last = names.pop();
+      return  [ first, last ].join( " " );
+    } else
+      return  first;
+  } else
+    return  str;
+}
+
+function initStyles(){
+  initDarkmode();
+  function click(){ output(); }
+  abbreviatefoodservice.addEventListener( "click", click );
+  suppressmiddlenames.addEventListener( "click", click );
 }
 
 function initDarkmode(){
@@ -689,17 +723,14 @@ function output(){
     addGridEditWidgets();
     addGridDraggables();
     let hiddenStations = Array.from( stations.querySelectorAll( ".hidden" ) ).map(
-      s => {
-        //console.log( s.querySelector( "th" ) );
-        return  s.querySelector( "th" ).textContent;
-      }
+      s => s.dataset.location
     );
     stations.innerHTML = formatStations( global );
     addStationCollapse();
     addStationEditWidgets();
     addStationDraggables();
     stations.querySelectorAll( "table" ).forEach( table => {
-      if(  hiddenStations.includes( table.querySelector( "th" ).textContent )  )
+      if(  hiddenStations.includes( table.dataset.location )  )
         table.classList.add( "hidden" );
     });
   } else {
@@ -751,7 +782,7 @@ function updateSortOrder(){
 }
 
 function useFavorite( idx ){
-  sortOrder = favoriteSorts[ idx ];
+  sortOrder = Array.from( favoriteSorts[ idx ] );
   savePreferences();
   output();
 }
@@ -930,7 +961,9 @@ function formatTable( it ){
   <th onclick="sortBy(6)">Notes ` +
     toSorted( data, cmpColumns( sortOrder ) ).map( rec =>
     "<tr>" + rec.slice(0,6).map( (col,colIdx) =>
-      `<td><span class='grid ${classes[colIdx]}' data-index="${rec[6]}">${col}</span>`
+      `<td><span class='grid ${classes[colIdx]}' data-index="${rec[6]}">
+         ${colIdx?colIdx==2?suppressMiddleNames(col):col:abbreviateFoodService(col)}
+       </span>`
     ).join( " " )
   ).join( "\n" ) + "</table>";
 }
@@ -947,10 +980,11 @@ function addGridLocationWidgets(){
   locations.forEach( (location) => {
     let idx = location.dataset.index;
     let options = [ "Food Service Baby Elephant", "Food Service Beatniks",
-		    "Food Service CopOut", "Food Service Lizzard Lounge", 
+		    "Food Service CopOut", "Food Service Lizard Lounge",
 		    "Food Service Overflow", "Food Service Roof",
 		    "Food Service Distro", "Food Service Cabin", "Food Service Grill" ];
-    let supplement = [ "Food Service", "Food Service Team", "Food Service Under", "Food & Beverage" ];
+    let supplement = [ "Food Service", "Food Service Team",
+		       "Food Service Under", "Food & Beverage" ];
     if(  options.findIndex( e => e == global.data[ idx ][0] ) == -1  ){
       if(  supplement.findIndex( e => e == global.data[ idx ][0] ) >= 0  ){
 	options.push( global.data[ idx ][0] );
@@ -1174,8 +1208,7 @@ function formatStations( it ){
   data.forEach( (row,i) => row.push( i ) );
   data.sort( cmpColumns( [ 3, 4 ] ) );
   let [ event, notevent ] = sift( data, /EVENT/i );
-  let [ supervisor, notsuper ] = sift( notevent, /Supervisor/i );
-  let [ ferris, notferris ] = sift( notsuper, /Ferris/i );
+  let [ ferris, notferris ] = sift( notevent, /Ferris/i );
   let [ roof, notroof ] = sift( notferris, /Roof/i );
   let [ slide, notslide ] = sift( notroof, /Slide/i );
   let [ distro, notdistro ] = sift( notslide, /Distr/i );
@@ -1187,18 +1220,19 @@ function formatStations( it ){
   let [ pinball, notpinball ] = sift( notbeatniks, /Pinball/i );
   let [ elephant, notelephant ] = sift( notpinball, /Elephant/i );
   let [ copout, notcopout ] = sift( notelephant, /CopOut|Guard/i );
-  let [ house, nothouse ] = sift( notcopout, /House/i );
+  let [ house, nothouse ] = sift( notcopout, /House|Facilities/i );
   let [ mezz, notmezz ] = sift( nothouse, /Lizz?ard/i );
   let [ front, notfront ] = sift( notmezz, /Front/i );
-  let [ floor, notfloor ] = sift( notfront, /Floor/i );
-  let [ gift, notgift ] = sift( notfloor, /Gift/i );
+  let [ floor, notfloor ] = sift( notfront, /Floor|Operations/i );
+  let [ gift, notgift ] = sift( notfloor, /Gift|Retail/i );
   let [ leads, notleads ] = sift( notgift, /Lead/i );
   let [ cabin, notcabin ] = sift( notleads, /Cabin/i );
   let [ grill, notgrill ] = sift( notcabin, /Grill/i );
   let [ parking, notparking ] = sift( notgrill, /Parking/i );
   let [ grounds, notgrounds ] = sift( notparking, /Grounds/i );
   let [ project, notproject ] = sift( notgrounds, /Project/i );
-  let other = notproject;
+  let [ supervisor, notsuper ] = sift( notproject, /Supervisor/i );
+  let other = notsuper;
   let stations = [ supervisor, leads, ferris, roof, 
 		   prep, distro, slide,
 		   overflow, art,
@@ -1247,8 +1281,8 @@ function formatStations( it ){
       );
       //console.log( poses );
       output +=
-`<span><table class="station"><tr><th
-  colspan=3>${location}<td colspan=9><span
+`<span><table class="station" data-location="${location}"><tr><th
+  colspan=3>${abbreviateFoodService(location)}<td colspan=9><span
   class="notes">${global.stationNotes[ location ] ?? "  "}</span>
        <tr><th class="position" colspan=3>FOH
            <th class="position" colspan=3>BOH
@@ -1260,7 +1294,7 @@ function formatStations( it ){
           `<td><span class="station ${classes[colIndex]}"
                      data-location="${location}"
                      data-position="${posNames[recIndex]}"
-                     data-index="${rec[3]}"> ${col} </span>`
+                     data-index="${rec[3]}"> ${colIndex?col:suppressMiddleNames(col)} </span>`
 	).join( " " )
       ).join( " " )
     ).join( " " ) +
