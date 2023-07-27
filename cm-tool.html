@@ -126,14 +126,14 @@
   }
   .location{ cursor: pointer;
           white-space: nowrap }
-  .position{ cursor: pointer
+  .position{ cursor: pointer;
           white-space: nowrap }
   .name{ cursor: move }
   td:has(.name){ touch-action: none }
   .name.dragging{ opacity: .5 }
-  .start{ cursor: pointer
+  .start{ cursor: pointer;
           white-space: nowrap }
-  .end{ cursor: pointer
+  .end{ cursor: pointer;
           white-space: nowrap }
   .notes{ cursor: pointer }
   .options{ display: flex;
@@ -403,7 +403,7 @@ function abbreviateFoodService( str ){
 function suppressMiddleNames( str ){
   if(  suppressmiddlenames.checked  ){
     let names = str.replace( /\s*$/, "" ).split( " " );
-    console.log( str, names );
+    //console.log( str, names );
     let first = names.shift();
     if(  names.length != 0  ){
       let last = names.pop();
