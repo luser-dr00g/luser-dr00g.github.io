@@ -154,7 +154,7 @@
 <div class="everything">
   <div class="badge panel-name"><a id="badge">CM Deployment Tool</a></div>
   <div class="panel">
-    <more-panel id="style" class="more style"><span class="panel-name">style</span>
+    <more-panel id="style" class="style"><span class="panel-name">style</span>
       <div class="more">
         <input type=checkbox id="darkmode">
           <label for="darkmode">Dark</label>
@@ -325,6 +325,8 @@ function loadPreferences(){
   let prefs = JSON.parse( localStorage.getItem( "preferences" ) );
   if(  prefs  ){
     darkmode.checked = prefs.darkmode ?? false;
+    abbreviatefoodservice.checked = prefs.abbreviatefoodservice ?? false;
+    suppressmiddlenames.checked = prefs.suppressmiddlenames ?? false;
     sortOrder = prefs.sortOrder ?? [];
     favoriteSorts = prefs.favoriteSorts ?? [];
   }
@@ -333,6 +335,8 @@ function loadPreferences(){
 function savePreferences(){
   let prefs = {
     darkmode: darkmode.checked,
+    abbreviatefoodservice: abbreviatefoodservice.checked,
+    suppressmiddlenames: suppressmiddlenames.checked,
     sortOrder: sortOrder,
     favoriteSorts: favoriteSorts
   };
@@ -417,7 +421,10 @@ function suppressMiddleNames( str ){
 
 function initStyles(){
   initDarkmode();
-  function click(){ output(); }
+  function click(){
+    savePreferences();
+    output();
+  }
   abbreviatefoodservice.addEventListener( "click", click );
   suppressmiddlenames.addEventListener( "click", click );
 }
