@@ -31,9 +31,6 @@
   button{
       margin: 0 1ex;
   }
-  input[type="text"]{
-      width: inherit;
-  }
   input[type="checkbox"]{
       width: 20px;
       height: 10px;
@@ -1101,12 +1098,13 @@ function addGridNotesWidgets(){
     let idx = note.dataset.index;
     const clickHandler = (event) => {
       let edit = document.createElement( "input" );
+      edit.setAttribute( "type", "text" );
       edit.value = global.data[ idx ][5];
-      edit.size = 30;
       let target = note.childNodes[0];
       note.replaceChild( edit, target );
       note.parentNode.removeEventListener( "click", clickHandler );
       const done = (event) => {
+        if(  ! edit.parentNode  ) return;
 	if(  edit.value == ""  ) edit.value = "\t";
 	target.textContent = edit.value;
 	changeNotes( idx, edit.value );
@@ -1349,6 +1347,8 @@ function addStationEditWidgets(){
       let table = td.parentNode.parentNode.parentNode;
       let location = table.dataset.location;
       let edit = document.createElement( "input" );
+      edit.setAttribute( "type", "text" );
+      edit.style.width = td.offsetWidth + "px";
       edit.value = global.stationNotes[ location ] ?? "";
       let target = note;
       target.parentNode.replaceChild( edit, target );
