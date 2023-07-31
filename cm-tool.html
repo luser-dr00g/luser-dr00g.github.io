@@ -686,7 +686,7 @@ function findDate( input ){
 function dayOfWeek( mon, day, year ){
   let days = [ "Saturday", "Sunday",
 	       "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ];
-  let months = "Jan1Feb4Mar4Apr0May2Jun5Jul0Aug3Sep6Oct1Nov4Dec6July0";
+  let months = "Jan1Feb4Mar4Apr0May2Jun5Jul0Aug3Sep6Oct1Nov4Dec6January1February4March4April0June5July0August3September6October1November4December6";
   RegExp( mon ).exec( months );
   let m = parseInt( RegExp.rightContext.charAt(0) );
   let t = Math.floor( (parseInt(year) % 100) / 4 ) + parseInt(day) + m;
@@ -934,7 +934,8 @@ function redoN( n ){
 }
 
 function dateToEnglish( date ){
-  let re = /(....)-(...+)-(..?)-(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/;
+  console.log( date );
+  let re = /(....)-(...+)-(..?)-(undefined|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/;
   let matches = re.exec( date );
   let mon = matches[2], day = matches[3], year = matches[1], dow = matches[4];
   return  dow + " - " + mon + " " + day + ", " + year;
