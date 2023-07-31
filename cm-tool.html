@@ -267,10 +267,12 @@
 	
       <p>In the Grid view, you can edit all the fields except names.
 	Whereas in the Text view you can, in fact, edit names too.
-	You can even add new people in the Text view,
-	just type a new line that starts with at least one space, then the name,
-	then a start time, dash, end time. There should be no spaces in the times
-	but minutes are allowed, eg. "<tt> &nbsp; &nbsp;John Doe 4pm-7:30pm</tt>"
+	You can even add new people in the Text view.
+	After a Location line which is flush-left,
+	just type a new line that starts with at least one space or a TAB character,
+	then the name, then a start time, dash, end time.
+	There should be no spaces in the times but minutes are allowed,
+	eg. "<tt> &nbsp; &nbsp;John Doe 4pm-7:30pm</tt>"
 
       <p>Unlike the previous version of this tool, the Text view is not re-sorted
 	according to the sort order selected in the grid view. The order in the
@@ -673,7 +675,7 @@ function invertIfChecked( b ){
 }
 
 function findDate( input ){
-  let re = /(Jan|Feb|Mar|Apr|May|Jun|Jul|July|Aug|Sep|Oct|Nov|Dec) (\d\d?), (\d\d\d\d)/g;
+  let re = /(Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|September|Oct|October|November|Dec|December) (\d\d?), (\d\d\d\d)/g;
   let matches = [ ...input.matchAll( re ) ];
   return  matches.map( match =>
     match[3] + "-" + match[1] + "-" + match[2] + "-" +
@@ -1096,6 +1098,7 @@ function addGridNotesWidgets(){
     const clickHandler = (event) => {
       let edit = document.createElement( "input" );
       edit.value = global.data[ idx ][5];
+      edit.size = 30;
       let target = note.childNodes[0];
       note.replaceChild( edit, target );
       note.parentNode.removeEventListener( "click", clickHandler );
@@ -1340,7 +1343,6 @@ function addStationEditWidgets(){
     let td = note.parentNode;
     const clickHandler = (event) => {
       let table = td.parentNode.parentNode.parentNode;
-      console.log( table );
       let location = table.dataset.location;
       let edit = document.createElement( "input" );
       edit.value = global.stationNotes[ location ] ?? "";
@@ -1349,6 +1351,7 @@ function addStationEditWidgets(){
       note.removeEventListener( "click", clickHandler );
       td.removeEventListener( "click", clickHandler );
       const done = (event) => {
+        if(  ! edit.parentNode  ) return;
 	target.textContent = edit.value;
 	changeStationNote( location, edit.value );
 	edit.parentNode.replaceChild( target, edit );
