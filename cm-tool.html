@@ -136,7 +136,8 @@
           white-space: nowrap }
   .end{ cursor: pointer;
           white-space: nowrap }
-  .notes{ cursor: pointer }
+  .notes{ cursor: pointer;
+          white-space: nowrap }
   .options{ display: flex;
 	    justify-content: space-around;
 	    flex-direction: column;
@@ -1338,7 +1339,9 @@ function addStationEditWidgets(){
   stations.querySelectorAll( ".notes" ).forEach( note => {
     let td = note.parentNode;
     const clickHandler = (event) => {
-      let location = note.parentNode.parentNode.firstChild.textContent;
+      let table = td.parentNode.parentNode.parentNode;
+      console.log( table );
+      let location = table.dataset.location;
       let edit = document.createElement( "input" );
       edit.value = global.stationNotes[ location ] ?? "";
       let target = note;
