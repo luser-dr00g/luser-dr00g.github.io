@@ -638,10 +638,13 @@ function parse( input ){
     let re = /(\D*)(1?\d:?\d?\d? ?[ap]m) *[--] *(1?\d:?\d?\d? ?[ap]m)(.*)/;
     let matches = re.exec( line );
     if(  matches  ){
-      name = matches[1]; if(  name == ""  ) name = "\t";
+      name = matches[1];
+      name = name.replace( /^\s*/, "\t" );
+      if(  name == ""  ) name = "\t";
       start = matches[2];
       end = matches[3];
-      notes = matches[4]; if(  notes == ""  ) notes = "   ";
+      notes = matches[4];
+      if(  notes == ""  ) notes = "   ";
       if(  invertIfChecked( cat.match( RegExp( filter.value ) ) )  ){
 	output.push( [ loc, pos, name, start, end, notes ] );
       }
