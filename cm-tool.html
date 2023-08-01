@@ -642,7 +642,11 @@ function parse( input ){
       name = name.replace( /^\s*/, "\t" );
       if(  name == ""  ) name = "\t";
       start = matches[2];
+      start = start.replace( / /g, "" );
+      start = start.replace( /:00/, "" );
       end = matches[3];
+      end = end.replace( / /g, "" );
+      end = end.replace( /:00/, "" );
       notes = matches[4];
       if(  notes == ""  ) notes = "   ";
       if(  invertIfChecked( cat.match( RegExp( filter.value ) ) )  ){
