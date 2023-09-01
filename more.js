@@ -1,9 +1,10 @@
-const morePanelTemplate = document.createElement("template");
+const morePanelTemplate = document.createElement( "template" );
 morePanelTemplate.innerHTML = `
   <style>
     .content{
       border: 1px solid;
       border-radius: 5px;
+      padding: .25em;
     }
     #toggle{
       font-size: small;
@@ -47,14 +48,22 @@ class MorePanel extends HTMLElement {
 
   showMore() {
     this.shadowRoot.querySelector("#toggle").textContent="(less)";
-    this.querySelectorAll(".less").forEach( el => el.style.display = 'none' );
-    this.querySelectorAll(".more").forEach( el => el.style.display = '' );
+    this.querySelectorAll(".less").forEach( el => {
+      el.style.display = 'none';
+    } );
+    this.querySelectorAll(".more").forEach( el => {
+      el.style.display = '';
+    } );
   }
 
   showLess() {
     this.shadowRoot.querySelector("#toggle").textContent="(more)";
-    this.querySelectorAll(".more").forEach( el => el.style.display = 'none' );
-    this.querySelectorAll(".less").forEach( el => el.style.display = '' );
+    this.querySelectorAll(".more").forEach( el => {
+      el.style.display = 'none';
+    } );
+    this.querySelectorAll(".less").forEach( el => {
+      el.style.display = '';
+    } );
   }
 }
 

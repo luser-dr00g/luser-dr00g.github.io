@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<meta http-equiv="content-type" content="text/html" charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<html>
+<title> CM Deployment tool </title>
+<style type="text/css">
+
+:root{
+    --body-bg: hsl(0 0% 100%);
+    --table-bg: hsl(0 0% 85%);
+    --heading: hsl(0 0% 20%);
+    --text: hsl(0 0% 0%); }
+.darkmode{
+    --body-bg: hsl(0 0% 0%);
+    --table-bg: hsl(0 0% 20%);
+    --heading: hsl(0 0% 85%);
+    --text: hsl(0 0% 100%); }
+
+.not-implemented{
+    background-color: red;
+}
+.incomplete{
+    background-color: purple;
+}
+
+body{
+    overscroll-behavior: none;
+    background-color: var(--body-bg);
+    color: var(--text);
+    font-size: normal; }
+.controls{
+    display: flex;
+    flex-flow: row wrap;
+    align-items: flex-start;
+    justify-content: flex-start; }
+more-panel{
+    display: inline-flex;
+    flex-flow: row wrap;
+    margin: .05em; }
+button[slot="tab"]{
+    color: var(--heading);
+    border-color: var(--text);
+    background-color: var(--table-bg); }
+button{
+    color: var(--heading);
+    border-color: var(--text);
+    background-color: var(--table-bg); }
+
+input[type="checkbox"]{
+    width: 20px;
+    height: 10px;
+    -webkit-appearance: none;
+    background: #c6c6c6;
+    outline: none;
+    border-radius: 20px;
+    transition: .5s;
+    box-shadow: inset 0 0 5px rbga(0,0,0,.2); }
+input:checked[type="checkbox"]{
+    background: #03a9f4; }
+input[type="text"]{
+    color: var(--text);
+    border-color: var(--text);
+    background-color: var(--table-bg); }
+textarea{
+    color: var(--text);
+    border-color: var(--text);
+    background-color: var(--body-bg); }
+.undo{
+    display: inline-flex; }
+.row{
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    justify-content: flex-start; }
+.vert{
+    display: inline-flex;
+    flex-flow: column wrap; }
+label{
+    font-size: small; }
+.panel-name{
+    font-size: small; }
+.shortcut{
+    cursor: pointer;
+    color: var(--text);
+    text-decoration: underline;
+    padding: .5em; }
+
+#star{
+    cursor: default; }
+#status{
+    display: inline-flex;
+    flex-flow: row nowrap;
+    align-items: flex-start;
+    justify-content: flex-start; }
+#status *{
+    padding: .25em; }
+
+#text{
+    width: 75ex;
+    height: 90vh; }
+
+th{
+    text-transform: capitalize;
+    border-bottom: groove;
+    text-align: left;
+    cursor: default; }
+
+#grid table tr:nth-child(3n+2){
+    background-color: var(--table-bg); }
+
+details:not([open]) #badge{
+    display: none; }
+details[open] #shorttoday{
+    display: none; }
+details[open] #shortfilter{
+    display: none; }
+
+</style>
+<body>
+
+  <details open>
+    <summary>
+      <a class="shortcut" id="badge">Scheduling/Deployment Tool</a>
+      <span id="shorttoday"></span>
+      <span id="shortfilter"></span>
+    </summary>
+  <div class="controls">
+    <more-panel class="undo not-implemented">
+      <span class="less"><span>&nbsp;&#x2939;</span>
+	               <span>&#x2938;&nbsp;</span></span>
+      <div class="row more"><button>Undo 1</button></div>
+      <div class="more"><hr></div>
+      <div class="row more"><button>Redo 1</button></div>
+    </more-panel>
+
+    <more-panel class="control incomplete"> <span class="panel-name">control</span>
+      <div class="row">
+        <input id="pasteme" class="more less" type=text autofocus placeholder="Paste here">
+        <button id="load" class="more" onClick="showFileInput()">Load</button>
+        <button class="more" onclick="saveTextFile()">Save</button>
+	<a id="share" class="more">Share</a>
+      </div>
+    </more-panel>
+
+    <more-panel class="rules incomplete"> <span class="panel-name">rules</span>
+      <div class="more vert">
+	<span class="row"><input type=checkbox id="sixteen">
+          <label for="sixteen">fixed position=16</label></span>
+	<span class="row"><input type=checkbox id="movesuper">
+          <label for="movesuper">move supervisors</label></span>
+	<span class="row"><input type=checkbox id="movelead">
+          <label for="movelead">move leads</label></span>
+      </div>
+    </more-panel>
+
+    <more-panel class="date"> <!--<span class="panel-name">days</span> -->
+      <span id="today" class="more less">date</span>
+      <div id="days" class="more"></div>
+    </more-panel>
+
+    <more-panel class="style"> <span class="panel-name">style</span>
+      <div class="more vert">
+	<span class="row"><input type=checkbox id="darkmode">
+	  <label for="darkmode">Dark</label></span>
+	<span class="row"><input type=checkbox id="abbreviatefoodservice">
+	  <label for="abbreviatefoodservice">Abbreviate Food Service</label></span>
+	<span class="row"><input type=checkbox id="suppressmiddlenames">
+	  <label for="suppressmiddlenames">Suppress Middle Names</label></span>
+      </div>
+    </more-panel>
+
+    <more-panel class="custom not-implemented">
+      <span class="panel-name">custom<span class="more"> fields</span></span>
+      <div class="row more json">
+	<div class="vert">
+	  <button class="more" onclick="saveCustomFields()">save</button>
+	  <label for="custom-json">JSON:</label>
+	</div>
+	<textarea id="custom-json"></textarea>
+      </div>
+      <div class="more rendered"> </div>
+      <div class="more" id="custom-favs"> </div>
+    </more-panel>
+
+    <more-panel class="filter"> <span class="panel-name">filter</span>
+      {<i><span id="filter-name"></span></i>}
+      <div class="more row">
+        <div class="vert">
+        <label for="invertFilter">Invert</label>
+        <input type=checkbox id="invertFilter">
+        </div>
+        <div class="vert">
+        <!-- <label for="filter" >Filter</label> -->
+        <input id="filter" type=text value="" size="40">
+        </div>
+      </div>
+      <span class="shortcut more less" id="everyone"
+	    onclick='setFilter("", false, "")'
+	    >everyone</span>
+      <div class="more row">
+        <span class="shortcut"
+	      onclick='setFilter("Food|Bar", false, "Food")'
+	      >Food</span>
+        <span class="shortcut"
+	      onclick='setFilter("Guest|Operations", false, "Floor")'
+	      >Floor</span>
+	<span class="shortcut"
+	      onclick='setFilter("Services", false, "Services")'
+	      >Services</span>
+	<span class="shortcut"
+	      onclick='setFilter("Retail", false, "Retail")'
+	      >Retail</span>
+        <span class="shortcut"
+	      onclick='setFilter("Food|Bar", true, "not Food")'
+	      >not Food</span>
+	<span class="shortcut"
+	      onclick="plusPinball()"
+	      >&pm;Pinball</span>
+      </div>
+      <div class="more row">
+	<span class="shortcut"
+	      onclick='setFilter("Distro|Food.*(Super|Lead)", false, "Super etc")'
+          >Super|Lead|Distro</span>
+	<span class="shortcut"
+	      onclick='setFilter("Lizard|CopOut|Beatnik", false, "Kitchens")'
+          >Lizard|CopOut|Beatnik</span>
+	<span class="shortcut"
+	      onclick='setFilter("Baby|Roof|Overflow|Cabin|Cowboy", false, "Snack Bars")'
+          >Baby|Roof|Overflow|Cabin|Cowboy</span>
+      </div>
+      <div class="more row">
+	<span class="shortcut"
+	      onclick='setFilter("Food.*FOH$", false, "FOH")'
+	      >FOH</span>
+	<span class="shortcut"
+	      onclick='setFilter("Food.*BOH$", false, "BOH")'
+	      >BOH</span>
+	<span class="shortcut"
+	      onclick='setFilter("Bar", false, "Bar")'
+	      >Bar</span>
+	<span class="shortcut"
+	      onclick='setFilter("Food.*[^B][^O][^H]$", false, "not FOH|BOH|Bar")'
+          >not FOH|BOH|Bar</span>
+      </div>
+    </more-panel>
+
+    <more-panel class="sorting">
+      <span class="panel-name">sort <span class="more">order</span> </span>
+      <span class="less"> {<i><span id="shorter-sort-order"></span></i>}
+	<button id="short-clear" onclick="clearSortOrder()">&#x2716;</button>
+      </span>
+      <span id="shorter-favs" class="less"></span>
+      <div class="more"> {<i><span id="sort-order"></span></i>}
+	<span id="star" onclick="toggleFavoriteSort()"></span>
+	<button id="sort-clear" onclick="clearSortOrder()">clear sort</button>
+	<div id="favs"></div>
+      </div>
+    </more-panel>
+  </div>
+
+  <div class="statue">
+    <label for="status">Status: </label> <span id="status"></span>
+  </div>
+  </details>
+
+  <tabs-panel>
+    <button slot="tab" data-target="#text" class="tab">text</button>
+    <button slot="tab" data-target="#grid" class="active tab">grid</button>
+    <button slot="tab" data-target="#stations" class="tab">stations</button>
+    <button slot="tab" data-target="#help" class="tab">help</button>
+    <textarea id="text" slot="content" class="content"></textarea>
+    <div id="grid" slot="content" class="active content"></div>
+    <div id="stations" slot="content" class="content"></div>
+    <div id="help" slot="content" class="content">
+      <div>
+        <span>web app and components &copy;2023 Michael Joshua Ryan
+          <a href="mailto:MRyan@citymuseum.org">MRyan@citymuseum.org</a>
+        </span>
+      </div>
+    </div>
+  </tabs-panel>
+
+  <template id="text-template">
+    <input type="text">
+  </template>
+  <template id="checkbox-template">
+    <input type="checkbox">
+  </template>
+  <template id="clickbox-template">
+   <click-box></click-box>
+  </template>
+  <template id="option-template">
+    <input type="text" readonly>
+  </template>
+  <template id="handle-template">
+    <input type="text" readonly>
+  </template>
+  <template id="time-template">
+    <input type="text">
+  </template>
+
+</body>
+<script src="more.js"></script>
+<script src="tabs.js"></script>
+<script src="click.js"></script>
+<script>
+
+var global = null;  // saved to/reloaded from localStorage
+var undoStack = [];
+var redoStack = [];
+var sortOrder = [];  // saved to/reloaded from localStorage
+var favoriteSorts = [];  // saved to/reloaded from localStorage
+var hiddenColumns = [];
+var hiddenStations = [];
+var customFields = [ {"notes":"text"} ];  // default
+var favoriteCustomFields = [[ {"notes":"text"} ]];
+
+var permanentFields = [  // gridFields = [ ...permanentFields, ...customFields ]
+  {"location":"option"},
+  {"position":"option"},
+  {"name":"handle"},
+  {"start":"time"},
+  {"end":"time"}
+];
+
+const status = document.querySelector("#status");
+const badge = document.querySelector("#badge");
+const darkmode = document.querySelector("#darkmode");
+const abbreviatefoodservice = document.querySelector("#abbreviatefoodservice");
+const suppressmiddlenames = document.querySelector("#suppressmiddlenames");
+const paste = document.querySelector("#pasteme");
+const filter = document.querySelector("#filter");
+const invertFilter = document.querySelector("#invertFilter");
+const filterName = document.querySelector("#filter-name");
+const share = document.querySelector("#share");
+const date = document.querySelector("#date");
+const text = document.querySelector("#text");
+const grid = document.querySelector("#grid");
+const stations = document.querySelector("#stations");
+const sixteen = document.querySelector("#sixteen");
+const movesuper = document.querySelector("#movesuper");
+const movelead = document.querySelector("#movelead");
+const today = document.querySelector("#today");
+const days = document.querySelector("#days");
+const everyone = document.querySelector("#everyone");
+const shortclear = document.querySelector("#short-clear");
+const sortclear = document.querySelector("#sort-clear");
+const shorttoday = document.querySelector("#shorttoday");
+const shortfilter = document.querySelector("#shortfilter");
+
+main();
+
+function main(){
+  appendStatus( "initializing..." );
+  badge.href = window.location.pathname;
+  loadPreferences();
+  initStyles();
+  paste.addEventListener( "paste", fetchAndOutput );
+  text.addEventListener( "change", reparseText );
+  filter.addEventListener( "change", output );
+  invertFilter.addEventListener( "change", output );
+  loadAndOutput();
+  appendStatus( "ready." );
+}
+
+function loadPreferences(){
+  let str = localStorage.getItem( "preferences" );
+  if(  ! str  ) return;
+  let prefs = JSON.parse( str );
+  if(  prefs  ){
+    darkmode.checked 			= prefs.darkmode ?? false;
+    abbreviatefoodservice.checked 	= prefs.abbreviatefoodservice ?? false;
+    suppressmiddlenames.checked 	= prefs.suppressmiddlenames ?? false;
+    sixteen.checked 			= prefs.sixteen ?? true;
+    movesuper.checked 			= prefs.movesuper ?? false;
+    movelead.checked 			= prefs.movelead ?? true;
+    filter.value			= prefs.filter ?? "";
+    invertFilter.checked		= prefs.invertFilter ?? false;
+    filterName.textContent		= prefs.filterName ?? "";
+    shortfilter.textContent = filterName.textContent;
+    sortOrder 				= prefs.sortOrder ?? [];
+    favoriteSorts 			= prefs.favoriteSorts ?? [];
+    hiddenColumns			= prefs.hiddenColumns ?? [];
+    hiddenStations			= prefs.hiddenStations ?? [];
+    customFields			= prefs.customFields ?? [ {"notes":"text"} ];
+    favoriteCustomFields	= prefs.favoriteCustomFields ?? [[ {"notes":"text"} ]];
+  }
+}
+
+function savePreferences(){
+  let prefs = {
+    darkmode: 			darkmode.checked,
+    abbreviatefoodservice: 	abbreviatefoodservice.checked,
+    suppressmiddlenames: 	suppressmiddlenames.checked,
+    sixteen: 			sixteen.checked,
+    movesuper: 			movesuper.checked,
+    movelead: 			movelead.checked,
+    filter:			filter.value,
+    invertFilter:               invertFilter.checked,
+    filterName:			filterName.textContent,
+    sortOrder: 			sortOrder,
+    favoriteSorts: 		favoriteSorts,
+    hiddenColumns:		hiddenColumns,
+    hiddenStation:		hiddenStations,
+    customFields:		customFields,
+    favoriteCustomFields:	favoriteCustomFields
+  };
+  localStorage.setItem( "preferences", JSON.stringify( prefs ) );
+}
+
+function initStyles(){
+  initDarkmode();
+  function click(){
+    savePreferences();
+    output();
+  }
+  abbreviatefoodservice.addEventListener( "click", click );
+  suppressmiddlenames.addEventListener( "click", click );
+  function click2(){
+    savePreferences();
+  }
+  sixteen.addEventListener( "click", click2 );
+  movesuper.addEventListener( "click", click2 );
+  movelead.addEventListener( "click", click2 );
+}
+
+function initDarkmode(){
+  function click(){
+    if(  darkmode.checked  ) document.body.classList.add("darkmode");
+    else document.body.classList.remove("darkmode");
+    savePreferences();
+  }
+  darkmode.addEventListener( "click", click );
+  click();
+  click();
+}
+
+function toggleFavoriteSort(){
+  if(  sortOrder.length == 0  ) return;
+  let idx = favoriteSorts.findIndex( x => arrayEq( x, sortOrder ) );
+  if(  idx == -1  ){
+    favoriteSorts.push( Array.from( sortOrder ) );
+  } else {
+    let head = favoriteSorts.slice( 0, idx );
+    let tail = favoriteSorts.slice( idx + 1 );
+    favoriteSorts = head.concat( tail );
+  }
+  updateSortOrder();
+  savePreferences();
+}
+
+function setFilter( str, b, name ){
+  filter.value = str;
+  invertFilter.checked = b;
+  filterName.textContent = name;
+  shortfilter.textContent = name;
+  savePreferences();
+  output();
+}
+
+function plusPinball(){
+  if(  ! filter.value  ){
+    filter.value = "Pinball";
+    filterName.textContent = "Pinball";
+  } else if(  filter.value == "Pinball"  ){
+    filter.value = "";
+    filterName.textContent = "";
+  } else if(  filter.value.match( /\|Pinball/ )  ){
+    filter.value = filter.value.replace( /\|Pinball/, "" );
+  } else {
+    filter.value = filter.value + "|Pinball";
+  }
+  savePreferences();
+  output();
+}
+
+function abbreviateFoodService( str ){
+  if(  abbreviatefoodservice.checked  )
+    return str.replace( /Food Service/, "FS" );
+  else
+    return  str;
+}
+
+function suppressMiddleNames( str ){
+  if(  suppressmiddlenames.checked  ){
+    let names = str.replace( /\s*$/, "" ).split( " " );
+    let first = names.shift();
+    if(  names.length  ){
+      let last = names.pop();
+      return  [ first, last ].join( " " );
+    } else
+      return  first;
+  } else
+    return  str;
+}
+
+function createSpan( str ){
+  let span = document.createElement( "span" );
+  span.appendChild( document.createTextNode( str ) );
+  return  span;
+}
+
+function appendStatus( msg ){
+  status.appendChild( createSpan( msg ) );
+  while(  status.textContent.length > 80 && status.childNodes.length > 2  ){
+    status.removeChild( status.childNodes[0] );
+  }
+}
+
+// Undo/redo constructors // the interface for modifications of the Model
+
+function createData( data ){
+  let rec = {
+    type: 'Create',
+    next: JSON.parse( JSON.stringify( data ) ),
+    prev: global === null  ? null  : JSON.parse( JSON.stringify( global ) ),
+    _do: () => { global = rec.next },
+    undo: () => { global = rec.prev }
+  };
+  rec._do();
+  undoStack.push( rec );
+}
+  
+function editData( data ){
+  let rec = {
+    type: 'Edit-Text',
+    next: JSON.parse( JSON.stringify( data ) ),
+    prev: global === null  ? null  : JSON.parse( JSON.stringify( global ) ),
+    _do: () => { global = rec.next },
+    undo: () => { global = rec.prev }
+  };
+  rec._do();
+  undoStack.push( rec );
+}
+
+function changeLocation( idx, loc ){
+  if(  global.data[ idx ][0] == loc  ) return;
+  if(  global.data[ idx ][1] == 'Supervisor' && ! movesuper.checked  ) return;
+  if(  global.data[ idx ][1] == 'Lead' && ! movelead.checked  ) return;
+  let rec = {
+    type: 'Location',
+    idx: idx,
+    next: loc,
+    prev: global.data[ idx ][0],
+    _do: () => { global.data[ rec.idx ][0] = rec.next },
+    undo: () => { global.data[ rec.idx ][1] = rec.prev }
+  };
+  rec._do();
+  undoStack.push( rec );
+}
+
+function changePosition( idx, pos ){
+  if(  global.data[ idx ][1] == pos  ) return;
+  if(  global.data[ idx ][1] == '16' && sixteen.checked  ) return;
+  if(  global.data[ idx ][1] == 'Supervisor' && ! movesuper.checked  ) return;
+  if(  global.data[ idx ][1] == 'Lead' && ! movelead.checked  ) return;
+  let rec = {
+    type: 'Position',
+    idx: idx,
+    next: pos,
+    prev: global.data[ idx ][1],
+    _do: () => { global.data[ rec.idx ][1] = rec.next },
+    undo: () => { global.data[ rec.idx ][1] = rec.prev }
+  };
+  rec._do();
+  undoStack.push( rec );
+}
+
+function changeLocationAndPosition( idx, src ){
+  let loc = global.data[ src ][0];
+  let pos = global.data[ src ][1];
+  changeLocation( idx, loc );
+  changePosition( idx, pos );
+}
+
+function changeTime( idx, col, value ){
+  if(  global.data[ idx ][ 3 + col ] == value  ) return;
+  let rec = {
+    type: 'Time',
+    idx: idx,
+    col: col,
+    next: value,
+    prev: global.data[ idx ][ 3 + col ],
+    _do: () => { global.data[ rec.idx ][ 3 + rec.col ] = rec.next },
+    undo: () => { global.data[ rec.idx ][ 3 + rec.col ] = rec.prev }
+  };
+  rec._do();
+  undoStack.push( rec );
+}
+
+function changeNote( idx, note ){
+  if(  global.data[ idx ][5] == note  ) return;
+  let rec = {
+    type: 'Note',
+    idx: idx,
+    next: note,
+    prev: global.data[ idx ][5],
+    _do: () => { global.data[ rec.idx ][5] = rec.next },
+    undo: () => { global.data[ rec.idx ][5] = rec.prev }
+  };
+  rec._do();
+  undoStack.push( rec );
+}
+
+function changeStationNote( location, note ){
+  if(  global.stationNotes[ location ] == note  ) return;
+  let rec = {
+    type: 'Station-note',
+    location: location,
+    next: note,
+    prev: global.stationNotes[ location ],
+    _do: () => { global.stationNotes[ location ] = rec.next },
+    undo: () => { global.stationNotes[ location ] = rec.prev }
+  };
+  rec._do();
+  undoStack.push( rec );
+}
+    
+function changeModel(){
+  let rec = newUndoRecord();
+  undoStack.push( rec );
+  rec._do();
+}
+    
+function diffGlobal( prev, next ){
+  let type = "";
+  if(  prev.date != next.date  ){
+    type = "Load";
+  } else if(  ! objectEq( prev.stationNotes, next.stationsNotes )  ){
+    type = "Edit station";
+  } else {
+    type = "Edit";
+  }
+}
+
+// I/O Functions
+
+function savedFormat( it ){
+  return  formatText( sortedData( it, cmpColumns( [1, -2, 4, 5] ) ), false );
+}
+
+function saveData(){
+  localStorage.setItem( "global", savedFormat( global ) );
+  saveDay();
+  appendStatus( "saved." );
+}
+
+function loadData(){
+  let data = localStorage.getItem( "global" );
+  if(  data  ) createData( parse( data ) );
+}
+
+function saveDay(){
+  let days = (localStorage.getItem( "days" ) ?? "").split( " " );
+  if(  ! days.includes( global.date )  ){
+    days.push( global.date );
+    localStorage.setItem( "days", days.join( " " ) );
+  }
+  localStorage.setItem( global.date, savedFormat( global ) );
+}
+
+function loadDay( day ){
+  let days = (localStorage.getItem( "days" ) ?? "").split( " " );
+  if(  days.includes( day )  ){
+    let data = localStorage.getItem( day )
+    if(  data  ) createData( parse( data ) );
+    saveData();
+    output();
+  }
+}
+    
+function fetchAndOutput( event ){
+  event.preventDefault();
+  let data = parse( event.clipboardData.getData( "text/plain" ) );
+  if(  data  ){
+    createData( data );
+    saveData();
+    output();
+  }
+}
+    
+function reparseText(){
+  let data = parse( text.value );
+  if(  data  ){
+    editData( data );
+    saveData();
+    output();
+  }
+}
+
+function loadAndOutput(){
+  if(  window.location.search  ){
+    appendStatus( "reading query..." );
+    let s = window.location.search;
+    //let q = decodeURIComponent();
+    appendStatus( "query read." );
+  } else {
+    appendStatus( "loading..." );
+    loadData();
+    appendStatus( "loaded." );
+  }
+  output();
+}
+
+// Input parsing
+
+function parse( input ){
+  if(  input.match( /^Museum Holdings/ )  ){
+    return  parsePaycor( input );
+  } else {
+    return  parseInternal( input );
+  }
+}
+
+function parsePaycor( input ){
+  appendStatus( "parsing Paycor text..." );
+  let lines = input.split( "\n" );
+  let date = findDate( input );
+  let startIndex = lines.findIndex( x => x.match( /^Staff Member/ ) );
+  let output = [];
+  var i;
+  for(  i = startIndex + 1; i < lines.length; ++i  ){
+    let name = lines[ i ];
+    let matches = /(\d\d?:?\d?\d? *[ap]m) *- *(\d\d?:?\d?\d? *[ap]m)(.*)/.exec( lines[i+1] );
+    if(  matches  ){
+      i+=2;
+      let start = matches[1].replace(/^0/,"").replace(/:00/,"").replace(/ /g,"");
+      let end = matches[2].replace(/^0/,"").replace(/:00/,"").replace(/ /g,"");
+      let cat = matches[3];
+      let w = cat.split( " " );
+      let pos = w.pop();
+      let loc = w.join( " " );
+      output.push( [ loc, pos, name, start, end ] );
+      while(  i < lines.length && ! lines[ i ].match( /^\t+\d/ )  )
+	++i;
+    }
+  }
+  appendStatus( "finished." );
+  //console.log( output );
+  return  {
+    date: date ?? "unknown",
+    stationNotes: {},
+    data: output
+  };
+}
+  
+function parseInternal( input ){
+  appendStatus( "parsing..." );
+  let lines = input.split( "\n" );
+  let date = findDate( input );
+  let stationNotes = findStationNotes( input );
+  let startIndex = lines.findIndex( x => x.match( /^station notes/ ) );
+  let cat = "";
+  let loc = "";
+  let pos = "";
+  let output = [];
+  var i;
+  for(  i = startIndex + 1; i < lines.length; ++i  ){
+    let line = lines[ i ];
+    if(  line.match( /\d?\d:?\d?\d?\s*[ap]m\s*-\s*\d?\d:?\d?\d?\s*[ap]m/ )  ){
+      let re = /(\D*)(\d?\d:?\d?\d?\s*[ap]m)\s*-\s*(\d?\d:?\d?\d?\s*[ap]m)(.*)/;
+      let matches = re.exec( line );
+      if(  matches  ){
+	let name = matches[1].replace( /^\s*/, "" ).replace(/\s*$/, "" );
+	let start = matches[2].replace( /^\s*0/, "" ).replace( /:00/, "" ).replace( /\s/g, "" );
+	let end = matches[3].replace( /^\s*0/, "" ).replace( /:00/, "" ).replace( /\s/g, "" );
+	let notes = matches[4];
+	output.push( [ loc, pos, name, start, end, notes ] );
+      }
+    } else {
+      cat = line;
+      let w = line.split( " " );
+      pos = w.pop();
+      loc = w.join( " " );
+    }
+  }
+  appendStatus( "finished." );
+  return  {
+    date: date ?? "unknown",
+    stationNotes: stationNotes ?? {},
+    data: output
+  };
+}
+
+function findDate( input ){
+  let re = /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday) *[,-]? *(January|February|March|April|May|June|July|August|September|October|November|December),? *(\d\d?),? *(\d\d\d\d)/;
+  let matches = re.exec( input );
+  if(  ! matches  ) return  undefined;
+  let dow = matches[1];
+  let mon = matches[2];
+  let day = matches[3];
+  let year = matches[4];
+  return  `${year}-${mon}-${day}-${dow}`;
+}
+  
+function dateToEnglish( date ){
+  let re = /(\d+)-(\S*)-(\d+)-(\S*)/;
+  let matches = re.exec( date );
+  if(  ! matches  ) return  undefined;
+  let year = matches[1];
+  let mon = matches[2];
+  let day = matches[3];
+  let dow = matches[4];
+  return  `${dow} ${mon} ${day}, ${year}`;
+}
+  
+function findStationNotes( input ){
+  let re = /station notes:/;
+  if(  re.test( input )  ){
+    let json = RegExp.rightContext.split( "\n" )[0];
+    if(  json != ""  ) return  JSON.parse( json );
+  }
+  return  {};
+}
+
+// Updating the screen
+
+function dayLink( day ){
+  let span = document.createElement( "span" );
+  span.appendChild( document.createTextNode( day ) )
+  span.classList.add( "shortcut" );
+  span.onclick = () => loadDay( day );
+  return  span;
+}
+
+function output(){
+  //console.log( global );
+  if(  global  ){
+    paste.classList.remove( "less" );
+    let filterRE = RegExp( filter.value );
+    shorttoday.textContent = today.textContent = dateToEnglish( global.date );
+    days.textContent = "";
+    localStorage.getItem( "days" )?.split( " " ).forEach(
+      day => days.appendChild( dayLink( day ) )
+    );
+    updateCustomFields();
+    updateSortOrder();
+    text.value = formatText(
+      sortedData(
+        filterData( global,
+	  x=>invertIfChecked( x.slice(0,2).join(" ").match( filterRE ) )
+        ),
+        cmpColumns( [ 1, -2, 4, 5 ] )
+      ), true );
+    console.log( "text length", text.value.length );
+    grid.innerHTML = formatTable(
+      sortedData(
+	filterData(
+	  prependDataIndex( global ),
+	  x=>{//console.log( x );
+	      return invertIfChecked( x.slice(1,3).join(" ").match( filterRE )) }
+	),
+	cmpColumns( (sortOrder.length  ? sortOrder  : [ 1, -2, 4, 5 ]).
+                    map( x=>Math.sign(x)*(Math.abs(x)+1) ) )
+      ) );
+  } else {
+    paste.classList.add( "less" );
+  }
+  if(  filter.value == "" && ! invertFilter.checked  ){
+    everyone.classList.remove( "less" );
+  } else {
+    everyone.classList.add( "less" );
+  }
+  if(  arrayEq( sortOrder, [] )  ){
+    shortclear.style.display = "none";
+    sortclear.style.display = "none";
+  } else {
+    shortclear.style.display = "";
+    sortclear.style.display = "";
+  }
+  let control = document.querySelector( ".control" ).shadowRoot.querySelector( "#toggle" );
+  control.click();
+  control.click();
+  let filters = document.querySelector( ".filter" ).shadowRoot.querySelector( "#toggle" );
+  filters.click();
+  filters.click();
+}
+
+function formatText( it, abbrev ){
+  if(  ! it || ! it.data  ) return  "";
+  var cat = "";
+  return  `data for ${dateToEnglish( it.date )}\n` +
+    `station notes: ${JSON.stringify( it.stationNotes )}\n` +
+    `custom fields: ${JSON.stringify( customFields )}\n` +
+    it.data.map( rec=>{
+      let pre = rec.slice(0,2).join( " " );
+      let [ name, start, end, notes ] = rec.slice(2);
+      let person = "\t" +
+	  ( abbrev ? suppressMiddleNames( name ) : name ) + "\t" +
+	  start + "-" + end + "\t" + (notes ?? "");
+      if(  pre == cat  ){
+        return  person;
+      } else {
+	cat = pre;
+	return  (abbrev ? abbreviateFoodService( pre ) : pre ) + "\n" + person;
+      }
+    }).join("\n");
+}
+
+function formatTable( it ){
+  let gridFields = [ ...permanentFields, ...customFields ];
+  //console.log( gridFields );
+  let classes = gridFields.map( x=>Object.keys(x)[0] );
+  return  "<table>" +
+    "<tr>" + classes.map( (x,i) => `<th onclick="sortBy(${i+1})">` + x ).join(" ") +
+    it.data.map( rec =>
+      "<tr>" + rec.slice(1).map( (col,colIdx) =>
+	`<td><span class="grid ${classes[colIdx]}" data-index="${rec[0]}">
+             ${colIdx==0?abbreviateFoodService(col):colIdx==2?suppressMiddleNames(col):col}
+             </span>`
+      ).join( " " )
+    ).join( "\n" ) +
+    "</table>";
+}
+  
+function saveCustomFields(){
+  if(  customFields.length == 0  ) return;
+  let idx = favoriteCustomFields.findIndex( x => arrayEq( x, customFields ) );
+  if(  idx == -1  ){
+    favoriteCustomFields.unshift( customFields );
+  }
+  savePreferences();
+  output();
+}
+
+function deleteFavoriteCustomFields( idx ){
+  let head = favoriteCustomFields.slice( 0, idx );
+  let tail = favoriteCustomFields.slice( idx + 1 );
+  favoriteCustomFields = head.concat( tail );
+  savePreferences();
+  output();
+}
+
+function updateCustomFields(){
+  let json = document.querySelector( "#custom-json" );
+  json.value = JSON.stringify( customFields );
+  let cf = document.querySelector( "#custom-favs" );
+  cf.textContent = "";
+  favoriteCustomFields.forEach( (spec, idx) => {
+    let span = document.createElement( "span" );
+    spec.forEach( field => span.textContent += " " + Object.keys( field )[0] );
+    let del = document.createElement( "button" );
+    del.innerHTML = "&#x2716;";
+    del.onclick = () => deleteFavoriteCustomFields(idx);
+    span.appendChild( del );
+    cf.appendChild( span );
+  } );
+}
+
+function updateSortOrder(){
+  let gridFields = [ ...permanentFields, ...customFields ];
+  let names = gridFields.map( x=>Object.keys(x)[0] );
+  let s = document.querySelector( "#sort-order" );
+  let ss = document.querySelector( "#shorter-sort-order" );
+  s.textContent = "";
+  ss.textContent = "";
+  sortOrder.forEach( col => {
+    s.textContent += " " + (col < 0  ? "▼"  : "") + names[ Math.abs(col) - 1 ] + " ";
+    ss.textContent += " " + col;
+  } );
+
+  let idx = favoriteSorts.findIndex( x => arrayEq( x, sortOrder ) );
+  document.querySelector( "#star" ).innerHTML = idx != -1  ? "★"  : "☆";
+
+  let favs = document.querySelector( "#favs" );
+  favs.textContent = "";
+  favoriteSorts.forEach( (sort, idx) => {
+    let span = document.createElement( "span" );
+    span.classList.add( "shortcut" );
+    sort.forEach( col => {
+      span.textContent += " " + (col < 0  ? "▼"  : "") + names[ Math.abs(col) - 1 ] + " ";
+    } );
+    span.addEventListener( "click", event => useFavorite( idx ) );
+    favs.appendChild( span );
+  } );
+  let sfavs = document.querySelector( "#shorter-favs" );
+  sfavs.textContent = "";
+  favoriteSorts.
+    filter( x => ! arrayEq( x, sortOrder ) ).
+    slice(0,2).
+    forEach( (sort, idx) => {
+      let sspan = document.createElement( "span" );
+      sspan.classList.add( "shortcut" );
+      sort.forEach( col => {
+        sspan.textContent += " " + col;
+      } );
+      sspan.addEventListener( "click",
+	event => useFavorite( favoriteSorts.findIndex( x=>arrayEq(x, sort) ) )
+      );
+      sfavs.appendChild( sspan );
+    } );
+}
+
+function useFavorite( idx ){
+  sortOrder = Array.from( favoriteSorts[ idx ] );
+  let head = favoriteSorts.slice( 0, idx );
+  let tail = favoriteSorts.slice( idx + 1 );
+  favoriteSorts = [ sortOrder, ...head, ...tail ];
+  savePreferences();
+  output();
+}
+
+function clearSortOrder(){
+  sortOrder = [];
+  savePreferences();
+  output();
+}
+
+function sortBy( col ){
+  if(  sortOrder.includes( col )  ){
+    shuffleOrCycle( col );
+  } else if(  sortOrder.includes( -col )  ){
+    shuffleOrCycle( -col );
+  } else {
+    sortOrder.unshift( col );
+  }
+  savePreferences();
+  output();
+}
+
+function shuffleOrCycle( col ){
+  if(  sortOrder[0] == col  ){
+    cycle( col );
+  } else {
+    shuffleToFront( col );
+  }
+}
+
+function cycle( col ){
+  if(  col > 0  ) sortOrder[0] = -col;
+  else sortOrder.shift();
+}
+
+function shuffleToFront( col ){
+  let idx = sortOrder.findIndex( x => x == col );
+  let tail = sortOrder.slice( idx );
+  let it = tail.shift();
+  let head = sortOrder.slice( 0, idx );
+  sortOrder = [ it, ...head, ...tail ];
+}
+
+// More functions
+
+function invertIfChecked( b ){
+  return  invertFilter.checked  ? !!!b  : b;
+}
+
+function prependDataIndex( it ){
+  let { date, stationNotes, data } = it;
+  return  { date, stationNotes, data: data.map( (x,i)=>[ i, ...Array.from(x) ] ) };
+}
+
+function copyData( it ){
+  let { date, stationNotes, data } = it;
+  return  { date, stationNotes, data: data.map( x=>Array.from(x) ) };
+}
+
+function filterData( it, flt ){
+  let { date, stationNotes, data } = it;
+  //console.log( data );
+  return  { date, stationNotes, data: data.filter( flt ) };
+}
+
+function sortedData( it, cmpFunc ){
+  let { date, stationNotes, data } = it;
+  return  { date, stationNotes, data: toSorted( data, cmpFunc ) };
+}
+
+function toSorted( arr, cmpFunc ){
+  let tmp = Array.from( arr );
+  tmp.sort( cmpFunc );
+  return  tmp;
+}
+
+function sift( data, re ){
+  return  sieve( data, rec => rec[0].match( re ) || rec[1].match( re ) );
+}
+
+function sieve( arr, pred ){
+  return  [ arr.filter( pred ), arr.filter( x => ! pred( x ) ) ];
+}
+
+function isTime( s ){
+  return  /^\d/.test( s ) && /[ap]m$/.test( s );
+}
+
+function cmpString( a, b ){
+  return  a < b  ? -1  : a > b  ? 1  : 0;
+}
+  
+function cmpTime( a, b ){
+  return  milTime( a ) - milTime( b );
+}
+
+function milTime( x ){
+  let re = /(1?\d):?(\d\d)? ?([ap]m)/;
+  let matches = re.exec( x );
+  if(  matches === null  ) return  0;
+  let result = (Number(matches[1])*100)
+  result += Number(matches[2]??0);
+  if(  matches[3] == 'pm'  &&  matches[1] != '12'  )
+    result += 1200;
+  if(  matches[3] == 'am'  &&  matches[1] == '12'  )
+    result += 1200;
+  if(  matches[3] == 'am'  &&  matches[1] < 5  )
+    result += 2400;
+  return  result;
+}
+
+function cmpColumns( cols ){
+  function cmp(x, y){
+    let columns = Array.from( cols );
+    while(  columns.length > 0  ){
+      let a = x[ Math.abs(columns[0])-1 ], b = y[ Math.abs(columns[0])-1 ];
+      let result = ( isTime( a ) ? cmpTime : cmpString )( a, b );
+      if(  result != 0  ) return  columns[0] > 0  ? result  : -result;
+      columns.shift();
+    }
+    return  0;
+  }
+  return  cmp;
+}
+
+function arrayEq( x, y ){
+  return  x.length == y.length &&
+    x.map( (e,i) => e == y[i] ).reduce( (x,y) => x & y, true );
+}
+
+function objectEq( x, y ){
+  return  arrayEq( Object.keys( x ).sort(), Object.keys( y ).sort() ) &&
+    xkeys.map( xk => x[xk] == y[xk] ).reduce( (x,y) => x & y, true );
+}
+
+</script>
+</html>
