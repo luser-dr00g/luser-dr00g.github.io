@@ -483,7 +483,7 @@ function abbreviateFoodService( str ){
 
 function suppressMiddleNames( str ){
   if(  suppressmiddlenames.checked  ){
-    let names = str.replace( /\s*$/, "" ).split( " " );
+    let names = str.replace( /\s*$/s, "" ).split( " " );
     let first = names.shift();
     if(  names.length  ){
       let last = names.pop();
@@ -721,11 +721,11 @@ function parsePaycor( input ){
   var i;
   for(  i = startIndex + 1; i < lines.length; ++i  ){
     let name = lines[ i ];
-    let matches = /(\d\d?:?\d?\d? *[ap]m) *- *(\d\d?:?\d?\d? *[ap]m)(.*)/.exec( lines[i+1] );
+    let matches = /(\d\d?:?\d?\d?\s*[ap]m)\s*-\s*(\d\d?:?\d?\d?\s*[ap]m)(.*)/.exec( lines[i+1] );
     if(  matches  ){
       i+=2;
-      let start = matches[1].replace(/^0/,"").replace(/:00/,"").replace(/ /g,"");
-      let end = matches[2].replace(/^0/,"").replace(/:00/,"").replace(/ /g,"");
+      let start = matches[1].replace(/^\s*0/,"").replace(/:00/,"").replace(/\s/g,"");
+      let end = matches[2].replace(/^\s*0/,"").replace(/:00/,"").replace(/\s/g,"");
       let cat = matches[3];
       let w = cat.split( " " );
       let pos = w.pop();
@@ -761,7 +761,7 @@ function parseInternal( input ){
       let re = /(\D*)(\d?\d:?\d?\d?\s*[ap]m)\s*-\s*(\d?\d:?\d?\d?\s*[ap]m)(.*)/;
       let matches = re.exec( line );
       if(  matches  ){
-	let name = matches[1].replace( /^\s*/, "" ).replace(/\s*$/, "" );
+	let name = matches[1].replace( /^\s*/s, "" ).replace(/\s*$/s, "" );
 	let start = matches[2].replace( /^\s*0/, "" ).replace( /:00/, "" ).replace( /\s/g, "" );
 	let end = matches[3].replace( /^\s*0/, "" ).replace( /:00/, "" ).replace( /\s/g, "" );
 	let notes = matches[4];
@@ -880,8 +880,8 @@ function formatText( it, abbrev ){
   if(  ! it || ! it.data  ) return  "";
   var cat = "";
   return  `data for ${dateToEnglish( it.date )}\n` +
-    `station notes: ${JSON.stringify( it.stationNotes )}\n` +
     `custom fields: ${JSON.stringify( customFields )}\n` +
+    `station notes: ${JSON.stringify( it.stationNotes )}\n` +
     it.data.map( rec=>{
       let pre = rec.slice(0,2).join( " " );
       let [ name, start, end, notes ] = rec.slice(2);
