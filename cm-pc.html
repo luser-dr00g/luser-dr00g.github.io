@@ -96,8 +96,8 @@ label{
     padding: .25em; }
 
 #text{
-    width: 75ex;
-    height: 90vh; }
+    width: 90ch;
+    height: 80vh; }
 
 th{
     text-transform: capitalize;
@@ -730,7 +730,7 @@ function parsePaycor( input ){
       let w = cat.split( " " );
       let pos = w.pop();
       let loc = w.join( " " );
-      output.push( [ loc, pos, name, start, end ] );
+      output.push( [ loc, pos, name, start, end, "" ] );
       while(  i < lines.length && ! lines[ i ].match( /^\t+\d/ )  )
 	++i;
     }
@@ -761,10 +761,11 @@ function parseInternal( input ){
       let re = /(\D*)(\d?\d:?\d?\d?\s*[ap]m)\s*-\s*(\d?\d:?\d?\d?\s*[ap]m)(.*)/;
       let matches = re.exec( line );
       if(  matches  ){
-	let name = matches[1].replace( /^\s*/s, "" ).replace(/\s*$/s, "" );
-	let start = matches[2].replace( /^\s*0/, "" ).replace( /:00/, "" ).replace( /\s/g, "" );
-	let end = matches[3].replace( /^\s*0/, "" ).replace( /:00/, "" ).replace( /\s/g, "" );
-	let notes = matches[4];
+	let name = matches[1].replace( /^\s*/s, "" ).replace(/\s*$/, "" ).replace( /[\n]/g, "" );
+	//console.log( name );
+	let start = matches[2].replace( /^\s*0/s, "" ).replace( /:00/, "" ).replace( /\s/g, "" );
+	let end = matches[3].replace( /^\s*0/s, "" ).replace( /:00/, "" ).replace( /\s/g, "" );
+	let notes = matches[4].replace( /^\s*/s, "" );
 	output.push( [ loc, pos, name, start, end, notes ] );
       }
     } else {
@@ -885,6 +886,7 @@ function formatText( it, abbrev ){
     it.data.map( rec=>{
       let pre = rec.slice(0,2).join( " " );
       let [ name, start, end, notes ] = rec.slice(2);
+      console.log( {notes} );
       let person = "\t" +
 	  ( abbrev ? suppressMiddleNames( name ) : name ) + "\t" +
 	  start + "-" + end + "\t" + (notes ?? "");
