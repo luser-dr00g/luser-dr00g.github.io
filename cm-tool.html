@@ -100,7 +100,7 @@
   }
   [data-tab-content]{ display: none }
   .active[data-tab-content]{ display: block }
-  #text{ width: 70ex;
+  #text{ width: 90ch;
 	 height: 80vh; }
   table{
       border-style: solid;
@@ -662,7 +662,7 @@ function parse( input ){
       //console.log( i, line, "dots");
       continue;
     }
-    if(  line.match( /1?\d:?\d?\d? ?[ap]m *- *1?\d:?\d?\d? ?[ap]m/ )  ){
+    if(  line.match( /\d?\d:?\d?\d? ?[ap]m *- *\d?\d:?\d?\d? ?[ap]m/ )  ){
       //console.log( i, line, "person" );
       perPerson( line );
     } else {
@@ -772,7 +772,7 @@ function updateSortOrder(){
   s.textContent = "{";
   sortOrder.forEach( col =>
     s.textContent +=
-      " " + (col < 0 ? "▼" : "") + names[ Math.abs(col) - 1 ] + " " );
+      " " + (col < 0  ? "▼" : "") + names[ Math.abs(col) - 1 ] + " " );
   s.textContent += "}";
 
   let idx = favoriteSorts.findIndex( x =>
@@ -1549,7 +1549,7 @@ function cmpColumns( cols ){
 
 function toSorted( arr, cmpFunc ){
   let tmp = Array.from( arr );
-  tmp.sort( cmpFunc )
+  tmp.sort( cmpFunc );
   return  tmp;
 }
 
