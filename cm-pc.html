@@ -60,7 +60,8 @@ input:checked[type="checkbox"]{
 input[type="text"]{
     color: var(--text);
     border-color: var(--text);
-    background-color: var(--table-bg); }
+    background-color: inherit;
+}
 textarea{
     color: var(--text);
     border-color: var(--text);
@@ -71,7 +72,8 @@ textarea{
     display: flex;
     flex-flow: row wrap;
     align-items: center;
-    justify-content: flex-start; }
+    justify-content: flex-start;
+    padding-bottom: .2em; }
 .vert{
     display: inline-flex;
     flex-flow: column wrap; }
@@ -80,10 +82,13 @@ label{
 .panel-name{
     font-size: small; }
 .shortcut{
+    display: inline-flex;
     cursor: pointer;
     color: var(--text);
     text-decoration: underline;
-    padding: .5em; }
+    white-space: nowrap;
+    padding-left: .3em;
+    padding-right: .3em; }
 
 #star{
     cursor: default; }
@@ -104,6 +109,36 @@ th{
     border-bottom: groove;
     text-align: left;
     cursor: default; }
+
+.option{
+    border: none;
+    outline: none;
+}
+.handle{
+    border: none;
+    outline: none;
+    cursor: default;
+}
+.text{
+    border: none;
+    outline: none;
+    width: inherit;
+}
+.time{
+    border: none;
+    outline: none;
+    text-align: right;
+    width: 8ch;
+}
+.location{
+    width: 25ch;
+}
+.position{
+    width: 9ch;
+}
+.name{
+    width: 25ch;
+}
 
 #grid table tr:nth-child(3n+2){
     background-color: var(--table-bg); }
@@ -133,10 +168,10 @@ details[open] #shortfilter{
       <div class="row more"><button>Redo 1</button></div>
     </more-panel>
 
-    <more-panel class="control incomplete"> <span class="panel-name">control</span>
+    <more-panel class="control"> <span class="panel-name">control</span>
       <div class="row">
         <input id="pasteme" class="more less" type=text autofocus placeholder="Paste here">
-        <button id="load" class="more" onClick="showFileInput()">Load</button>
+        <span><button id="load" class="more" onClick="showFileInput()">Load</button></span>
         <button class="more" onclick="saveTextFile()">Save</button>
 	<a id="share" class="more">Share</a>
       </div>
@@ -169,7 +204,7 @@ details[open] #shortfilter{
       </div>
     </more-panel>
 
-    <more-panel class="custom not-implemented">
+    <more-panel class="custom incomplete">
       <span class="panel-name">custom<span class="more"> fields</span></span>
       <div class="row more json">
 	<div class="vert">
@@ -197,10 +232,16 @@ details[open] #shortfilter{
       <span class="shortcut more less" id="everyone"
 	    onclick='setFilter("", false, "")'
 	    >everyone</span>
-      <div class="more row">
-        <span class="shortcut"
+        <span id="food" class="shortcut more less"
 	      onclick='setFilter("Food|Bar", false, "Food")'
 	      >Food</span>
+	<span class="shortcut more less"
+	      onclick="plusEvent()"
+	      >&pm;Event</span>
+	<span class="shortcut more"
+	      onclick="plusPinball()"
+	      >&pm;Pinball</span>
+      <div class="more row">
         <span class="shortcut"
 	      onclick='setFilter("Guest|Operations", false, "Floor")'
 	      >Floor</span>
@@ -213,9 +254,6 @@ details[open] #shortfilter{
         <span class="shortcut"
 	      onclick='setFilter("Food|Bar", true, "not Food")'
 	      >not Food</span>
-	<span class="shortcut"
-	      onclick="plusPinball()"
-	      >&pm;Pinball</span>
       </div>
       <div class="more row">
 	<span class="shortcut"
@@ -280,24 +318,16 @@ details[open] #shortfilter{
     </div>
   </tabs-panel>
 
-  <template id="text-template">
-    <input type="text">
-  </template>
-  <template id="checkbox-template">
-    <input type="checkbox">
-  </template>
-  <template id="clickbox-template">
-   <click-box></click-box>
-  </template>
-  <template id="option-template">
-    <input type="text" readonly>
-  </template>
-  <template id="handle-template">
-    <input type="text" readonly>
-  </template>
-  <template id="time-template">
-    <input type="text">
-  </template>
+<datalist id="locations"></datalist>
+<datalist id="positions"></datalist>
+<template id="text-template"><input type="text"></template>
+<template id="checkbox-template"><input type="checkbox"></template>
+<template id="clickbox-template"><click-box cycle
+  states="empty checkmark xmark questionmark" empty=""
+  checkmark="&check;" xmark="✖" questionmark="?"></click-box></template>
+<template id="option-template"><input type="text"></template>
+<template id="handle-template"><input type="text" readonly></template>
+<template id="time-template"><input type="text"></template>
 
 </body>
 <script src="more.js"></script>
@@ -343,6 +373,7 @@ const movelead = document.querySelector("#movelead");
 const today = document.querySelector("#today");
 const days = document.querySelector("#days");
 const everyone = document.querySelector("#everyone");
+const food = document.querySelector("#food");
 const shortclear = document.querySelector("#short-clear");
 const sortclear = document.querySelector("#sort-clear");
 const shorttoday = document.querySelector("#shorttoday");
@@ -379,11 +410,15 @@ function loadPreferences(){
     filterName.textContent		= prefs.filterName ?? "";
     shortfilter.textContent = filterName.textContent;
     sortOrder 				= prefs.sortOrder ?? [];
-    favoriteSorts 			= prefs.favoriteSorts ?? [];
+    favoriteSorts 			= prefs.favoriteSorts ??
+      [ [4,5,1,-2], [-4,-5], [2,4,5] ];
     hiddenColumns			= prefs.hiddenColumns ?? [];
     hiddenStations			= prefs.hiddenStations ?? [];
-    customFields			= prefs.customFields ?? [ {"notes":"text"} ];
-    favoriteCustomFields	= prefs.favoriteCustomFields ?? [[ {"notes":"text"} ]];
+    customFields			= prefs.customFields ??
+      [ {"here":"clickbox"},{"notes":"text"} ];
+    favoriteCustomFields	= prefs.favoriteCustomFields ??
+      [[ {"notes":"text"} ],
+       [ {"here":"clickbox"}, {"notes":"text"} ]];
   }
 }
 
@@ -458,7 +493,37 @@ function setFilter( str, b, name ){
   output();
 }
 
+function filterPlusMinus( str ){
+  if(  filter.value == ""  ){
+    filter.value = str;
+    filterName.textContent = str;
+    shortfilter.textContent = str;
+  } else if(  filter.value == str  ){
+    filter.value = "";
+    filterName.textContent = "";
+    shortfilter.textContent = "";
+  } else if(  filter.value.match( RegExp( "\\|" + str, "i" ) )  ){
+    filter.value = filter.value.replace( RegExp( "\\|" + str, "i" ), "" );
+    filterName.textContent = filterName.textContent.replace( / \+/, "" );
+    shortfilter.textContent = filterName.textContent;
+  } else {
+    filter.value = filter.value + "|" + str;
+    filterName.textContent = filterName.textContent + " +";
+    shortfilter.textContent = filterName.textContent;
+  }
+  savePreferences();
+  output();
+}
+
 function plusPinball(){
+  filterPlusMinus( "Pinball" );
+}
+
+function plusEvent(){
+  filterPlusMinus( "Event" );
+}
+
+function plusPinball_v1(){
   if(  ! filter.value  ){
     filter.value = "Pinball";
     filterName.textContent = "Pinball";
@@ -650,6 +715,44 @@ function loadData(){
   if(  data  ) createData( parse( data ) );
 }
 
+function saveTextFile(){
+  let textData = savedFormat( global );
+  const filename = global.date + ".txt";
+  downloadToFile( textData, filename, "text/plain" );
+}
+
+function downloadToFile ( content, filename, contentType ){
+  const a = document.createElement( "a" );
+  const file = new Blob( [ content ], { type: contentType } );
+  a.href = URL.createObjectURL( file );
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function showFileInput(){
+  var load = document.querySelector( "#load" );
+  var parent = load.parentNode;
+  parent.removeChild( load );
+  var input = document.createElement( "input" );
+  input.setAttribute( "type", "file" );
+  input.setAttribute( "id", "openme" );
+  input.setAttribute( "accept", ".txt" );
+  input.onchange = loadTextFile;
+  parent.appendChild( input );
+  function loadTextFile(){
+    let file = input.files[0];
+    let fr = new FileReader();
+    fr.onload = function(){
+      text.value = fr.result;
+      reparseText( );
+    }
+    fr.readAsText( file );
+    parent.removeChild( input );
+    parent.appendChild( load );
+  }
+}
+
 function saveDay(){
   let days = (localStorage.getItem( "days" ) ?? "").split( " " );
   if(  ! days.includes( global.date )  ){
@@ -691,7 +794,12 @@ function reparseText(){
 function loadAndOutput(){
   if(  window.location.search  ){
     appendStatus( "reading query..." );
-    let s = window.location.search;
+    let params = new URLSearchParams(window.location.search.substring(1));
+    if(  params.has( "q" )  ){
+      let q = params.get("q");
+      createData( parse( q ) );
+    }
+    //let s = window.location.search;
     //let q = decodeURIComponent();
     appendStatus( "query read." );
   } else {
@@ -730,7 +838,8 @@ function parsePaycor( input ){
       let w = cat.split( " " );
       let pos = w.pop();
       let loc = w.join( " " );
-      output.push( [ loc, pos, name, start, end, "" ] );
+      let custom = customFields.map( ()=>"" );
+      output.push( [ loc, pos, name, start, end, ...custom ] );
       while(  i < lines.length && ! lines[ i ].match( /^\t+\d/ )  )
 	++i;
     }
@@ -748,6 +857,8 @@ function parseInternal( input ){
   appendStatus( "parsing..." );
   let lines = input.split( "\n" );
   let date = findDate( input );
+  let custom = findCustomFields( input );
+  //console.log( custom );
   let stationNotes = findStationNotes( input );
   let startIndex = lines.findIndex( x => x.match( /^station notes/ ) );
   let cat = "";
@@ -765,8 +876,15 @@ function parseInternal( input ){
 	//console.log( name );
 	let start = matches[2].replace( /^\s*0/s, "" ).replace( /:00/, "" ).replace( /\s/g, "" );
 	let end = matches[3].replace( /^\s*0/s, "" ).replace( /:00/, "" ).replace( /\s/g, "" );
-	let notes = matches[4].replace( /^\s*/s, "" );
-	output.push( [ loc, pos, name, start, end, notes ] );
+        let rest = matches[4].replace( /^\t/, "" ).split( "\t" );
+	//console.log( rest );
+	if(  rest.length < custom.length  ){
+	  rest = rest.concat( Array( custom.length - rest.length ).fill( "" ) );
+	}
+	//let notes = matches[4].replace( /^\s*/s, "" );
+	let rec = [ loc, pos, name, start, end, ...rest ];
+	//console.log( rec );
+	output.push( rec );
       }
     } else {
       cat = line;
@@ -776,6 +894,7 @@ function parseInternal( input ){
     }
   }
   appendStatus( "finished." );
+  customFields = custom;
   return  {
     date: date ?? "unknown",
     stationNotes: stationNotes ?? {},
@@ -814,6 +933,15 @@ function findStationNotes( input ){
   return  {};
 }
 
+function findCustomFields( input ){
+  let re = /custom fields:/;
+  if(  re.test( input )  ){
+    let json = RegExp.rightContext.split( "\n" )[0];
+    if(  json != ""  ) return  JSON.parse( json );
+  }
+  return [{"notes":"text"}];
+}
+
 // Updating the screen
 
 function dayLink( day ){
@@ -834,6 +962,7 @@ function output(){
     localStorage.getItem( "days" )?.split( " " ).forEach(
       day => days.appendChild( dayLink( day ) )
     );
+    updateShareLink();
     updateCustomFields();
     updateSortOrder();
     text.value = formatText(
@@ -843,8 +972,11 @@ function output(){
         ),
         cmpColumns( [ 1, -2, 4, 5 ] )
       ), true );
-    console.log( "text length", text.value.length );
-    grid.innerHTML = formatTable(
+    //console.log( "text length", text.value.length );
+    updateLocationsAndPositions( global );
+    let table = grid.querySelector( "table" );
+    if(  table  ) grid.removeChild( table );
+    grid.appendChild( formatTable(
       sortedData(
 	filterData(
 	  prependDataIndex( global ),
@@ -853,7 +985,7 @@ function output(){
 	),
 	cmpColumns( (sortOrder.length  ? sortOrder  : [ 1, -2, 4, 5 ]).
                     map( x=>Math.sign(x)*(Math.abs(x)+1) ) )
-      ) );
+      ) ) );
   } else {
     paste.classList.add( "less" );
   }
@@ -861,6 +993,11 @@ function output(){
     everyone.classList.remove( "less" );
   } else {
     everyone.classList.add( "less" );
+  }
+  if(  filterName.textContent.match( /Food/ ) && ! invertFilter.checked  ){
+    food.classList.remove( "less" );
+  } else {
+    food.classList.add( "less" );
   }
   if(  arrayEq( sortOrder, [] )  ){
     shortclear.style.display = "none";
@@ -877,6 +1014,39 @@ function output(){
   filters.click();
 }
 
+function updateShareLink(){
+  share.href = window.location.pathname + "?q=" +
+    encodeURIComponent( savedFormat( global ) ).replace( /%20/g, "+" );
+}
+
+function updateLocationsAndPositions( it ){
+  let locations = it.data.map( rec => rec[0] );
+  let locdata = document.getElementById( "locations" );
+  while(  locdata.firstChild  ){locdata.removeChild(locdata.firstChild);}
+  unique( locations ).forEach( loc => {
+    let opt = document.createElement( "option" );
+    opt.value = loc;
+    locdata.appendChild( opt );
+  } );
+  let positions = it.data.map( rec => rec[1] );
+  let posdata = document.getElementById( "positions" );
+  while(  posdata.firstChild  ){posdata.removeChild(posdata.firstChild);}
+  unique( positions ).forEach( pos => {
+    let opt = document.createElement( "option" );
+    opt.value = pos;
+    posdata.appendChild( opt );
+  } );
+}
+
+function unique( arr ){
+  let output = [ arr.shift() ];
+  arr.forEach( e => {
+    if(  output.findIndex( x => e==x ) == -1  )
+      output.push( e );
+  });
+  return  output;
+}
+
 function formatText( it, abbrev ){
   if(  ! it || ! it.data  ) return  "";
   var cat = "";
@@ -885,11 +1055,11 @@ function formatText( it, abbrev ){
     `station notes: ${JSON.stringify( it.stationNotes )}\n` +
     it.data.map( rec=>{
       let pre = rec.slice(0,2).join( " " );
-      let [ name, start, end, notes ] = rec.slice(2);
-      console.log( {notes} );
+      let [ name, start, end, ...rest ] = rec.slice(2);
+      //console.log( {notes} );
       let person = "\t" +
 	  ( abbrev ? suppressMiddleNames( name ) : name ) + "\t" +
-	  start + "-" + end + "\t" + (notes ?? "");
+	  start + "-" + end + "\t" + rest.join("\t");
       if(  pre == cat  ){
         return  person;
       } else {
@@ -901,18 +1071,97 @@ function formatText( it, abbrev ){
 
 function formatTable( it ){
   let gridFields = [ ...permanentFields, ...customFields ];
-  //console.log( gridFields );
   let classes = gridFields.map( x=>Object.keys(x)[0] );
-  return  "<table>" +
-    "<tr>" + classes.map( (x,i) => `<th onclick="sortBy(${i+1})">` + x ).join(" ") +
-    it.data.map( rec =>
-      "<tr>" + rec.slice(1).map( (col,colIdx) =>
-	`<td><span class="grid ${classes[colIdx]}" data-index="${rec[0]}">
-             ${colIdx==0?abbreviateFoodService(col):colIdx==2?suppressMiddleNames(col):col}
-             </span>`
-      ).join( " " )
-    ).join( "\n" ) +
-    "</table>";
+  let types = classes.map( (x,i)=>gridFields[i][x] );
+  let table = document.createElement( "table" );
+  let header = document.createElement( "tr" );
+  table.appendChild( header );
+  classes.forEach( (x,i)=>{
+    let th = document.createElement( "th" );
+    th.appendChild( document.createTextNode( x ) );
+    th.onclick= ()=>sortBy(i+1);
+    header.appendChild( th );
+  } );
+  it.data.forEach( (rec,idx)=>{
+    let tr = document.createElement( "tr" );
+    table.appendChild( tr );
+    rec.slice(1).forEach( (col,colIdx)=>{
+      if(  ! types[colIdx]  ) return;
+      let td = document.createElement( "td" );
+      let [ input, element ] = newInput( types[colIdx],
+					 colIdx==0?abbreviateFoodService(col):
+                                         colIdx==2?suppressMiddleNames(col):col,
+					 classes[colIdx],
+					 rec[0] );
+      td.appendChild( input );
+      tr.appendChild( td );
+    } );
+  } );
+  return table;
+}
+
+function newInput( type, value, theClass, idx ){
+  //console.log( type, value, theClass, idx );
+  let template = document.getElementById( type + "-template" );
+  let input = template.content.cloneNode( true );
+  //console.log( type, value, template, input );
+  switch( type ){
+  case 'text': {
+    let element = input.querySelector( "input" );
+    element.value = value;
+    element.classList.add( "grid" );
+    element.classList.add( type );
+    element.classList.add( theClass );
+    element.dataset.index = idx;
+    return [ input, "input" ];
+  }
+  case 'time': {
+    let element = input.querySelector( "input" );
+    element.value = value;
+    element.classList.add( "grid" );
+    element.classList.add( type );
+    element.classList.add( theClass );
+    element.dataset.index = idx;
+    return [ input, "input" ];
+  }
+  case 'option': {
+    let element = input.querySelector( "input" );
+    element.value = value;
+    element.classList.add( "grid" );
+    element.classList.add( type );
+    element.classList.add( theClass );
+    element.setAttribute( "list", theClass + "s" );
+    element.dataset.index = idx;
+    return [ input, "input" ];
+  }
+  case 'handle': {
+    let element = input.querySelector( "input" );
+    element.value = value;
+    element.classList.add( "grid" );
+    element.classList.add( type );
+    element.classList.add( theClass );
+    element.dataset.index = idx;
+    return [ input, "input" ];
+  }
+  case 'checkbox': {
+    let element = input.querySelector( "input" );
+    element.checked = value;
+    element.classList.add( "grid" );
+    element.classList.add( type );
+    element.classList.add( theClass );
+    element.dataset.index = idx;
+    return [ input, "input" ];
+  }
+  case 'clickbox': {
+    let element = input.querySelector( "click-box" );
+    element.setAttribute( "value", value );
+    element.classList.add( "grid" );
+    element.classList.add( type );
+    element.classList.add( theClass );
+    element.dataset.index = idx;
+    return [ input, "click-box" ];
+  }
+  }
 }
   
 function saveCustomFields(){
