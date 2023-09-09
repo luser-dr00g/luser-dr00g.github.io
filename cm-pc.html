@@ -107,7 +107,10 @@ th{
 .handle{
     border: none;
     outline: none;
-    cursor: default;
+}
+[draggable]{
+    cursor: move;
+    cursor: grab;
 }
 .text{
     border: none;
@@ -141,6 +144,10 @@ th{
 
 #help{
     width: 60ch;
+}
+
+.important{
+    background-color: red;
 }
 
 details:not([open]) #badge{
@@ -185,8 +192,8 @@ details[open] #shortfilter{
       </div>
     </more-panel>
 
-    <more-panel class="rules incomplete"> <span class="panel-name">rules</span>
-      <div class="more vert">
+    <more-panel class="rules"> <span class="panel-name incomplete">rules</span>
+      <div class="more vert incomplete">
 	<span class="row"><input type=checkbox id="sixteen">
           <label for="sixteen">fixed position=16</label></span>
 	<span class="row"><input type=checkbox id="movesuper">
@@ -209,12 +216,12 @@ details[open] #shortfilter{
       <div class="more" id="custom-favs"> </div>
     </more-panel>
 
-    <more-panel class="undo not-implemented">
-      <span class="less"><span>&nbsp;&#x2939;</span>
+    <more-panel class="undo">
+      <span class="less not-implemented"><span>&nbsp;&#x2939;</span>
 	               <span>&#x2938;&nbsp;</span></span>
-      <div class="row more"><button>Undo 1</button></div>
+      <div class="row more not-implemented"><button>Undo 1</button></div>
       <div class="more"><hr></div>
-      <div class="row more"><button>Redo 1</button></div>
+      <div class="row more not-implemented"><button>Redo 1</button></div>
     </more-panel>
 
     <more-panel class="filter"> <span class="panel-name">filter</span>
@@ -323,20 +330,36 @@ details[open] #shortfilter{
 	and choose the regular <em>Printable version</em>.
 	Hit escape to close the print dialog that pops up
 	and hit ctrl-A ctrl-C to copy all the text. 
-	Then you can return to this page and paste into the &lt;<em>Paste Here</em>&gt; box
+	Then you can return to this page and paste into the 
+        &lt;<em>Paste Here</em>&gt; box
 	to feed the data to it.
+      <p><em class="important"> Important! </em> If you are emailing 
+        the share link using MS Outlook, you must create a link by clicking
+        the "Insert link" button or hitting Ctrl-k. Merely pasting the link into the message
+        body of the email will produce something that looks like a link but
+	doesn't work properly for the email's recipient. 
+      <p><em class="important"> Important! </em> If you are the recipient of an
+	emailed link, be aware that reloading the share link will obliterate any
+	edits you have made and reset the state to exactly the data contained
+	in the share link. So, please click the "Scheduling/Deployment tool" link
+	at the top to reload the page before editing the data.
       <p> Click the triangle at the top left to collapse all the menus
 	for a streamlined printable version.
       <p> There is a <em>default sorting order</em> that is applied automatically
 	if no other sorting order is chosen. The text view is always shown using this
 	same default sort order which is { <em>location ▼position start end</em> }.
+      <p> Filtering works by applying a regular expression pattern to the combined
+	{ location + position } fields. And the "invert" button reverses the sense
+	of the pattern so that matching items are excluded and non-matching items
+	are shown.
       <p> Portions of the app that are
 	<span class="not-implemented"><em>NOT IMPLEMENTED</em></span> or
 	<span class="incomplete"><em>INCOMPLETE</em></span> are highlighted.
 	So don't futz with those, ya mugs. They don't gonna work write.
       <div>
-        <span>web app and components &copy;2023 Michael Joshua Ryan
-          <a href="mailto:MRyan@citymuseum.org">MRyan@citymuseum.org</a>
+        <span>Web app and components &copy;2023 Michael Joshua Ryan<br>
+	  To request features, report bugs or for other assistance, please contact
+          <a href="mailto:MRyan@citymuseum.org">MRyan@citymuseum.org</a>.
         </span>
       </div>
     </div>
@@ -999,11 +1022,11 @@ function output(){
   if(  global  ){
     paste.classList.remove( "less" );
     let filterRE = RegExp( filter.value );
-    shorttoday.textContent = today.textContent = dateToEnglish( global.date );
+    if(  global.date  )
+      shorttoday.textContent = today.textContent = dateToEnglish( global.date );
     days.textContent = "";
     localStorage.getItem( "days" )?.split( " " ).forEach(
-      day => days.appendChild( dayLink( day ) )
-    );
+      day => days.appendChild( dayLink( day ) ) );
     updateShareLink();
     updateCustomFields();
     updateSortOrder();
@@ -1194,6 +1217,7 @@ function newInput( type, value, theClass, idx, colIdx ){
   case 'handle': {
     let [ element, tag ] = fillElement( input, "input", type, theClass, idx, colIdx );
     element.value = value;
+    element.setAttribute( "draggable", "true" );
     return [ input, tag ];
   }
   case 'checkbox': {
@@ -1276,7 +1300,7 @@ function updateSortOrder(){
     sort.forEach( col => {
       span.textContent += " " + (col < 0  ? "▼"  : "") + names[ Math.abs(col) - 1 ] + " ";
     } );
-    span.addEventListener( "click", event => useFavorite( idx ) );
+    span.addEventListener( "click", event => useFavoriteSort( idx ) );
     favs.appendChild( span );
   } );
   let sfavs = document.querySelector( "#shorter-favs" );
@@ -1291,13 +1315,23 @@ function updateSortOrder(){
         sspan.textContent += " " + col;
       } );
       sspan.addEventListener( "click",
-	event => useFavorite( favoriteSorts.findIndex( x=>arrayEq(x, sort) ) )
+	event => useFavoriteSort( favoriteSorts.findIndex( x=>arrayEq(x, sort) ) )
       );
       sfavs.appendChild( sspan );
     } );
 }
 
-function useFavorite( idx ){
+function useFavoriteCustomFields( idx ){
+  //TODO adjust columns of global.data to make sense
+  customFields = Array.from( favoriteCustomFields[ idx ] );
+  let head = favoriteCustomFields.slice( 0, idx );
+  let tail = favoriteCustomFields.slice( idx + 1 );
+  favoriteCustomFields = [ favoriteCustomFields[ idx ], ...head, ...tail ];
+  savePreferences();
+  output();
+}
+
+function useFavoriteSort( idx ){
   sortOrder = Array.from( favoriteSorts[ idx ] );
   let head = favoriteSorts.slice( 0, idx );
   let tail = favoriteSorts.slice( idx + 1 );
