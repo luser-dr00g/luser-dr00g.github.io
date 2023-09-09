@@ -17,10 +17,10 @@
     --text: hsl(0 0% 100%); }
 
 .not-implemented{
-    background-color: red;
+    background-color: magenta;
 }
 .incomplete{
-    background-color: purple;
+    background-color: violet;
 }
 
 body{
@@ -45,18 +45,8 @@ button{
     color: var(--heading);
     border-color: var(--text);
     background-color: var(--table-bg); }
-
-input[type="checkbox"]{
-    width: 20px;
-    height: 10px;
-    -webkit-appearance: none;
-    background: #c6c6c6;
-    outline: none;
-    border-radius: 20px;
-    transition: .5s;
-    box-shadow: inset 0 0 5px rbga(0,0,0,.2); }
-input:checked[type="checkbox"]{
-    background: #03a9f4; }
+#pasteme{
+    width: 10ch; }
 input[type="text"]{
     color: var(--text);
     border-color: var(--text);
@@ -139,9 +129,19 @@ th{
 .name{
     width: 25ch;
 }
+.checkbox{
+    text-align: center;
+}
+.clickbox{
+    text-align: center;
+}
 
 #grid table tr:nth-child(3n+2){
     background-color: var(--table-bg); }
+
+#help{
+    width: 60ch;
+}
 
 details:not([open]) #badge{
     display: none; }
@@ -160,31 +160,12 @@ details[open] #shortfilter{
       <span id="shortfilter"></span>
     </summary>
   <div class="controls">
-    <more-panel class="undo not-implemented">
-      <span class="less"><span>&nbsp;&#x2939;</span>
-	               <span>&#x2938;&nbsp;</span></span>
-      <div class="row more"><button>Undo 1</button></div>
-      <div class="more"><hr></div>
-      <div class="row more"><button>Redo 1</button></div>
-    </more-panel>
-
-    <more-panel class="control"> <span class="panel-name">control</span>
+    <more-panel class="control"> <span class="panel-name">file</span>
       <div class="row">
         <input id="pasteme" class="more less" type=text autofocus placeholder="Paste here">
         <span><button id="load" class="more" onClick="showFileInput()">Load</button></span>
         <button class="more" onclick="saveTextFile()">Save</button>
 	<a id="share" class="more">Share</a>
-      </div>
-    </more-panel>
-
-    <more-panel class="rules incomplete"> <span class="panel-name">rules</span>
-      <div class="more vert">
-	<span class="row"><input type=checkbox id="sixteen">
-          <label for="sixteen">fixed position=16</label></span>
-	<span class="row"><input type=checkbox id="movesuper">
-          <label for="movesuper">move supervisors</label></span>
-	<span class="row"><input type=checkbox id="movelead">
-          <label for="movelead">move leads</label></span>
       </div>
     </more-panel>
 
@@ -204,6 +185,17 @@ details[open] #shortfilter{
       </div>
     </more-panel>
 
+    <more-panel class="rules incomplete"> <span class="panel-name">rules</span>
+      <div class="more vert">
+	<span class="row"><input type=checkbox id="sixteen">
+          <label for="sixteen">fixed position=16</label></span>
+	<span class="row"><input type=checkbox id="movesuper">
+          <label for="movesuper">move supervisors</label></span>
+	<span class="row"><input type=checkbox id="movelead">
+          <label for="movelead">move leads</label></span>
+      </div>
+    </more-panel>
+
     <more-panel class="custom incomplete">
       <span class="panel-name">custom<span class="more"> fields</span></span>
       <div class="row more json">
@@ -215,6 +207,14 @@ details[open] #shortfilter{
       </div>
       <div class="more rendered"> </div>
       <div class="more" id="custom-favs"> </div>
+    </more-panel>
+
+    <more-panel class="undo not-implemented">
+      <span class="less"><span>&nbsp;&#x2939;</span>
+	               <span>&#x2938;&nbsp;</span></span>
+      <div class="row more"><button>Undo 1</button></div>
+      <div class="more"><hr></div>
+      <div class="row more"><button>Redo 1</button></div>
     </more-panel>
 
     <more-panel class="filter"> <span class="panel-name">filter</span>
@@ -310,6 +310,30 @@ details[open] #shortfilter{
     <div id="grid" slot="content" class="active content"></div>
     <div id="stations" slot="content" class="content"></div>
     <div id="help" slot="content" class="content">
+      <p> <em>Load personnel data</em> by opening the File menu and
+	loading a previously saved <code>.txt</code> file
+	<em>Or</em> by following an emailed share link 
+        <em>Or</em> by copy/pasting text data
+	from Paycor's printable view of the day's schedule
+        into the &lt;<em>Paste here</em>&gt; box.
+	In detail: login to the Paycor website,
+	click the top left hamburger menu,
+	navigate to <em>Time > Scheduling</em>,
+	click <em>Day</em> then click the little printer icon at top right,
+	and choose the regular <em>Printable version</em>.
+	Hit escape to close the print dialog that pops up
+	and hit ctrl-A ctrl-C to copy all the text. 
+	Then you can return to this page and paste into the &lt;<em>Paste Here</em>&gt; box
+	to feed the data to it.
+      <p> Click the triangle at the top left to collapse all the menus
+	for a streamlined printable version.
+      <p> There is a <em>default sorting order</em> that is applied automatically
+	if no other sorting order is chosen. The text view is always shown using this
+	same default sort order which is { <em>location ▼position start end</em> }.
+      <p> Portions of the app that are
+	<span class="not-implemented"><em>NOT IMPLEMENTED</em></span> or
+	<span class="incomplete"><em>INCOMPLETE</em></span> are highlighted.
+	So don't futz with those, ya mugs. They don't gonna work write.
       <div>
         <span>web app and components &copy;2023 Michael Joshua Ryan
           <a href="mailto:MRyan@citymuseum.org">MRyan@citymuseum.org</a>
@@ -318,8 +342,11 @@ details[open] #shortfilter{
     </div>
   </tabs-panel>
 
+  <!-- populated with the values from columns 1 and 2 -->
 <datalist id="locations"></datalist>
 <datalist id="positions"></datalist>
+
+  <!-- templates for grid edit widgets -->
 <template id="text-template"><input type="text"></template>
 <template id="checkbox-template"><input type="checkbox"></template>
 <template id="clickbox-template"><click-box cycle
@@ -598,6 +625,21 @@ function editData( data ){
   undoStack.push( rec );
 }
 
+function changeField( idx, colIdx, newValue ){
+  let rec = {
+    type: 'Edit-Field',
+    idx: idx,
+    colIdx: colIdx,
+    next: newValue,
+    prev: global.data[ idx ][ colIdx ],
+    _do: () => { global.data[ idx ][ colIdx ] = newValue },
+    undo: () => { global.data[ idx ][ colIdx ] = rec.prev }
+  };
+  //console.log( rec );
+  rec._do();
+  undoStack.push( rec );
+}
+
 function changeLocation( idx, loc ){
   if(  global.data[ idx ][0] == loc  ) return;
   if(  global.data[ idx ][1] == 'Supervisor' && ! movesuper.checked  ) return;
@@ -828,7 +870,7 @@ function parsePaycor( input ){
   let output = [];
   var i;
   for(  i = startIndex + 1; i < lines.length; ++i  ){
-    let name = lines[ i ];
+    let name = lines[ i ].replace(/\s*$/,"");
     let matches = /(\d\d?:?\d?\d?\s*[ap]m)\s*-\s*(\d\d?:?\d?\d?\s*[ap]m)(.*)/.exec( lines[i+1] );
     if(  matches  ){
       i+=2;
@@ -1092,74 +1134,87 @@ function formatTable( it ){
 					 colIdx==0?abbreviateFoodService(col):
                                          colIdx==2?suppressMiddleNames(col):col,
 					 classes[colIdx],
-					 rec[0] );
+					 rec[0],
+					 colIdx );
       td.appendChild( input );
+      td.classList.add( types[colIdx] );
       tr.appendChild( td );
     } );
   } );
   return table;
 }
 
-function newInput( type, value, theClass, idx ){
+function fillElement( input, tag, type, theClass, idx, colIdx ){
+  let element = input.querySelector( tag );
+  element.classList.add( "grid" );
+  element.classList.add( type );
+  element.classList.add( theClass );
+  element.dataset.index = idx;
+  element.dataset.colIdx = colIdx;
+  return [ element, tag ];
+}
+
+function newInput( type, value, theClass, idx, colIdx ){
   //console.log( type, value, theClass, idx );
   let template = document.getElementById( type + "-template" );
   let input = template.content.cloneNode( true );
   //console.log( type, value, template, input );
   switch( type ){
   case 'text': {
-    let element = input.querySelector( "input" );
+    let [ element, tag ] = fillElement( input, "input", type, theClass, idx, colIdx );
     element.value = value;
-    element.classList.add( "grid" );
-    element.classList.add( type );
-    element.classList.add( theClass );
-    element.dataset.index = idx;
-    return [ input, "input" ];
+    element.addEventListener( "change", e => {
+      changeField( idx, colIdx, element.value );
+      saveData();
+      output();
+    } );
+    return [ input, tag ];
   }
   case 'time': {
-    let element = input.querySelector( "input" );
+    let [ element, tag ] = fillElement( input, "input", type, theClass, idx, colIdx );
     element.value = value;
-    element.classList.add( "grid" );
-    element.classList.add( type );
-    element.classList.add( theClass );
-    element.dataset.index = idx;
-    return [ input, "input" ];
+    element.addEventListener( "change", e => {
+      changeField( idx, colIdx, element.value );
+      saveData();
+      output();
+    } );
+    return [ input, tag ];
   }
   case 'option': {
-    let element = input.querySelector( "input" );
+    let [ element, tag ] = fillElement( input, "input", type, theClass, idx, colIdx );
     element.value = value;
-    element.classList.add( "grid" );
-    element.classList.add( type );
-    element.classList.add( theClass );
     element.setAttribute( "list", theClass + "s" );
-    element.dataset.index = idx;
-    return [ input, "input" ];
+    element.addEventListener( "change", e => {
+      changeField( idx, colIdx, element.value );
+      saveData();
+      output();
+    } );
+    return [ input, tag ];
   }
   case 'handle': {
-    let element = input.querySelector( "input" );
+    let [ element, tag ] = fillElement( input, "input", type, theClass, idx, colIdx );
     element.value = value;
-    element.classList.add( "grid" );
-    element.classList.add( type );
-    element.classList.add( theClass );
-    element.dataset.index = idx;
-    return [ input, "input" ];
+    return [ input, tag ];
   }
   case 'checkbox': {
-    let element = input.querySelector( "input" );
+    let [ element, tag ] = fillElement( input, "input", type, theClass, idx, colIdx );
     element.checked = value;
-    element.classList.add( "grid" );
-    element.classList.add( type );
-    element.classList.add( theClass );
-    element.dataset.index = idx;
-    return [ input, "input" ];
+    element.addEventListener( "change", e => {
+      changeField( idx, colIdx, element.checked );
+      saveData();
+      output();
+    } );
+    return [ input, tag ];
   }
   case 'clickbox': {
-    let element = input.querySelector( "click-box" );
-    element.setAttribute( "value", value );
-    element.classList.add( "grid" );
-    element.classList.add( type );
-    element.classList.add( theClass );
-    element.dataset.index = idx;
-    return [ input, "click-box" ];
+    let [ element, tag ] = fillElement( input, "click-box", type, theClass, idx, colIdx );
+    element.setAttribute( "label", value );
+    element.addEventListener( "change", e => {
+      changeField( idx, colIdx, element.getAttribute( "label" ) );
+      saveData();
+      output();
+    } );
+    return [ input, tag ];
   }
   }
 }
