@@ -10,7 +10,10 @@ clickBoxTemplate.innerHTML = `
       border-color: var(--fg-color);
       background-color: var(--bg-color);
       text-align: center;
+      font-size: x-small;
       cursor: default;
+      padding: 0;
+      margin: 0;
     }
   </style>
   <input id="box" type="text" readonly>
@@ -32,42 +35,51 @@ class ClickBox extends HTMLElement {
     this._stateNumber = this._states.findIndex( x => x == val );
     this.draw();
   }
+  setLabel( label ){
+    this._stateNumber = this._labels.findIndex( x => x == label );
+    this._state = this._states[ this._stateNumber ];
+    this.draw();
+  }
   increment() {
     this._stateNumber = (this._stateNumber + 1) % this._states.length;
     this._state = this._states[ this._stateNumber ];
+    this.draw();
   }
   draw() {
-    let box = this.shadowRoot.querySelector("#box");
     //console.log( box );
-    this.value = this._state;
-    //console.log( this.value );
+    this.setAttribute( "value", this._state );
     this.label =
-      this.hasAttribute( this.value )  ? this.getAttribute( this.value )  : this.value;
+      this.hasAttribute( this._state )  ? this.getAttribute( this._state )  : this._state;
+    this.setAttribute( "label", this.label );
+    let box = this.shadowRoot.querySelector("#box");
     box.toggleAttribute( "readonly" );
       box.value = this.label;
     box.toggleAttribute( "readonly" );
     box.blur();
+    this.dispatchChangeEvent();
   }
   click( event ){
     event.preventDefault();
     this.increment();
-    this.draw();
     return;
   }
   connectedCallback() {
-    this.shadowRoot.querySelector("#box").addEventListener( "click", (e)=>this.click(e) );
+    let clicker = (e)=>{this.click(e)}
+    this.shadowRoot.querySelector("#box").addEventListener( "click", clicker );
+    this._clicker = clicker;
 
     if(  this.hasAttribute( "cycle" )  ){
       this._states =
 	( this.hasAttribute("states") ?
 	    this.getAttribute("states") : "empty true false" ).split( " " );
+      this._labels = this._states.map( x=>this.hasAttribute(x)?this.getAttribute(x):x );
       //console.log( this._states );
       this._stateNumber = 0;
       this._state = this._states[ this._stateNumber ];
       let box = this.shadowRoot.querySelector("#box");
       let size = this._states.
-        map(x=>this.hasAttribute(x)?this.getAttribute(x):x).
-        map(x=>x.length).
+        map( x=>this.hasAttribute(x)?this.getAttribute(x):x ).
+        map( x=>x.length ).
         reduce( max );
       //console.log( size );
       box.setAttribute( "size", size );
@@ -77,15 +89,27 @@ class ClickBox extends HTMLElement {
     }
   }
   disconnectedCallback() {
-    this.shadowRoot.querySelector("#box").removeEventListener();
+    if(  this._clicker  ){
+      this.shadowRoot.querySelector("#box").removeEventListener( "click", this._clicker );
+      this._clicker = null;
+    }
   }
   static get observedAttributes() {
-    return ["value"];
+    return ["value", "label"];
   }
   attributeChangedCallback( name, oldValue, newValue ){
-    if(  name == "value"  ){
-      if(  this.states  ) this.setValue( newValue );
+    switch(  name  ){
+    case "value": if(  this.states  ) this.setValue( newValue ); break;
+    case "label": if(  this.states  ) this.setLabel( newValue ); break;
     }
+  }
+  dispatchChangeEvent(){
+    const changeEvent = new CustomEvent( 'change', {
+      detail: this._state,
+      bubbles: true,
+      composed: true,
+    } );
+    this.dispatchEvent( changeEvent );
   }
 }
 
