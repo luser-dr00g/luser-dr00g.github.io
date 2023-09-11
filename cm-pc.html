@@ -51,6 +51,7 @@ input[type="text"]{
     color: var(--text);
     border-color: var(--text);
     background-color: inherit;
+    width: attr(size) "ch";
 }
 textarea{
     color: var(--text);
@@ -137,6 +138,9 @@ th{
     width: 60ch;
 }
 
+[disabled]{
+    background-color: red;
+}
 .important{
     background-color: red;
 }
@@ -214,7 +218,7 @@ details[open] #shortfilter{
       <div class="more" id="custom-favs"> </div>
     </more-panel>
 
-    <more-panel class="undo">
+    <more-panel id="undo" class="undo">
       <span class="less not-implemented"><span>&nbsp;&#x2939;</span>
 	               <span>&#x2938;&nbsp;</span></span>
       <div class="row more not-implemented"><button>Undo 1</button></div>
@@ -350,6 +354,20 @@ details[open] #shortfilter{
 	{ location + position } fields. And the "invert" button reverses the sense
 	of the pattern so that matching items are excluded and non-matching items
 	are shown.
+      <p>
+	You can add new people using the Text view. After a Location line which
+	is flush-left, just type a new line that starts with at least one space,
+	then the name, then a start time, dash, end time. There
+	should be no spaces in the numbers but minutes are allowed and
+	'am' or 'pm' is required or it won't be recognized,
+	eg. "    First Middle Last 4 pm-7:30 pm".
+      <p>
+	You can add a new Location line in the Text view, too. Just write it
+	flush left to distinguish from the people lines which are indented.
+	The last word will be split off and used as the Position field.
+	You must put at least one person in that location
+	(or even a dummy line with just 2 times, eg " 1am-1am"), or else it won't
+	create any new records using the location and you won't see any result.
       <p> Portions of the app that are
 	<span class="not-implemented"><em>NOT IMPLEMENTED</em></span> or
 	<span class="incomplete"><em>INCOMPLETE</em></span> are highlighted.
@@ -410,6 +428,7 @@ const paste = document.querySelector("#pasteme");
 const filter = document.querySelector("#filter");
 const invertFilter = document.querySelector("#invertFilter");
 const filterName = document.querySelector("#filter-name");
+const undo = document.querySelector("#undo");
 const share = document.querySelector("#share");
 const date = document.querySelector("#date");
 const text = document.querySelector("#text");
@@ -761,9 +780,11 @@ function savedFormat( it ){
 }
 
 function saveData(){
-  localStorage.setItem( "global", savedFormat( global ) );
-  saveDay();
-  appendStatus( "saved." );
+  if(  global  ){
+    localStorage.setItem( "global", savedFormat( global ) );
+    saveDay();
+    appendStatus( "saved." );
+  }
 }
 
 function loadData(){
@@ -858,6 +879,10 @@ function loadAndOutput(){
     //let s = window.location.search;
     //let q = decodeURIComponent();
     appendStatus( "query read." );
+    let span = createSpan( "Please reload before editing." );
+    span.classList.add( "shortcut" );
+    span.addEventListener( "click", e => window.location = window.location.pathname );
+    status.appendChild( span );
   } else {
     appendStatus( "loading..." );
     loadData();
@@ -1010,7 +1035,11 @@ function dayLink( day ){
 
 function output(){
   //console.log( global );
-  if(  global  ){
+  if(  ! global  ){
+    paste.classList.add( "less" );
+    let table = grid.querySelector( "table" );
+    if(  table  ) grid.removeChild( table );
+  } else {
     paste.classList.remove( "less" );
     let filterRE = RegExp( filter.value );
     if(  global.date  )
@@ -1042,9 +1071,8 @@ function output(){
 	cmpColumns( (sortOrder.length  ? sortOrder  : [ 1, -2, 4, 5 ]).
                     map( x=>Math.sign(x)*(Math.abs(x)+1) ) )
       ) ) );
-  } else {
-    paste.classList.add( "less" );
   }
+
   if(  filter.value == "" && ! invertFilter.checked  ){
     everyone.classList.remove( "less" );
   } else {
@@ -1068,6 +1096,8 @@ function output(){
   let filters = document.querySelector( ".filter" ).shadowRoot.querySelector( "#toggle" );
   filters.click();
   filters.click();
+  updateUndoRedo();
+  if(  global == null  ) pasteme.focus();
 }
 
 function updateShareLink(){
@@ -1092,6 +1122,88 @@ function updateLocationsAndPositions( it ){
     opt.value = pos;
     posdata.appendChild( opt );
   } );
+}
+
+function newButton( str ){
+  let b = document.createElement( "button" );
+  b.innerHTML = str;
+  return  b;
+}
+
+function updateUndoRedo(){
+  Array.from(undo.childNodes).forEach(kid=>undo.removeChild(kid));
+  let br = document.createElement( "br" );
+  br.classList.add( "more" );
+  undo.appendChild( br );
+
+  let u = newButton( "&nbsp;&#x2939;&nbsp;" );
+  u.classList.add( "less" );
+  if(  undoStack.length == 0  ){
+    u.setAttribute( "disabled", "disabled" );
+    undo.appendChild( u );
+    let um = newButton( "-nothing to undo-" );
+    um.classList.add( "more" );
+    um.setAttribute( "disabled", "disabled" );
+    undo.appendChild( um );
+  } else {
+    u.onclick = () => undoN( 1 );
+    undo.appendChild( u );
+    undoStack.forEach( (rec,idx) => {
+      let i = undoStack.length - 1 - idx;
+      let um = newButton( `${i+1} undo ${rec.type}` );
+      um.classList.add( "more" );
+      um.onclick = () => undoN( i + 1 );
+      undo.appendChild( um );
+    } );
+  }
+  let hr = document.createElement( "hr" );
+  hr.classList.add( "more" );
+  undo.appendChild( hr );
+
+  let r = newButton( "&nbsp;&#x2938;&nbsp;" );
+  r.classList.add( "less" );
+  if(  redoStack.length == 0  ){
+    r.setAttribute( "disabled", "disabled" );
+    undo.appendChild( r );
+    let rm = newButton( "-nothing to redo-" );
+    rm.classList.add( "more" );
+    rm.setAttribute( "disabled", "disabled" );
+    undo.appendChild( rm );
+  } else {
+    r.onclick = () => redoN( 1 );
+    undo.appendChild( r );
+    redoStack.slice().reverse().forEach( (rec,idx) => {
+      let rm = newButton( `${idx+1} redo ${rec.type}` );
+      rm.classList.add( "more" );
+      rm.onclick = () => redoN( idx + 1 );
+      undo.appendChild( rm );
+    } );
+  }
+  let toggle = undo.shadowRoot.querySelector( "#toggle" );
+  toggle.click();
+  toggle.click();
+}
+
+function undoN( n ){
+  appendStatus( `undo (${n}).` );
+  for(  var i = 0; i < n; ++i  ){
+    let rec = undoStack.pop();
+    redoStack.push( rec );
+    rec.undo();
+  }
+  saveData();
+  output();
+}
+
+function redoN( n ){
+  appendStatus( `redo (${n})` );
+  for(  var i = 0; i < n; ++i  ){
+    let rec = redoStack.pop();
+    undoStack.push( rec );
+    rec._do();
+  }
+  saveData();
+  output();
 }
 
 function unique( arr ){
