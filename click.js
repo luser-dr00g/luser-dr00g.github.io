@@ -38,6 +38,7 @@ class ClickBox extends HTMLElement {
   setLabel( label ){
     this._stateNumber = this._labels.findIndex( x => x == label );
     this._state = this._states[ this._stateNumber ];
+    //console.log( label, this._state, this._states );
     this.draw();
   }
   increment() {
@@ -56,17 +57,16 @@ class ClickBox extends HTMLElement {
       box.value = this.label;
     box.toggleAttribute( "readonly" );
     box.blur();
-    this.dispatchChangeEvent();
   }
   click( event ){
-    event.preventDefault();
     this.increment();
+    this.dispatchChangeEvent();
+    event.preventDefault();
     return;
   }
   connectedCallback() {
-    let clicker = (e)=>{this.click(e)}
-    this.shadowRoot.querySelector("#box").addEventListener( "click", clicker );
-    this._clicker = clicker;
+    this._clicker = (e)=>{this.click(e)}
+    this.shadowRoot.querySelector("#box").addEventListener( "click", this._clicker );
 
     if(  this.hasAttribute( "cycle" )  ){
       this._states =
@@ -85,6 +85,8 @@ class ClickBox extends HTMLElement {
       box.setAttribute( "size", size );
       if(  this.hasAttribute( "value" )  ){
         this.setValue( this.getAttribute( "value" ) );
+      } else if(  this.hasAttribute( "label" )  ){
+	this.setLabel( this.getAttribute( "label" ) );
       }
     }
   }
