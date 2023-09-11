@@ -123,15 +123,6 @@ th{
     text-align: right;
     width: 8ch;
 }
-.location{
-    width: 25ch;
-}
-.position{
-    width: 9ch;
-}
-.name{
-    width: 25ch;
-}
 .checkbox{
     text-align: center;
 }
@@ -158,6 +149,13 @@ details[open] #shortfilter{
     display: none; }
 
 </style>
+<!--
+<style id="widths" disabled=true>
+.location{ width: 25ch; }
+.position{ width: 9ch; }
+.name{ width: 25ch; }
+</style>
+-->
 <body>
 
   <details open>
@@ -192,8 +190,8 @@ details[open] #shortfilter{
       </div>
     </more-panel>
 
-    <more-panel class="rules"> <span class="panel-name incomplete">rules</span>
-      <div class="more vert incomplete">
+    <more-panel class="rules"> <span class="panel-name">rules</span>
+      <div class="more vert">
 	<span class="row"><input type=checkbox id="sixteen">
           <label for="sixteen">fixed position=16</label></span>
 	<span class="row"><input type=checkbox id="movesuper">
@@ -573,22 +571,6 @@ function plusEvent(){
   filterPlusMinus( "Event" );
 }
 
-function plusPinball_v1(){
-  if(  ! filter.value  ){
-    filter.value = "Pinball";
-    filterName.textContent = "Pinball";
-  } else if(  filter.value == "Pinball"  ){
-    filter.value = "";
-    filterName.textContent = "";
-  } else if(  filter.value.match( /\|Pinball/ )  ){
-    filter.value = filter.value.replace( /\|Pinball/, "" );
-  } else {
-    filter.value = filter.value + "|Pinball";
-  }
-  savePreferences();
-  output();
-}
-
 function abbreviateFoodService( str ){
   if(  abbreviatefoodservice.checked  )
     return str.replace( /Food Service/, "FS" );
@@ -649,6 +631,15 @@ function editData( data ){
 }
 
 function changeField( idx, colIdx, newValue ){
+  switch(  colIdx  ){
+  case 0:
+    changeLocation( idx, newValue ); return;
+  case 1:
+    changePosition( idx, newValue ); return;
+  case 3:
+  case 4:
+    changeTime( idx, colIdx - 3, newValue ); return;
+  }
   let rec = {
     type: 'Edit-Field',
     idx: idx,
@@ -658,7 +649,7 @@ function changeField( idx, colIdx, newValue ){
     _do: () => { global.data[ idx ][ colIdx ] = newValue },
     undo: () => { global.data[ idx ][ colIdx ] = rec.prev }
   };
-  //console.log( rec );
+  console.log( rec );
   rec._do();
   undoStack.push( rec );
 }
@@ -953,7 +944,7 @@ function parseInternal( input ){
       }
     } else {
       cat = line;
-      let w = line.split( " " );
+      let w = line.replace( /^FS /, "Food Service " ).split( " " );
       pos = w.pop();
       loc = w.join( " " );
     }
@@ -1206,6 +1197,7 @@ function newInput( type, value, theClass, idx, colIdx ){
   case 'option': {
     let [ element, tag ] = fillElement( input, "input", type, theClass, idx, colIdx );
     element.value = value;
+    element.setAttribute( "size", value.length );
     element.setAttribute( "list", theClass + "s" );
     element.addEventListener( "change", e => {
       changeField( idx, colIdx, element.value );
@@ -1217,6 +1209,7 @@ function newInput( type, value, theClass, idx, colIdx ){
   case 'handle': {
     let [ element, tag ] = fillElement( input, "input", type, theClass, idx, colIdx );
     element.value = value;
+    element.setAttribute( "size", value.length );
     element.setAttribute( "draggable", "true" );
     return [ input, tag ];
   }
@@ -1234,7 +1227,9 @@ function newInput( type, value, theClass, idx, colIdx ){
     let [ element, tag ] = fillElement( input, "click-box", type, theClass, idx, colIdx );
     element.setAttribute( "label", value );
     element.addEventListener( "change", e => {
-      changeField( idx, colIdx, element.getAttribute( "label" ) );
+      console.log( e );
+      //changeField( idx, colIdx, element.getAttribute( "label" ) );
+      changeField( idx, colIdx, element.label );
       saveData();
       output();
     } );
