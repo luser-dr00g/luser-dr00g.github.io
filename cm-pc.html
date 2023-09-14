@@ -219,11 +219,11 @@ details[open] #shortfilter{
     </more-panel>
 
     <more-panel id="undo" class="undo">
-      <span class="less not-implemented"><span>&nbsp;&#x2939;</span>
+      <span class="less"><span>&nbsp;&#x2939;</span>
 	               <span>&#x2938;&nbsp;</span></span>
-      <div class="row more not-implemented"><button>Undo 1</button></div>
+      <div class="row more"><button>Undo 1</button></div>
       <div class="more"><hr></div>
-      <div class="row more not-implemented"><button>Redo 1</button></div>
+      <div class="row more"><button>Redo 1</button></div>
     </more-panel>
 
     <more-panel class="filter"> <span class="panel-name">filter</span>
@@ -591,14 +591,13 @@ function plusEvent(){
 }
 
 function abbreviateFoodService( str ){
-  if(  abbreviatefoodservice.checked  )
+  //if(  abbreviatefoodservice.checked  )
     return str.replace( /Food Service/, "FS" );
-  else
-    return  str;
+  //else return  str;
 }
 
 function suppressMiddleNames( str ){
-  if(  suppressmiddlenames.checked  ){
+  //if(  suppressmiddlenames.checked  ){
     let names = str.replace( /\s*$/s, "" ).split( " " );
     let first = names.shift();
     if(  names.length  ){
@@ -606,8 +605,7 @@ function suppressMiddleNames( str ){
       return  [ first, last ].join( " " );
     } else
       return  first;
-  } else
-    return  str;
+  //} else return  str;
 }
 
 function createSpan( str ){
@@ -642,11 +640,42 @@ function editData( data ){
     type: 'Edit-Text',
     next: JSON.parse( JSON.stringify( data ) ),
     prev: global === null  ? null  : JSON.parse( JSON.stringify( global ) ),
-    _do: () => { global = rec.next },
-    undo: () => { global = rec.prev }
+    diff: diffGlobal( global, data ),
+    _do: () => { doDiffChanges( rec ) }, //{ global = rec.next },
+    undo: () => { undoDiffChanges( rec ) } //{ global = rec.prev }
   };
+  console.log( rec.diff );
   rec._do();
   undoStack.push( rec );
+}
+
+function doDiffChanges( undorec ){
+  undorec.diff.extra.change.forEach( change => {
+    let idx = findRecord( global, change.next );
+    for(  var i = 0; i < change.next.length; ++i  ){
+      if(  i == 2  ) continue;
+      global.data[ idx ][ i ] = change.next[ i ];
+    }
+  } );
+  undorec.diff.extra.add.forEach( rec => {
+    global.data.push( rec );
+  } );
+}
+  
+function undoDiffChanges( undorec ){
+  undorec.diff.extra.change.forEach( change => {
+    let idx = findRecord( global, change.prev );
+    for(  var i = 0; i < change.prev.length; ++i  ){
+      if(  i == 2  ) continue;
+      global.data[ idx ][ i ] = change.prev[ i ];
+    }
+  } );
+  undorec.diff.extra.add.forEach( rec => {
+    let idx = findRecord( global, rec );
+    let head = global.data.slice( 0, idx );
+    let tail = global.data.slice( idx + 1 );
+    global.data = head.concat( tail );
+  } );
 }
 
 function changeField( idx, colIdx, newValue ){
@@ -764,13 +793,52 @@ function changeModel(){
     
 function diffGlobal( prev, next ){
   let type = "";
+  let extra = { add: [], change: [] };
   if(  prev.date != next.date  ){
-    type = "Load";
-  } else if(  ! objectEq( prev.stationNotes, next.stationsNotes )  ){
+    type = "Load day";
+  } else if(  ! objectEq( prev.stationNotes, next.stationNotes )  ){
     type = "Edit station";
   } else {
-    type = "Edit";
+    type = "Edit data";
+    let sp = sortedData( prev, cmpColumns( [ 3, 1, 2, 4, 5 ] ) );
+    let sn = sortedData( next, cmpColumns( [ 3, 1, 2, 4, 5 ] ) );
+    sn.data.forEach( rec => {
+      let idx = findRecord( sp, rec );
+      if(  idx == -1  ){
+	extra.add.push( rec );
+      } else {
+	//console.log( idx );
+	for(  var i = 0; i < rec.length; ++i  ){
+	  if(  i == 2  ) continue;
+	  if(  rec[ i ] != sp.data[ idx ][ i ]  ){
+	    extra.change.push( {
+	      prev: JSON.parse( JSON.stringify( sp.data[ idx ] ) ),
+	      next: JSON.parse( JSON.stringify( rec ) )
+	    } );
+	    break;
+	  }
+	}
+      }
+    } );
   }
+  return  { type, extra };
+}
+
+function findRecord( it, rec ){
+  let name = rec[ 2 ];
+  let n = name.split( " " ).length;
+  let key = n > 2  ? suppressMiddleNames( name )  : name;
+  let idx = -1;
+  it.data.forEach( (r, i) => {
+    let rn = r[ 2 ].split( " " ).length;
+    let rk = rn > 2  ? suppressMiddleNames( r[ 2 ] )  : r[ 2 ];
+    if(  rk == key  ){
+      //if(  rn == n  ||  ( n == 2 && rn > 2 )  ){
+	idx = i;
+      //}
+    }
+  } );
+  return  idx;
 }
 
 // I/O Functions
@@ -879,6 +947,7 @@ function loadAndOutput(){
     //let s = window.location.search;
     //let q = decodeURIComponent();
     appendStatus( "query read." );
+    saveData();
     let span = createSpan( "Please reload before editing." );
     span.classList.add( "shortcut" );
     span.addEventListener( "click", e => window.location = window.location.pathname );
@@ -1218,7 +1287,8 @@ function unique( arr ){
 function formatText( it, abbrev ){
   if(  ! it || ! it.data  ) return  "";
   var cat = "";
-  return  `data for ${dateToEnglish( it.date )}\n` +
+  return  `${abbrev&&invertFilter.checked?"! ":""}${abbrev&&filter.value?filter.value+" ":""}` +
+    `data for ${dateToEnglish( it.date )}\n` +
     `custom fields: ${JSON.stringify( customFields )}\n` +
     `station notes: ${JSON.stringify( it.stationNotes )}\n` +
     it.data.map( rec=>{
@@ -1226,13 +1296,18 @@ function formatText( it, abbrev ){
       let [ name, start, end, ...rest ] = rec.slice(2);
       //console.log( {notes} );
       let person = "\t" +
-	  ( abbrev ? suppressMiddleNames( name ) : name ) + "\t" +
+	  ( abbrev && suppressmiddlenames.checked
+	      ? suppressMiddleNames( name )
+	      : name ) + "\t" +
 	  start + "-" + end + "\t" + rest.join("\t");
       if(  pre == cat  ){
         return  person;
       } else {
 	cat = pre;
-	return  (abbrev ? abbreviateFoodService( pre ) : pre ) + "\n" + person;
+	return  (abbrev && abbreviatefoodservice.checked
+		  ? abbreviateFoodService( pre )
+		  : pre ) +
+	        "\n" + person;
       }
     }).join("\n");
 }
@@ -1257,8 +1332,11 @@ function formatTable( it ){
       if(  ! types[colIdx]  ) return;
       let td = document.createElement( "td" );
       let [ input, element ] = newInput( types[colIdx],
-					 colIdx==0?abbreviateFoodService(col):
-                                         colIdx==2?suppressMiddleNames(col):col,
+					 (colIdx==0 && abbreviatefoodservice.checked)?
+                                           abbreviateFoodService(col):
+                                           (colIdx==2 && suppressmiddlenames.checked)?
+					     suppressMiddleNames(col):
+					     col,
 					 classes[colIdx],
 					 rec[0],
 					 colIdx );
@@ -1574,8 +1652,12 @@ function arrayEq( x, y ){
 }
 
 function objectEq( x, y ){
-  return  arrayEq( Object.keys( x ).sort(), Object.keys( y ).sort() ) &&
-    xkeys.map( xk => x[xk] == y[xk] ).reduce( (x,y) => x & y, true );
+  if(  x == undefined  ) return  y == undefined;
+  if(  y == undefined  ) return  false;
+  let xkeys = Object.keys( x ).sort();
+  let ykeys = Object.keys( y ).sort();
+  return  arrayEq( xkeys, ykeys ) &&
+    xkeys.map( xk => x[xk] == y[xk] ).reduce( (x,y) => x && y, true );
 }
 
 </script>
