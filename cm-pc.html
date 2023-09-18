@@ -37,6 +37,7 @@ more-panel{
     display: inline-flex;
     flex-flow: row wrap;
     margin: .05em; }
+
 button[slot="tab"]{
     color: var(--heading);
     border-color: var(--text);
@@ -52,6 +53,16 @@ input[type="text"]{
     border-color: var(--text);
     background-color: inherit;
     width: attr(size) "ch";
+}
+.panel-name input[type="checkbox"]{
+    //opacity: 0;
+}
+.panel-name label{
+    //position: relative;
+    //left: -2ch;
+}
+#darkmode:checked+label{
+    content: "Light";
 }
 textarea{
     color: var(--text);
@@ -108,6 +119,11 @@ th{
 .handle{
     border: none;
     outline: none;
+}
+.dragging{
+    border: 1px;
+    cursor: move;
+    cursor: grabbing;
 }
 [draggable]{
     cursor: move;
@@ -183,14 +199,14 @@ details[open] #shortfilter{
       <div id="days" class="more"></div>
     </more-panel>
 
-    <more-panel class="style"> <span class="panel-name">style</span>
+    <more-panel class="style"> <!--<span class="panel-name">style</span> -->
+	<span class="panel-name"><input type=checkbox id="darkmode" >
+	<label for="darkmode">Dark</label></span>
       <div class="more vert">
-	<span class="row"><input type=checkbox id="darkmode">
-	  <label for="darkmode">Dark</label></span>
 	<span class="row"><input type=checkbox id="abbreviatefoodservice">
-	  <label for="abbreviatefoodservice">Abbreviate Food Service</label></span>
+	<label for="abbreviatefoodservice">Abbreviate Food Service</label></span>
 	<span class="row"><input type=checkbox id="suppressmiddlenames">
-	  <label for="suppressmiddlenames">Suppress Middle Names</label></span>
+	<label for="suppressmiddlenames">Suppress Middle Names</label></span>
       </div>
     </more-panel>
 
@@ -214,7 +230,7 @@ details[open] #shortfilter{
 	</div>
 	<textarea id="custom-json"></textarea>
       </div>
-      <div class="more rendered"> </div>
+      <div class="more rendered" id="custom-rendered"> </div>
       <div class="more" id="custom-favs"> </div>
     </more-panel>
 
@@ -340,11 +356,6 @@ details[open] #shortfilter{
         the "Insert link" button or hitting Ctrl-k. Merely pasting the link into the message
         body of the email will produce something that looks like a link but
 	doesn't work properly for the email's recipient. 
-      <p><em class="important"> Important! </em> If you are the recipient of an
-	emailed link, be aware that reloading the share link will obliterate any
-	edits you have made and reset the state to exactly the data contained
-	in the share link. So, please click the "Scheduling/Deployment tool" link
-	at the top to reload the page before editing the data.
       <p> Click the triangle at the top left to collapse all the menus
 	for a streamlined printable version.
       <p> There is a <em>default sorting order</em> that is applied automatically
@@ -1446,14 +1457,32 @@ function deleteFavoriteCustomFields( idx ){
   output();
 }
 
+function useFavoriteCustomFields( idx ){
+  customFields = favoriteCustomFields[ idx ];
+  output();
+}
+
 function updateCustomFields(){
   let json = document.querySelector( "#custom-json" );
   json.value = JSON.stringify( customFields );
+  let render = document.querySelector( "#custom-rendered" );
+  render.innerHTML = 
+    "<table><tr>" +
+    customFields.map( (field,idx) => "<th>" + Object.keys( field )[ 0 ] ).join("") + 
+    "<tr>" +
+    customFields.map( (field,idx) => "<td>" + field[ Object.keys( field )[ 0 ] ] ).join("") +
+    "</table>";
+  updateFavoriteCustomFields();
+}
+
+function updateFavoriteCustomFields(){
   let cf = document.querySelector( "#custom-favs" );
   cf.textContent = "";
   favoriteCustomFields.forEach( (spec, idx) => {
     let span = document.createElement( "span" );
+    span.classList.add( "shortcut" );
     spec.forEach( field => span.textContent += " " + Object.keys( field )[0] );
+    span.onclick = () => useFavoriteCustomFields( idx );
     let del = document.createElement( "button" );
     del.innerHTML = "&#x2716;";
     del.onclick = () => deleteFavoriteCustomFields(idx);
