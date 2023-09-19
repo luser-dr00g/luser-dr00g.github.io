@@ -37,6 +37,12 @@ class ClickBox extends HTMLElement {
   }
   setLabel( label ){
     this._stateNumber = this._labels.findIndex( x => x == label );
+    if( this._stateNumber == -1 ){
+      if(  this.hasAttribute( label )  ){
+	console.log( this.getAttribute( label ) );
+        return this.setValue( this.getAttribute( label ) );
+      }
+    }
     this._state = this._states[ this._stateNumber ];
     //console.log( label, this._state, this._states );
     this.draw();
