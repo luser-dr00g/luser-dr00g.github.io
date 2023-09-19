@@ -1445,6 +1445,13 @@ function newInput( type, value, theClass, idx, colIdx ){
     element.value = value;
     element.setAttribute( "size", value.length );
     element.setAttribute( "list", theClass + "s" );
+    element.addEventListener( "focus", e => {
+      element.setAttribute( "placeholder", element.value );
+      element.value = "";
+    } );
+    element.addEventListener( "blur", e => {
+      element.value = element.getAttribute( "placeholder" );
+    } );
     element.addEventListener( "change", e => {
       changeField( idx, colIdx, element.value );
       saveData();
