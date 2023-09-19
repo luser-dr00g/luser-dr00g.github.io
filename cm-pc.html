@@ -221,14 +221,14 @@ details[open] #shortfilter{
       </div>
     </more-panel>
 
-    <more-panel class="custom incomplete">
-      <span class="panel-name">custom<span class="more"> fields</span></span>
+    <more-panel class="custom">
+      <span class="panel-name incomplete">custom<span class="more"> fields</span></span>
       <div class="row more json">
 	<div class="vert">
 	  <button class="more" onclick="saveCustomFields()">save</button>
 	  <label for="custom-json">JSON:</label>
 	</div>
-	<textarea id="custom-json"></textarea>
+	<textarea id="custom-json" incomplete></textarea>
       </div>
       <div class="more rendered" id="custom-rendered"> </div>
       <div class="more" id="custom-favs"> </div>
@@ -392,6 +392,13 @@ details[open] #shortfilter{
     </div>
   </tabs-panel>
 
+<datalist id="field-types">
+  <option value="text">
+  <option value="checkbox">
+  <option value="clickbox">
+  <option value="option">
+  <option value="time">
+</datalist>
   <!-- populated with the values from columns 1 and 2 -->
 <datalist id="locations"></datalist>
 <datalist id="positions"></datalist>
@@ -401,7 +408,9 @@ details[open] #shortfilter{
 <template id="checkbox-template"><input type="checkbox"></template>
 <template id="clickbox-template"><click-box cycle
   states="empty checkmark xmark questionmark" empty=""
-  checkmark="&check;" xmark="✖" questionmark="?"></click-box></template>
+  checkmark="&check;" xmark="✖" questionmark="?"
+  true="checkmark" false="xmark"
+></click-box></template>
 <template id="option-template"><input type="text"></template>
 <template id="handle-template"><input type="text" readonly></template>
 <template id="time-template"><input type="text"></template>
@@ -456,6 +465,7 @@ const shortclear = document.querySelector("#short-clear");
 const sortclear = document.querySelector("#sort-clear");
 const shorttoday = document.querySelector("#shorttoday");
 const shortfilter = document.querySelector("#shortfilter");
+const customJSON = document.querySelector("#custom-json");
 
 main();
 
@@ -468,6 +478,7 @@ function main(){
   text.addEventListener( "change", reparseText );
   filter.addEventListener( "change", output );
   invertFilter.addEventListener( "change", output );
+  customJSON.addEventListener( "change", interpretCustomJSON );
   loadAndOutput();
   appendStatus( "ready." );
 }
@@ -801,6 +812,18 @@ function changeModel(){
   undoStack.push( rec );
   rec._do();
 }
+
+function editCustomFields( value ){
+  let rec = {
+    type: 'Edit-Custom',
+    next: value,
+    prev: customFields,
+    _do: () => { customFields = rec.next; savePreferences(); },
+    undo: () => { customFields = rec.prev; savePreferences(); }
+  };
+  rec._do();
+  undoStack.push( rec );
+}
     
 function diffGlobal( prev, next ){
   let type = "";
@@ -969,6 +992,27 @@ function loadAndOutput(){
     appendStatus( "loaded." );
   }
   output();
+}
+
+// Apply changes to Custom Fields
+
+function interpretCustomJSON( event ){
+  let next = JSON.parse( customJSON.value );
+  let diff = diffCustom( customFields, next );
+  customFields = next; //applyCustomDiff( diff );
+  output();
+}
+
+function diffCustom( prev, next ){
+  let pz = prev.length;
+  let nz = next.length;
+  if(  pz == nz  ){  // rename or retype or reorder?
+  } else if(  pz < nz  ){  // add?
+  } else { // pz > nz  // delete?
+  }
+}
+
+function applyCustomDiff( diff ){
 }
 
 // Input parsing
@@ -1332,7 +1376,9 @@ function formatTable( it ){
   table.appendChild( header );
   classes.forEach( (x,i)=>{
     let th = document.createElement( "th" );
-    th.appendChild( document.createTextNode( x ) );
+    th.appendChild(
+      document.createTextNode(
+	decodeURIComponent( x.replace( /\+/g, "%20" ) ) ) );
     th.onclick= ()=>sortBy(i+1);
     header.appendChild( th );
   } );
@@ -1465,14 +1511,88 @@ function useFavoriteCustomFields( idx ){
 function updateCustomFields(){
   let json = document.querySelector( "#custom-json" );
   json.value = JSON.stringify( customFields );
-  let render = document.querySelector( "#custom-rendered" );
-  render.innerHTML = 
-    "<table><tr>" +
-    customFields.map( (field,idx) => "<th>" + Object.keys( field )[ 0 ] ).join("") + 
-    "<tr>" +
-    customFields.map( (field,idx) => "<td>" + field[ Object.keys( field )[ 0 ] ] ).join("") +
-    "</table>";
+  renderCustomFields();
   updateFavoriteCustomFields();
+}
+
+function renderCustomFields(){
+  let render = document.querySelector( "#custom-rendered" );
+  render.innerText = "";
+  let table = document.createElement( "table" );
+
+  let headers = document.createElement( "tr" );
+  let body = document.createElement( "tr" );
+  customFields.forEach( (field, idx) => {
+    let name = Object.keys( field )[ 0 ];
+    let th = document.createElement( "th" );
+    let input = document.createElement( "input" );
+    input.value = name;
+    input.size = name.length;
+    input.onchange = () => {
+      //input.value = input.value.replace( /\s/g, "" );
+      input.value = encodeURIComponent( input.value ).replace( /%20/g, "+" );
+      let custom = JSON.parse( JSON.stringify( customFields ) );
+      custom[ idx ] = { [input.value]: field[ name ] };
+      editCustomFields( custom );
+      saveData();
+      output();
+    };
+    let del = document.createElement( "button" );
+    del.innerHTML = "✖";
+    del.onclick = () => {
+      let head = customFields.slice( 0, idx );
+      let tail = customFields.slice( idx + 1 );
+      editCustomFields( [ ...head, ...tail ] );
+      saveData();
+      output();
+    };
+    th.appendChild( input );
+    th.appendChild( del );
+    headers.appendChild( th );
+  } );
+  let th = document.createElement( "th" );
+  let plus = document.createElement( "button" );
+  th.appendChild( document.createTextNode( "<new>" ) );
+  plus.textContent = "+";
+  plus.onclick = () => {
+    let custom = JSON.parse( JSON.stringify( customFields ) );
+    custom.push( { [`column-${customFields.length+1}`]: "text" } );
+    editCustomFields( custom );
+    saveData();
+    output();
+  };
+  th.appendChild( plus );
+  headers.appendChild( th );
+
+  customFields.forEach( (field, idx) => {
+    let name = Object.keys( field )[ 0 ];
+    let type = field[ name ];
+    let td = document.createElement( "td" );
+    let input = document.createElement( "input" );
+    input.setAttribute( "list", "field-types" );
+    input.value = type;
+    input.size = 9;
+    input.onfocus = () => {
+      input.setAttribute( "placeholder", input.value );
+      input.value = "";
+    };
+    input.onblur = () => {
+      input.value = input.getAttribute( "placeholder" );
+    };
+    input.onchange = () => {
+      let custom = JSON.parse( JSON.stringify( customFields ) );
+      custom[ idx ] = { [name]: input.value };
+      editCustomFields( custom );
+      saveData();
+      output();
+    };
+    td.appendChild( input );
+    body.appendChild( td );
+  } );
+
+  table.appendChild( headers );
+  table.appendChild( body );
+  render.appendChild( table );
 }
 
 function updateFavoriteCustomFields(){
