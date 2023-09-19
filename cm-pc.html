@@ -1785,7 +1785,8 @@ function cmpColumns( cols ){
   function cmp(x, y){
     let columns = Array.from( cols );
     while(  columns.length > 0  ){
-      let a = x[ Math.abs(columns[0])-1 ], b = y[ Math.abs(columns[0])-1 ];
+      let idx = Math.abs( columns[ 0 ] ) - 1;
+      let a = x[ idx ] ?? "", b = y[ idx ] ?? "";
       let result = ( isTime( a ) ? cmpTime : cmpString )( a, b );
       if(  result != 0  ) return  columns[0] > 0  ? result  : -result;
       columns.shift();
