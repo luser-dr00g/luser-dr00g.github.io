@@ -1397,7 +1397,7 @@ function formatStations( it ){
     /Ferris/, /Rooftop/,
     /Slide/, /Prep/, /Distr/,
     // ...
-    /Art City/, /Food Service (Supervisor|Team)/, /Overflow/,
+    /Art City/, /Food Service (Supervisor|.*Lead)/, /Overflow/,
     /Cowboy|Arch/, /Beatnik/, /Pinball/, /Elephant/, /Artifacts/,
     /CopOut|Guard/, /Facilities/,
     /Lizz?ard/,
@@ -1415,6 +1415,8 @@ function formatStations( it ){
   ) );
   spots.forEach( spot => {
     if(  ! spot[0]  ) return;
+    let classes = [ "name", "start", "end" ];
+    let types = [ "handle", "time", "time" ];
     let location = spot[0][1];
     let positions = unique( spot.map( x=>x[2] ) );
     let table = document.createElement( "table" );
@@ -1424,6 +1426,10 @@ function formatStations( it ){
 					      ?abbreviateFoodService( location )
 					      :location ) );
     loc.setAttribute( "colspan", positions.length * 3 );
+    loc.classList.add( "location" );
+    loc.dataset.index = spot[0][0];
+    loc.addEventListener( "dragover", (event) => handleDragOver( event, loc ) );
+    loc.addEventListener( "drop", (event) => handleDrop( event, loc ) );
     locline.appendChild( loc );
     table.appendChild( locline );
     let posline = document.createElement( "tr" );
@@ -1431,6 +1437,10 @@ function formatStations( it ){
       let th = document.createElement( "th" );
       th.setAttribute( "colspan", "3" );
       th.appendChild( document.createTextNode( pos ) );
+      th.classList.add( "position" );
+      th.dataset.index = global.data.findIndex( rec => rec[ 1 ] == pos );
+      th.addEventListener( "dragover", (event) => handleDragOver( event, th ) );
+      th.addEventListener( "drop", (event) => handleDrop( event, th ) );
       posline.appendChild( th );
     } );
     table.appendChild( posline );
@@ -1448,11 +1458,19 @@ function formatStations( it ){
       mapTuple( row, 4, rec =>
 	rec.slice(0, 3).forEach( (cell, idx) => {
 	  let td = document.createElement( "td" );
-	  td.dataset.index = rec[ 3 ];
-	  td.classList.add( idx==0  ? "name" : "time" );
-	  td.appendChild( document.createTextNode( idx==0 && suppressmiddlenames.checked
-						   ?suppressMiddleNames(cell)
-						   :cell ) );
+	  let [ input, element ] = newInput( types[ idx ],
+                                             idx==0 && suppressmiddlenames.checked
+					       ?suppressMiddleNames( cell ) :cell,
+					     classes[ idx ],
+					     rec[ 3 ],
+					     2 + idx );
+	  //td.dataset.index = rec[ 3 ];
+	  //td.classList.add( idx==0  ? "name" : "time" );
+	  //td.appendChild( document.createTextNode( idx==0 && suppressmiddlenames.checked
+						   //?suppressMiddleNames(cell)
+						   //:cell ) );
+          td.appendChild( input );
+	  td.classList.add( types[ idx ] );
 	  tr.appendChild( td );
 	} )
       );
@@ -1631,8 +1649,8 @@ function handleDragOver( event, dropTarget ){
     el.classList.remove( "dragover" ) );
   event.target.classList.add( "dragover" );
   if(  event.target.classList.contains( "name" )  ){
-    event.target.parentNode.parentNode.querySelector( ".location" ).classList.add( "dragover" );
-    event.target.parentNode.parentNode.querySelector( ".position" ).classList.add( "dragover" );
+    event.target.parentNode.parentNode.querySelector( ".location" )?.classList.add( "dragover" );
+    event.target.parentNode.parentNode.querySelector( ".position" )?.classList.add( "dragover" );
   }
   //console.log( "dragover", event );
 }
