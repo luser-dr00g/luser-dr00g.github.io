@@ -150,6 +150,20 @@ th{
 #grid table tr:nth-child(3n+2){
     background-color: var(--table-bg); }
 
+#stations {
+    flex-flow: row wrap;
+}
+#stations table {
+    display: inline-table;
+    background-color: var(--table-bg);
+    border-style: groove;
+    border-radius: 1ch;
+    padding: .5ch;
+}
+#stations table tr {
+    background-color: var(--body-bg);
+}
+
 #help{
     width: 60ch;
 }
@@ -1194,6 +1208,15 @@ function output(){
 	cmpColumns( (sortOrder.length  ? sortOrder  : [ 1, -2, 4, 5 ]).
                     map( x=>Math.sign(x)*(Math.abs(x)+1) ) )
       ) ) );
+    formatStations(
+      sortedData(
+        filterData(
+	  prependDataIndex( global ),
+	  x=> invertIfChecked( x.slice(1,3).join(" ").match( filterRE )) 
+	),
+	cmpColumns( [ 1, 2, 4, 5 ].map( x=>x+1 ) )
+      )
+    );
   }
 
   if(  filter.value == "" && ! invertFilter.checked  ){
@@ -1364,6 +1387,79 @@ function formatText( it, abbrev ){
 	        "\n" + person;
       }
     }).join("\n");
+}
+
+function formatStations( it ){
+  stations.textContent = "";
+  let spots = [];
+  let res = [
+    /Event/,
+    /Ferris/, /Rooftop/,
+    /Slide/, /Prep/, /Distr/,
+    // ...
+    /Art City/, /Food Service (Supervisor|Team)/, /Overflow/,
+    /Cowboy|Arch/, /Beatnik/, /Pinball/, /Elephant/, /Artifacts/,
+    /CopOut|Guard/, /Facilities/,
+    /Lizz?ard/,
+    /Floor/, /Front|Guest/, /Retail/, /Cabin/,
+    /Grill/,
+    /Grounds/, /Parking/,
+    /Project/,
+  ];
+  spots.push( res.reduce( (acc,cur) => {
+      let [ people, rest ] = sift( acc, cur );
+      spots.push( people );
+      return  rest;
+    },
+    it.data
+  ) );
+  spots.forEach( spot => {
+    if(  ! spot[0]  ) return;
+    let location = spot[0][1];
+    let positions = unique( spot.map( x=>x[2] ) );
+    let table = document.createElement( "table" );
+    let locline = document.createElement( "tr" );
+    let loc = document.createElement( "th" );
+    loc.appendChild( document.createTextNode( abbreviatefoodservice.checked
+					      ?abbreviateFoodService( location )
+					      :location ) );
+    loc.setAttribute( "colspan", positions.length * 3 );
+    locline.appendChild( loc );
+    table.appendChild( locline );
+    let posline = document.createElement( "tr" );
+    positions.forEach( pos => {
+      let th = document.createElement( "th" );
+      th.setAttribute( "colspan", "3" );
+      th.appendChild( document.createTextNode( pos ) );
+      posline.appendChild( th );
+    } );
+    table.appendChild( posline );
+    let poses = transposeStationTableData(
+      positions.map( pos =>
+        spot.filter( rec =>
+	  rec[ 2 ] == pos
+	).map( rec =>
+	  [ ...rec.slice( 3, 6 ), rec[0] ]
+	)
+      )
+    );
+    poses.forEach( row => {
+      let tr = document.createElement( "tr" );
+      mapTuple( row, 4, rec =>
+	rec.slice(0, 3).forEach( (cell, idx) => {
+	  let td = document.createElement( "td" );
+	  td.dataset.index = rec[ 3 ];
+	  td.classList.add( idx==0  ? "name" : "time" );
+	  td.appendChild( document.createTextNode( idx==0 && suppressmiddlenames.checked
+						   ?suppressMiddleNames(cell)
+						   :cell ) );
+	  tr.appendChild( td );
+	} )
+      );
+      table.appendChild( tr );
+    } );
+    stations.appendChild( table );
+  } );
 }
 
 function formatTable( it ){
@@ -1753,7 +1849,8 @@ function toSorted( arr, cmpFunc ){
 }
 
 function sift( data, re ){
-  return  sieve( data, rec => rec[0].match( re ) || rec[1].match( re ) );
+  return  sieve( data, rec => rec.slice( 1, 3 ).join( " " ).match( re ) );
+  //return  sieve( data, rec => rec[0].match( re ) || rec[1].match( re ) );
 }
 
 function sieve( arr, pred ){
@@ -1814,6 +1911,30 @@ function objectEq( x, y ){
   let ykeys = Object.keys( y ).sort();
   return  arrayEq( xkeys, ykeys ) &&
     xkeys.map( xk => x[xk] == y[xk] ).reduce( (x,y) => x && y, true );
+}
+
+function mapTuple( arr, n, proc ){
+  let i, output = [];
+  for(  i = 0; i < arr.length; i += n  ){
+    let inp = arr.slice( i, i+n );
+    let out = proc( inp, Math.floor(i/n) );
+    output.push( out );
+  }
+  return  output;
+}
+  
+function transposeStationTableData( tab ){
+  let maxlen = tab.reduce( (acc,cur)=> acc>cur.length?acc:cur.length, 0 );
+  let filled = tab.map( pos=>{
+    let len = pos.length;
+    pos.length = maxlen;
+    pos.fill( ["","","",-1], len, maxlen );
+    return pos;
+  } );
+  return  filled.reduce( (acc,cur)=>{
+    cur.forEach( (row,i)=>acc[i]=acc[i].concat(row) );
+    return acc;
+  } );
 }
 
 </script>
