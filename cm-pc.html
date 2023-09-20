@@ -125,12 +125,19 @@ th{
     cursor: move;
     cursor: grabbing;
 }
+.dragover{
+    border: dotted 1px;
+}
 [draggable]{
     cursor: move;
     cursor: grab;
 }
+td:has(.name){ touch-action: none }
 .text{
-    border: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: dotted 1px;
     outline: none;
     width: inherit;
 }
@@ -183,13 +190,6 @@ details[open] #shortfilter{
     display: none; }
 
 </style>
-<!--
-<style id="widths" disabled=true>
-.location{ width: 25ch; }
-.position{ width: 9ch; }
-.name{ width: 25ch; }
-</style>
--->
 <body>
 
   <details open>
@@ -747,7 +747,7 @@ function changeLocation( idx, loc ){
     next: loc,
     prev: global.data[ idx ][0],
     _do: () => { global.data[ rec.idx ][0] = rec.next },
-    undo: () => { global.data[ rec.idx ][1] = rec.prev }
+    undo: () => { global.data[ rec.idx ][0] = rec.prev }
   };
   rec._do();
   undoStack.push( rec );
@@ -1553,6 +1553,8 @@ function newInput( type, value, theClass, idx, colIdx ){
       saveData();
       output();
     } );
+    element.addEventListener( "dragover", (event) => handleDragOver( event, element ) );
+    element.addEventListener( "drop", (event) => handleDrop( event, element ) );
     return [ input, tag ];
   }
   case 'handle': {
@@ -1560,6 +1562,12 @@ function newInput( type, value, theClass, idx, colIdx ){
     element.value = value;
     element.setAttribute( "size", value.length );
     element.setAttribute( "draggable", "true" );
+    element.addEventListener( "pointerdown", handleDragStart );
+    element.addEventListener( "pointermove", handleDragMove );
+    element.addEventListener( "pointerup", handleDragStop );
+    element.addEventListener( "pointercancel", handleDragCancel );
+    element.addEventListener( "dragover", (event) => handleDragOver( event, element ) );
+    element.addEventListener( "drop", (event) => handleDrop( event, element ) );
     return [ input, tag ];
   }
   case 'checkbox': {
@@ -1584,6 +1592,78 @@ function newInput( type, value, theClass, idx, colIdx ){
     } );
     return [ input, tag ];
   }
+  }
+}
+
+function handleDragStart( event ){
+  let dragging = document.querySelectorAll( ".dragging" ).forEach( el =>
+    el.classList.remove( "dragging" )
+  );
+  event.target.classList.add( "dragging" );
+  //console.log( "dragstart", event );
+}
+  
+function handleDragMove( event ){
+  event.preventDefault();
+  if(  ! document.querySelector( ".dragging" )  ){
+    document.querySelectorAll( ".dragover" ).forEach( el =>
+      el.classList.remove( "dragover" ) );
+  }
+  //console.log( "dragmove", event );
+}
+
+function handleDragStop( event ){
+  //console.log( "dragstop", event );
+  document.querySelectorAll( ".dragover" ).forEach( el =>
+    el.classList.remove( "dragover" ) );
+}
+
+function handleDragCancel( event ){
+  //event.target.classList.remove( "dragging" );
+  //console.log( "dragcancel", event );
+  document.querySelectorAll( ".dragover" ).forEach( el =>
+    el.classList.remove( "dragover" ) );
+}
+  
+function handleDragOver( event, dropTarget ){
+  event.preventDefault();
+  document.querySelectorAll( ".dragover" ).forEach( el =>
+    el.classList.remove( "dragover" ) );
+  event.target.classList.add( "dragover" );
+  if(  event.target.classList.contains( "name" )  ){
+    event.target.parentNode.parentNode.querySelector( ".location" ).classList.add( "dragover" );
+    event.target.parentNode.parentNode.querySelector( ".position" ).classList.add( "dragover" );
+  }
+  //console.log( "dragover", event );
+}
+
+function handleDrop( event, dropTarget ){
+  event.preventDefault();
+  document.querySelectorAll( ".dragover" ).forEach( el =>
+    el.classList.remove( "dragover" ) );
+  let target = document.querySelector( ".dragging" );
+  //console.log( "drop", event, target );
+  doTheDrop( event.target, target );
+  if(  target  ) target.classList.remove( "dragging" );
+}
+
+function doTheDrop( over, it ){
+  //console.log( "doTheDrop", over, it );
+  if(  over.classList.contains( "location" )  ){
+    //console.log( "location", it.dataset.index, global.data[ over.dataset.index ][ 0 ] );
+    changeLocation( it.dataset.index, global.data[ over.dataset.index ][ 0 ] );
+    saveData();
+    output();
+  } else if(  over.classList.contains( "position" )  ){
+    //console.log( "position", it.dataset.index, global.data[ over.dataset.index ][ 1 ] );
+    changePosition( it.dataset.index, global.data[ over.dataset.index ][ 1 ] );
+    saveData();
+    output();
+  } else if(  over.classList.contains( "name" )  ){
+    //console.log( "name", it.dataset.index, over.dataset.index );
+    changeLocationAndPosition( it.dataset.index, over.dataset.index );
+    saveData();
+    output();
   }
 }
   
