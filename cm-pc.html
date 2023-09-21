@@ -132,7 +132,7 @@ th{
     cursor: move;
     cursor: grab;
 }
-td:has(.name){ touch-action: none }
+td:has(.handle){ touch-action: none }
 .text{
     border-top: none;
     border-left: none;
@@ -425,7 +425,7 @@ details[open] #shortfilter{
   true="checkmark" false="xmark"
 ></click-box></template>
 <template id="option-template"><input type="text"></template>
-<template id="handle-template"><input type="text" readonly></template>
+<template id="handle-template"><span></span></template>
 <template id="time-template"><input type="text"></template>
 
 </body>
@@ -1397,7 +1397,7 @@ function formatStations( it ){
     /Ferris/, /Rooftop/,
     /Slide/, /Prep/, /Distr/,
     // ...
-    /Art City/, /Food Service (Supervisor|.*Lead)/, /Overflow/,
+    /Art City/, /Food Service.*(Supervisor|Lead)/, /Overflow/,
     /Cowboy|Arch/, /Beatnik/, /Pinball/, /Elephant/, /Artifacts/,
     /CopOut|Guard/, /Facilities/,
     /Lizz?ard/,
@@ -1576,9 +1576,10 @@ function newInput( type, value, theClass, idx, colIdx ){
     return [ input, tag ];
   }
   case 'handle': {
-    let [ element, tag ] = fillElement( input, "input", type, theClass, idx, colIdx );
-    element.value = value;
-    element.setAttribute( "size", value.length );
+    let [ element, tag ] = fillElement( input, "span", type, theClass, idx, colIdx );
+    //element.value = value;
+    element.textContent = value;
+    //element.setAttribute( "size", value.length );
     element.setAttribute( "draggable", "true" );
     element.addEventListener( "pointerdown", handleDragStart );
     element.addEventListener( "pointermove", handleDragMove );
@@ -1618,6 +1619,7 @@ function handleDragStart( event ){
     el.classList.remove( "dragging" )
   );
   event.target.classList.add( "dragging" );
+  //event.preventDefault();
   //console.log( "dragstart", event );
 }
   
