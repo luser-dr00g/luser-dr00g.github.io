@@ -16,12 +16,8 @@
     --heading: hsl(0 0% 85%);
     --text: hsl(0 0% 100%); }
 
-.not-implemented{
-    background-color: magenta;
-}
-.incomplete{
-    background-color: violet;
-}
+.not-implemented{ background-color: magenta; }
+.incomplete{ background-color: violet; }
 
 body{
     overscroll-behavior: none;
@@ -54,14 +50,17 @@ input[type="text"]{
     background-color: inherit;
     width: attr(size) "ch";
 }
-.panel-name input[type="checkbox"]{
-    //opacity: 0;
+#darkmode{
+    opacity: 0;
 }
-.panel-name label{
-    //position: relative;
-    //left: -2ch;
+#darkmode+label{
+    position: relative;
+    left: -2ch;
 }
-#darkmode:checked+label{
+#darkmode+label::before{
+    content: "Dark";
+}
+#darkmode:checked+label::before{
     content: "Light";
 }
 textarea{
@@ -158,8 +157,7 @@ td:has(.handle){ touch-action: none }
     text-align: center;
 }
 
-#grid table tr:nth-child(3n+2){
-    background-color: var(--table-bg); }
+#grid table tr:nth-child(3n+2){ background-color: var(--table-bg); }
 
 #stations {
     flex-flow: row wrap;
@@ -186,12 +184,9 @@ td:has(.handle){ touch-action: none }
     background-color: red;
 }
 
-details:not([open]) #badge{
-    display: none; }
-details[open] #shorttoday{
-    display: none; }
-details[open] #shortfilter{
-    display: none; }
+details:not([open]) #badge{ display: none; }
+details[open] #shorttoday{ display: none; }
+details[open] #shortfilter{ display: none; }
 
 </style>
 <body>
@@ -219,7 +214,7 @@ details[open] #shortfilter{
 
     <more-panel class="style"> <!--<span class="panel-name">style</span> -->
 	<span class="panel-name"><input type=checkbox id="darkmode" >
-	<label for="darkmode">Dark</label></span>
+	<label for="darkmode">&nbsp;</label></span>
       <div class="more vert">
 	<span class="row"><input type=checkbox id="abbreviatefoodservice">
 	<label for="abbreviatefoodservice">Abbreviate Food Service</label></span>
@@ -448,7 +443,7 @@ var hiddenStations = [];
 var customFields = [ {"notes":"text"} ];  // default
 var favoriteCustomFields = [[ {"notes":"text"} ]];
 
-var permanentFields = [  // gridFields = [ ...permanentFields, ...customFields ]
+const permanentFields = [  // gridFields = [ ...permanentFields, ...customFields ]
   {"location":"option"},
   {"position":"option"},
   {"name":"handle"},
@@ -684,6 +679,9 @@ function editData( data ){
     undo: () => { undoDiffChanges( rec ) } //{ global = rec.prev }
   };
   console.log( rec.diff );
+  if(  rec.diff.type == "Load day"  ){
+    return  createData( data );
+  }
   rec._do();
   undoStack.push( rec );
 }
