@@ -105,15 +105,22 @@ label{
     width: 90ch;
     height: 80vh; }
 
-th{
+#grid th span {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-between;
+}
+#grid th span span {
     text-transform: capitalize;
     border-bottom: groove;
-    text-align: justify;
     white-space: nowrap;
     cursor: default; }
-table tr th button{
-    margin-left: 2ch;
-}
+#stations th {
+    text-transform: capitalize;
+    text-align: left;
+    border-bottom: groove;
+    white-space: nowrap;
+    cursor: default; }
 
 .option{
     border: none;
@@ -310,10 +317,10 @@ details[open] #shortfilter{ display: none; }
       </div>
       <div class="more row">
 	<span class="shortcut"
-	      onclick='setFilter("Food.*FOH$", false, "FOH")'
+	      onclick='setFilter("Food.*FOH", false, "FOH")'
 	      >FOH</span>
 	<span class="shortcut"
-	      onclick='setFilter("Food.*BOH$", false, "BOH")'
+	      onclick='setFilter("Food.*BOH", false, "BOH")'
 	      >BOH</span>
 	<span class="shortcut"
 	      onclick='setFilter("Bar", false, "Bar")'
@@ -1521,13 +1528,16 @@ function formatTable( it ){
   classes.forEach( (x,i)=>{
     if(  ! hiddenColumns.includes( i )  ){
       let th = document.createElement( "th" );
+      let wrap = document.createElement( "span" );
       let span = document.createElement( "span" );
       span.appendChild(
         document.createTextNode(
-	  decodeURIComponent( x.replace( /\+/g, "%20" ) ) ) );
+	  decodeURIComponent( x.replace( /\+/g, "%20" ) ) //+ " "
+	) );
       span.onclick= ()=>sortBy(i+1);
-      th.appendChild( span );
-      th.appendChild( newButton( "X", ()=>hideColumn(i) ) );
+      wrap.appendChild( span );
+      wrap.appendChild( newButton( "✖", ()=>hideColumn(i) ) );
+      th.appendChild( wrap );
       header.appendChild( th );
     }
   } );
