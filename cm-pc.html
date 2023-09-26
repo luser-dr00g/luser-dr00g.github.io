@@ -424,7 +424,7 @@ details[open] #shortfilter{ display: none; }
   true="checkmark" false="xmark"
 ></click-box></template>
 <template id="option-template"><input type="text"></template>
-<template id="handle-template"><span></span></template>
+<template id="handle-template"><span class="handle"></span></template>
 <template id="time-template"><input type="text"></template>
 
 </body>
@@ -537,7 +537,7 @@ function savePreferences(){
     sortOrder: 			sortOrder,
     favoriteSorts: 		favoriteSorts,
     hiddenColumns:		hiddenColumns,
-    hiddenStation:		hiddenStations,
+    hiddenStations:		hiddenStations,
     customFields:		customFields,
     favoriteCustomFields:	favoriteCustomFields
   };
@@ -731,10 +731,10 @@ function changeField( idx, colIdx, newValue ){
     colIdx: colIdx,
     next: newValue,
     prev: global.data[ idx ][ colIdx ],
-    _do: () => { global.data[ idx ][ colIdx ] = newValue },
+    _do: () => { global.data[ idx ][ colIdx ] = rec.next },
     undo: () => { global.data[ idx ][ colIdx ] = rec.prev }
   };
-  console.log( rec );
+  //console.log( rec );
   rec._do();
   undoStack.push( rec );
 }
@@ -1272,9 +1272,10 @@ function updateLocationsAndPositions( it ){
   } );
 }
 
-function newButton( str ){
+function newButton( str, func ){
   let b = document.createElement( "button" );
   b.innerHTML = str;
+  b.onclick = func;
   return  b;
 }
 
@@ -1393,6 +1394,15 @@ function formatText( it, abbrev ){
 
 function formatStations( it ){
   stations.textContent = "";
+  stations.removeEventListener( "pointermove", handleDragMove );
+  stations.removeEventListener( "pointerup", handleDragStop );
+  stations.removeEventListener( "pointercancel", handleDragCancel );
+  stations.addEventListener( "pointermove", handleDragMove );
+  stations.addEventListener( "pointerup", handleDragStop );
+  stations.addEventListener( "pointercancel", handleDragCancel );
+  stations.appendChild( newButton( "show all", showAllStations ) );
+  stations.appendChild( newButton( "hide all", hideAllStations ) );
+  stations.appendChild( document.createElement( "br" ) );
   let spots = [];
   let res = [
     /Event/,
@@ -1432,52 +1442,55 @@ function formatStations( it ){
     loc.dataset.index = spot[0][0];
     loc.addEventListener( "dragover", (event) => handleDragOver( event, loc ) );
     loc.addEventListener( "drop", (event) => handleDrop( event, loc ) );
+    loc.addEventListener( "click", (event) => hideStation( event, location ) );
     locline.appendChild( loc );
     table.appendChild( locline );
-    let posline = document.createElement( "tr" );
-    positions.forEach( pos => {
-      let th = document.createElement( "th" );
-      th.setAttribute( "colspan", "3" );
-      th.appendChild( document.createTextNode( pos ) );
-      th.classList.add( "position" );
-      th.dataset.index = global.data.findIndex( rec => rec[ 1 ] == pos );
-      th.addEventListener( "dragover", (event) => handleDragOver( event, th ) );
-      th.addEventListener( "drop", (event) => handleDrop( event, th ) );
-      posline.appendChild( th );
-    } );
-    table.appendChild( posline );
-    let poses = transposeStationTableData(
-      positions.map( pos =>
-        spot.filter( rec =>
-	  rec[ 2 ] == pos
-	).map( rec =>
-	  [ ...rec.slice( 3, 6 ), rec[0] ]
-	)
-      )
-    );
-    poses.forEach( row => {
-      let tr = document.createElement( "tr" );
-      mapTuple( row, 4, rec =>
-	rec.slice(0, 3).forEach( (cell, idx) => {
-	  let td = document.createElement( "td" );
-	  let [ input, element ] = newInput( types[ idx ],
-                                             idx==0 && suppressmiddlenames.checked
-					       ?suppressMiddleNames( cell ) :cell,
-					     classes[ idx ],
-					     rec[ 3 ],
-					     2 + idx );
+    if(  ! hiddenStations.includes( location )  ){
+      let posline = document.createElement( "tr" );
+      positions.forEach( pos => {
+        let th = document.createElement( "th" );
+        th.setAttribute( "colspan", "3" );
+        th.appendChild( document.createTextNode( pos ) );
+        th.classList.add( "position" );
+        th.dataset.index = global.data.findIndex( rec => rec[ 1 ] == pos );
+        th.addEventListener( "dragover", (event) => handleDragOver( event, th ) );
+        th.addEventListener( "drop", (event) => handleDrop( event, th ) );
+        posline.appendChild( th );
+      } );
+      table.appendChild( posline );
+      let poses = transposeStationTableData(
+        positions.map( pos =>
+          spot.filter( rec =>
+	    rec[ 2 ] == pos
+	  ).map( rec =>
+	    [ ...rec.slice( 3, 6 ), rec[0] ]
+	  )
+        )
+      );
+      poses.forEach( row => {
+        let tr = document.createElement( "tr" );
+        mapTuple( row, 4, rec =>
+	  rec.slice(0, 3).forEach( (cell, idx) => {
+	    let td = document.createElement( "td" );
+	    let [ input, element ] = newInput( types[ idx ],
+                                               idx==0 && suppressmiddlenames.checked
+					         ?suppressMiddleNames( cell ) :cell,
+					       classes[ idx ],
+					       rec[ 3 ],
+					       2 + idx );
 	  //td.dataset.index = rec[ 3 ];
 	  //td.classList.add( idx==0  ? "name" : "time" );
 	  //td.appendChild( document.createTextNode( idx==0 && suppressmiddlenames.checked
 						   //?suppressMiddleNames(cell)
 						   //:cell ) );
-          td.appendChild( input );
-	  td.classList.add( types[ idx ] );
-	  tr.appendChild( td );
-	} )
-      );
-      table.appendChild( tr );
-    } );
+            td.appendChild( input );
+	    td.classList.add( types[ idx ] );
+	    tr.appendChild( td );
+	  } )
+        );
+        table.appendChild( tr );
+      } );
+    }
     stations.appendChild( table );
   } );
 }
@@ -1517,7 +1530,50 @@ function formatTable( it ){
       tr.appendChild( td );
     } );
   } );
+  table.addEventListener( "pointermove", handleDragMove );
+  table.addEventListener( "pointerup", handleDragStop );
+  table.addEventListener( "pointercancel", handleDragCancel );
   return table;
+}
+
+//function newButton( label, func ){
+  //let button = document.createElement( "button" );
+  //button.innerHTML = label;
+  //button.onclick = func;
+  //return  button;
+//}
+
+function hideStation( event, location ){
+  if(  hiddenStations.includes( location )  ){
+    hiddenStations = hiddenStations.filter( loc => loc != location );
+  } else {
+    hiddenStations.push( location );
+  }
+  savePreferences();
+  output();
+}
+
+function hideAllStations(){
+  let filterRE = RegExp( filter.value );
+  hiddenStations = unique( filterData(
+    global, x=>invertIfChecked( x.slice(0,2).join(" ").match( filterRE ) )
+  ).data.map( rec => rec[0] ) );
+  savePreferences();
+  output();
+}
+
+function showAllStations(){
+  //hiddenStations = [];
+  let filterRE = RegExp( filter.value );
+  unique( filterData(
+    global, x=>invertIfChecked( x.slice(0,2).join(" ").match( filterRE ) )
+  ).data.map( rec => rec[0] ) ).forEach( location => {
+    if(  hiddenStations.includes( location )  ){
+      hiddenStations = hiddenStations.filter( loc => loc != location );
+    }
+  } );
+  savePreferences();
+  output();
 }
 
 function fillElement( input, tag, type, theClass, idx, colIdx ){
@@ -1585,9 +1641,6 @@ function newInput( type, value, theClass, idx, colIdx ){
     element.setAttribute( "draggable", "true" );
     element.addEventListener( "touchstart", (event) => event.preventDefault() );
     element.addEventListener( "pointerdown", handleDragStart );
-    element.addEventListener( "pointermove", handleDragMove );
-    element.addEventListener( "pointerup", handleDragStop );
-    element.addEventListener( "pointercancel", handleDragCancel );
     element.addEventListener( "dragover", (event) => handleDragOver( event, element ) );
     element.addEventListener( "drop", (event) => handleDrop( event, element ) );
     return [ input, tag ];
@@ -1606,9 +1659,9 @@ function newInput( type, value, theClass, idx, colIdx ){
     let [ element, tag ] = fillElement( input, "click-box", type, theClass, idx, colIdx );
     element.setAttribute( "label", value );
     element.addEventListener( "change", e => {
-      console.log( e );
-      //changeField( idx, colIdx, element.getAttribute( "label" ) );
-      changeField( idx, colIdx, element.label );
+      //console.log( e );
+      //changeField( idx, colIdx, element.label );
+      changeField( idx, colIdx, element.getAttribute( "label" ) );
       saveData();
       output();
     } );
