@@ -108,8 +108,12 @@ label{
 th{
     text-transform: capitalize;
     border-bottom: groove;
-    text-align: left;
+    text-align: justify;
+    white-space: nowrap;
     cursor: default; }
+table tr th button{
+    margin-left: 2ch;
+}
 
 .option{
     border: none;
@@ -345,7 +349,9 @@ details[open] #shortfilter{ display: none; }
     <button slot="tab" data-target="#stations" class="tab">stations</button>
     <button slot="tab" data-target="#help" class="tab">help</button>
     <textarea id="text" slot="content" class="content"></textarea>
-    <div id="grid" slot="content" class="active content"></div>
+    <div id="grid" slot="content" class="active content">
+      <div id="hidden-columns"></div>
+    </div>
     <div id="stations" slot="content" class="content"></div>
     <div id="help" slot="content" class="content">
       <p> <em>Load personnel data</em> by opening the File menu and
@@ -1200,6 +1206,7 @@ function output(){
     updateLocationsAndPositions( global );
     let table = grid.querySelector( "table" );
     if(  table  ) grid.removeChild( table );
+    updateHiddenColumns();
     grid.appendChild( formatTable(
       sortedData(
 	filterData(
@@ -1251,6 +1258,15 @@ function output(){
 function updateShareLink(){
   share.href = window.location.pathname + "?q=" +
     encodeURIComponent( savedFormat( global ) ).replace( /%20/g, "+" );
+}
+
+function updateHiddenColumns(){
+  let columns = [ ...permanentFields, ...customFields ].map( spec=>Object.keys(spec)[0] );
+  let hiddencolumns = document.querySelector( "#hidden-columns" );
+  hiddencolumns.textContent = "";
+  hiddenColumns.forEach( col => {
+    hiddencolumns.appendChild( newButton( columns[ col ], ()=>showColumn(col) ) );
+  } );
 }
 
 function updateLocationsAndPositions( it ){
@@ -1503,37 +1519,60 @@ function formatTable( it ){
   let header = document.createElement( "tr" );
   table.appendChild( header );
   classes.forEach( (x,i)=>{
-    let th = document.createElement( "th" );
-    th.appendChild(
-      document.createTextNode(
-	decodeURIComponent( x.replace( /\+/g, "%20" ) ) ) );
-    th.onclick= ()=>sortBy(i+1);
-    header.appendChild( th );
+    if(  ! hiddenColumns.includes( i )  ){
+      let th = document.createElement( "th" );
+      let span = document.createElement( "span" );
+      span.appendChild(
+        document.createTextNode(
+	  decodeURIComponent( x.replace( /\+/g, "%20" ) ) ) );
+      span.onclick= ()=>sortBy(i+1);
+      th.appendChild( span );
+      th.appendChild( newButton( "X", ()=>hideColumn(i) ) );
+      header.appendChild( th );
+    }
   } );
   it.data.forEach( (rec,idx)=>{
     let tr = document.createElement( "tr" );
     table.appendChild( tr );
     rec.slice(1).forEach( (col,colIdx)=>{
-      if(  ! types[colIdx]  ) return;
-      let td = document.createElement( "td" );
-      let [ input, element ] = newInput( types[colIdx],
-					 (colIdx==0 && abbreviatefoodservice.checked)?
-                                           abbreviateFoodService(col):
-                                           (colIdx==2 && suppressmiddlenames.checked)?
-					     suppressMiddleNames(col):
-					     col,
-					 classes[colIdx],
-					 rec[0],
-					 colIdx );
-      td.appendChild( input );
-      td.classList.add( types[colIdx] );
-      tr.appendChild( td );
+      if(  ! hiddenColumns.includes( colIdx )  ){
+        if(  ! types[colIdx]  ) return;
+        let td = document.createElement( "td" );
+        let [ input, element ] = newInput( types[colIdx],
+					   (colIdx==0 && abbreviatefoodservice.checked)?
+                                             abbreviateFoodService(col):
+                                             (colIdx==2 && suppressmiddlenames.checked)?
+					       suppressMiddleNames(col):
+					       col,
+					   classes[colIdx],
+					   rec[0],
+					   colIdx );
+        td.appendChild( input );
+        td.classList.add( types[colIdx] );
+        tr.appendChild( td );
+      }
     } );
   } );
   table.addEventListener( "pointermove", handleDragMove );
   table.addEventListener( "pointerup", handleDragStop );
   table.addEventListener( "pointercancel", handleDragCancel );
   return table;
+}
+
+function showColumn( idx ){
+  if(  hiddenColumns.includes( idx )  ){
+    hiddenColumns = hiddenColumns.filter( col => col != idx );
+  }
+  savePreferences();
+  output();
+}
+
+function hideColumn( idx ){
+  if(  ! hiddenColumns.includes( idx )  ){
+    hiddenColumns.push( idx );
+  }
+  savePreferences();
+  output();
 }
 
 //function newButton( label, func ){
