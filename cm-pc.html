@@ -1583,6 +1583,7 @@ function newInput( type, value, theClass, idx, colIdx ){
     element.textContent = value;
     //element.setAttribute( "size", value.length );
     element.setAttribute( "draggable", "true" );
+    element.addEventListener( "touchstart", (event) => event.preventDefault() );
     element.addEventListener( "pointerdown", handleDragStart );
     element.addEventListener( "pointermove", handleDragMove );
     element.addEventListener( "pointerup", handleDragStop );
