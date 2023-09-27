@@ -1274,6 +1274,9 @@ function updateHiddenColumns(){
   hiddenColumns.forEach( col => {
     hiddencolumns.appendChild( newButton( columns[ col ], ()=>showColumn(col) ) );
   } );
+  if(  hiddenColumns.length > 0  ){
+    hiddencolumns.appendChild( newButton( "all", showAllColumns ) );
+  }
 }
 
 function updateLocationsAndPositions( it ){
@@ -1581,6 +1584,12 @@ function hideColumn( idx ){
   if(  ! hiddenColumns.includes( idx )  ){
     hiddenColumns.push( idx );
   }
+  savePreferences();
+  output();
+}
+
+function showAllColumns(){
+  hiddenColumns = [];
   savePreferences();
   output();
 }
