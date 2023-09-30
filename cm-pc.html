@@ -23,7 +23,6 @@ body{
     overscroll-behavior: none;
     background-color: var(--body-bg);
     color: var(--text);
-    //font-size: normal;
 }
 .controls{
     display: flex;
@@ -126,6 +125,12 @@ label{
     border-bottom: groove;
     white-space: nowrap;
     cursor: default; }
+#stations th span {
+    vertical-align: text-top; }
+#stations textarea.station-note{
+    //width: inherit;
+    vertical-align: top;
+    border: solid 1px; }
 
 .option{
     border: none;
@@ -450,11 +455,16 @@ details[open] #shortfilter{ display: none; }
 <script src="click.js"></script>
 <script>
 
-var global = null;  // saved to/reloaded from localStorage
+  // State Variables
+// The Model     saved to/reloaded from localStorage
+var global = null;
+
 var undoStack = [];
 var redoStack = [];
-var sortOrder = [];  // saved to/reloaded from localStorage
-var favoriteSorts = [];  // saved to/reloaded from localStorage
+
+// Preferences     saved to/reloaded from localStorage
+var sortOrder = [];
+var favoriteSorts = [];
 var hiddenColumns = [];
 var hiddenStations = [];
 var customFields = [ {"notes":"text"} ];  // default
@@ -1504,15 +1514,41 @@ function formatStations( it ){
     let table = document.createElement( "table" );
     let locline = document.createElement( "tr" );
     let loc = document.createElement( "th" );
-    loc.appendChild( document.createTextNode( abbreviatefoodservice.checked
-					      ?abbreviateFoodService( location )
-					      :location ) );
+    let locname = createSpan( abbreviatefoodservice.checked
+			      ?abbreviateFoodService( location )
+			      :location );
+    loc.appendChild( locname );
+    //let [ stnoteinput, stnoteelem ] = newInput( "text",
+						//it.stationNotes[ location ] ?? "",
+						//"station-note",
+						//-1,
+						//-1,
+						//it.stationNotes[ location ]?.length );
+    //let stinput = stnoteinput.querySelector( stnoteelem );
+    let stinput = document.createElement( "textarea" );
+    stinput.classList.add( "station-note" );
+    stinput.classList.add( "text" );
+    stinput.setAttribute( "rows", "1" );
+    stinput.setAttribute( "wrap", "soft" );
+    stinput.setAttribute( "inputmode", "latin" );
+    if(  it.stationNotes[ location ]  ){
+      stinput.value = it.stationNotes[ location ];
+      //stinput.setAttribute( "size", it.stationNotes[ location ].length );
+    } else {
+      //stinput.setAttribute( "size", 8 );
+    }
+    stinput.onchange = (e) => {
+      changeStationNote( location, e.target.value );
+      saveData();
+      output();
+    };
+    loc.appendChild( stinput );
     loc.setAttribute( "colspan", positions.length * 3 );
     loc.classList.add( "location" );
     loc.dataset.index = spot[0][0];
     loc.addEventListener( "dragover", (event) => handleDragOver( event, loc ) );
     loc.addEventListener( "drop", (event) => handleDrop( event, loc ) );
-    loc.addEventListener( "click", (event) => hideStation( event, location ) );
+    locname.addEventListener( "click", (event) => hideStation( event, location ) );
     locline.appendChild( loc );
     table.appendChild( locline );
     if(  ! hiddenStations.includes( location )  ){
@@ -1563,6 +1599,8 @@ function formatStations( it ){
       } );
     }
     stations.appendChild( table );
+    stinput.style.width = ((loc.getClientRects()?.[0]?.width -
+      locname.getClientRects()?.[0]?.width) ?? 50) + "px";
   } );
 }
 
@@ -1649,13 +1687,6 @@ function showAllColumns(){
   savePreferences();
   output();
 }
-
-//function newButton( label, func ){
-  //let button = document.createElement( "button" );
-  //button.innerHTML = label;
-  //button.onclick = func;
-  //return  button;
-//}
 
 function hideStation( event, location ){
   if(  hiddenStations.includes( location )  ){
