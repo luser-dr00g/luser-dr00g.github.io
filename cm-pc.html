@@ -969,12 +969,14 @@ function showFileInput(){
 }
 
 function saveDay(){
-  let days = (localStorage.getItem( "days" ) ?? "").split( " " );
-  if(  ! days.includes( global.date )  ){
-    days.push( global.date );
-    localStorage.setItem( "days", days.join( " " ) );
+  if(  global  ){
+    let days = (localStorage.getItem( "days" ) ?? "").replace( /^ +/, "" ).split( " " );
+    if(  ! days.includes( global.date )  ){
+      days.push( global.date );
+      localStorage.setItem( "days", days.join( " " ) );
+    }
+    localStorage.setItem( global.date, savedFormat( global ) );
   }
-  localStorage.setItem( global.date, savedFormat( global ) );
 }
 
 function loadDay( day ){
