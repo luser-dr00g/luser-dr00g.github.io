@@ -23,7 +23,8 @@ body{
     overscroll-behavior: none;
     background-color: var(--body-bg);
     color: var(--text);
-    font-size: normal; }
+    //font-size: normal;
+}
 .controls{
     display: flex;
     flex-flow: row wrap;
@@ -59,9 +60,13 @@ input[type="text"]{
 }
 #darkmode+label::before{
     content: "Dark";
+    text-decoration: underline;
+    cursor: pointer;
 }
 #darkmode:checked+label::before{
     content: "Light";
+    text-decoration: underline;
+    cursor: pointer;
 }
 textarea{
     color: var(--text);
@@ -95,11 +100,12 @@ label{
     cursor: default; }
 #status{
     display: inline-flex;
-    flex-flow: row nowrap;
+    flex-flow: row wrap;
     align-items: flex-start;
     justify-content: flex-start; }
 #status *{
-    padding: .25em; }
+    padding: .25em;
+    white-space: nowrap; }
 
 #text{
     width: 90ch;
@@ -153,13 +159,12 @@ td:has(.handle){ touch-action: none }
     border-right: none;
     border-bottom: dotted 1px;
     outline: none;
-    width: inherit;
 }
 .time{
     border: none;
     outline: none;
     text-align: right;
-    width: 8ch;
+    max-width: 8ch;
 }
 .checkbox{
     text-align: center;
@@ -455,6 +460,9 @@ var hiddenColumns = [];
 var hiddenStations = [];
 var customFields = [ {"notes":"text"} ];  // default
 var favoriteCustomFields = [[ {"notes":"text"} ]];
+
+const months = [ "January", "February", "March", "April", "May", "June",
+		 "July", "August", "September", "October", "November", "December" ];
 
 const permanentFields = [  // gridFields = [ ...permanentFields, ...customFields ]
   {"location":"option"},
@@ -1179,10 +1187,47 @@ function findCustomFields( input ){
 
 function dayLink( day ){
   let span = document.createElement( "span" );
-  span.appendChild( document.createTextNode( day ) )
+  span.appendChild( document.createTextNode( day.slice( 2 ).join( "-" ) ) )
   span.classList.add( "shortcut" );
-  span.onclick = () => loadDay( day );
+  span.onclick = () => loadDay( day.join( "-" ) );
   return  span;
+}
+
+function cmpDay( xs, ys ){
+  return  cmpString( parseInt( xs[0] ), parseInt( ys[0] ) )  ||
+          cmpMonth( xs[1], ys[1] )   ||
+          cmpString( parseInt( xs[2] ), parseInt( ys[2] ) )  ||  0;
+}
+
+function cmpMonth( x, y ){
+  let xi = months.findIndex( e => e == x ),
+      yi = months.findIndex( e => e == y );
+  return  cmpString( xi, yi );
+}
+
+function updateDayLinks(){
+  days.textContent = "";
+  let stuff = localStorage.getItem( "days" )?.split( " " );
+  //console.log( stuff );
+  let saved = stuff.map(
+    day => day.split( "-" )
+  ).sort( cmpDay );
+  let years = unique( saved.map( d => d[0] ) );
+  years.forEach( year => {
+    //console.log( `year: "${year}" ` );
+    days.appendChild( createSpan( year + ": " ) );
+    let these = saved.filter( d => d[0] == year );
+    let mons = unique( these.map( d => d[1] ) );
+    mons.forEach( mon => {
+      days.appendChild( document.createElement( "br" ) );
+      days.appendChild( createSpan( mon + ": " ) );
+      let em = these.filter( d => d[1] == mon );
+      em.forEach( day => {
+	days.appendChild( dayLink( day ) );
+      } );
+    } );
+    days.appendChild( document.createElement( "br" ) );
+  } );
 }
 
 function output(){
@@ -1196,9 +1241,7 @@ function output(){
     let filterRE = RegExp( filter.value );
     if(  global.date  )
       shorttoday.textContent = today.textContent = dateToEnglish( global.date );
-    days.textContent = "";
-    localStorage.getItem( "days" )?.split( " " ).forEach(
-      day => days.appendChild( dayLink( day ) ) );
+    updateDayLinks();
     updateShareLink();
     updateCustomFields();
     updateSortOrder();
@@ -1503,7 +1546,8 @@ function formatStations( it ){
 					         ?suppressMiddleNames( cell ) :cell,
 					       classes[ idx ],
 					       rec[ 3 ],
-					       2 + idx );
+					       2 + idx,
+					       8 );
 	  //td.dataset.index = rec[ 3 ];
 	  //td.classList.add( idx==0  ? "name" : "time" );
 	  //td.appendChild( document.createTextNode( idx==0 && suppressmiddlenames.checked
@@ -1527,6 +1571,13 @@ function formatTable( it ){
   let types = classes.map( (x,i)=>gridFields[i][x] );
   let table = document.createElement( "table" );
   let header = document.createElement( "tr" );
+  let maxlocation =
+      it.data.reduce( (x,y) =>
+	Math.max(x,(abbreviatefoodservice.checked?abbreviateFoodService(y[1]):y[1]).length),
+	0 );
+  let maxposition = it.data.reduce( (x,y) => Math.max(x,y[2].length), 0 );
+  let maxname = it.data.reduce( (x,y) => Math.max(x,y[3].length), 0 );
+  console.log( maxlocation, maxposition, maxname );
   table.appendChild( header );
   classes.forEach( (x,i)=>{
     if(  ! hiddenColumns.includes( i )  ){
@@ -1551,6 +1602,9 @@ function formatTable( it ){
       if(  ! hiddenColumns.includes( colIdx )  ){
         if(  ! types[colIdx]  ) return;
         let td = document.createElement( "td" );
+	let size = colIdx == 0 ? maxlocation :
+	    colIdx == 1 ? maxposition :
+	    colIdx == 2 ? maxname : 0;
         let [ input, element ] = newInput( types[colIdx],
 					   (colIdx==0 && abbreviatefoodservice.checked)?
                                              abbreviateFoodService(col):
@@ -1559,7 +1613,8 @@ function formatTable( it ){
 					       col,
 					   classes[colIdx],
 					   rec[0],
-					   colIdx );
+					   colIdx,
+					   size );
         td.appendChild( input );
         td.classList.add( types[colIdx] );
         tr.appendChild( td );
@@ -1636,7 +1691,7 @@ function showAllStations(){
 
 function fillElement( input, tag, type, theClass, idx, colIdx ){
   let element = input.querySelector( tag );
-  element.classList.add( "grid" );
+  //element.classList.add( "grid" );
   element.classList.add( type );
   element.classList.add( theClass );
   element.dataset.index = idx;
@@ -1644,7 +1699,7 @@ function fillElement( input, tag, type, theClass, idx, colIdx ){
   return [ element, tag ];
 }
 
-function newInput( type, value, theClass, idx, colIdx ){
+function newInput( type, value, theClass, idx, colIdx, size ){
   //console.log( type, value, theClass, idx );
   let template = document.getElementById( type + "-template" );
   let input = template.content.cloneNode( true );
@@ -1663,6 +1718,7 @@ function newInput( type, value, theClass, idx, colIdx ){
   case 'time': {
     let [ element, tag ] = fillElement( input, "input", type, theClass, idx, colIdx );
     element.value = value;
+    element.setAttribute( "size", value.length );
     element.addEventListener( "change", e => {
       changeField( idx, colIdx, element.value );
       saveData();
@@ -1673,7 +1729,8 @@ function newInput( type, value, theClass, idx, colIdx ){
   case 'option': {
     let [ element, tag ] = fillElement( input, "input", type, theClass, idx, colIdx );
     element.value = value;
-    element.setAttribute( "size", value.length );
+    element.setAttribute( "size", size );
+    element.setAttribute( "maxlength", size );
     element.setAttribute( "list", theClass + "s" );
     element.addEventListener( "focus", e => {
       element.setAttribute( "placeholder", element.value );
@@ -1693,9 +1750,7 @@ function newInput( type, value, theClass, idx, colIdx ){
   }
   case 'handle': {
     let [ element, tag ] = fillElement( input, "span", type, theClass, idx, colIdx );
-    //element.value = value;
     element.textContent = value;
-    //element.setAttribute( "size", value.length );
     element.setAttribute( "draggable", "true" );
     element.addEventListener( "touchstart", (event) => event.preventDefault() );
     element.addEventListener( "pointerdown", handleDragStart );
