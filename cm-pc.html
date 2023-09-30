@@ -49,7 +49,6 @@ input[type="text"]{
     color: var(--text);
     border-color: var(--text);
     background-color: inherit;
-    width: attr(size) "ch";
 }
 #darkmode{
     opacity: 0;
@@ -152,7 +151,7 @@ label{
     cursor: move;
     cursor: grab;
 }
-td:has(.handle){ touch-action: none }
+td.handle{ touch-action: none }
 .text{
     border-top: none;
     border-left: none;
@@ -1549,7 +1548,7 @@ function formatStations( it ){
 					       classes[ idx ],
 					       rec[ 3 ],
 					       2 + idx,
-					       8 );
+					       cell.length );
 	  //td.dataset.index = rec[ 3 ];
 	  //td.classList.add( idx==0  ? "name" : "time" );
 	  //td.appendChild( document.createTextNode( idx==0 && suppressmiddlenames.checked
@@ -1721,6 +1720,7 @@ function newInput( type, value, theClass, idx, colIdx, size ){
     let [ element, tag ] = fillElement( input, "input", type, theClass, idx, colIdx );
     element.value = value;
     element.setAttribute( "size", value.length );
+    element.setAttribute( "maxlength", 8 );
     element.addEventListener( "change", e => {
       changeField( idx, colIdx, element.value );
       saveData();
