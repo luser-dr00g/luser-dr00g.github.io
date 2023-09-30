@@ -980,7 +980,7 @@ function saveDay(){
 }
 
 function loadDay( day ){
-  let days = (localStorage.getItem( "days" ) ?? "").split( " " );
+  let days = (localStorage.getItem( "days" ) ?? "").replace( /^ +/, "" ).split( " " );
   if(  days.includes( day )  ){
     let data = localStorage.getItem( day )
     if(  data  ) createData( parse( data ) );
@@ -1579,7 +1579,7 @@ function formatTable( it ){
 	0 );
   let maxposition = it.data.reduce( (x,y) => Math.max(x,y[2].length), 0 );
   let maxname = it.data.reduce( (x,y) => Math.max(x,y[3].length), 0 );
-  console.log( maxlocation, maxposition, maxname );
+  //console.log( maxlocation, maxposition, maxname );
   table.appendChild( header );
   classes.forEach( (x,i)=>{
     if(  ! hiddenColumns.includes( i )  ){
