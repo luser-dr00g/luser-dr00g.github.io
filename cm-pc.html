@@ -1209,7 +1209,7 @@ function cmpMonth( x, y ){
 
 function updateDayLinks(){
   days.textContent = "";
-  let stuff = localStorage.getItem( "days" )?.split( " " );
+  let stuff = localStorage.getItem( "days" )?.replace( /^ +/, "" ).split( " " );
   //console.log( stuff );
   let saved = stuff.map(
     day => day.split( "-" )
