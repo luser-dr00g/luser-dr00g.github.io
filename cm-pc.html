@@ -128,7 +128,6 @@ label{
 #stations th span {
     vertical-align: text-top; }
 #stations textarea.station-note{
-    //width: inherit;
     vertical-align: top;
     border: solid 1px; }
 
@@ -201,7 +200,7 @@ td.handle{ touch-action: none }
     background-color: red;
 }
 .important{
-    background-color: red;
+    background-color: orange;
 }
 
 details:not([open]) #badge{ display: none; }
@@ -321,7 +320,7 @@ details[open] #shortfilter{ display: none; }
 	      onclick='setFilter("Lizard|CopOut|Beatnik", false, "Kitchens")'
           >Lizard|CopOut|Beatnik</span>
 	<span class="shortcut"
-	      onclick='setFilter("Baby|Roof|Overflow|Cabin|Cowboy", false, "Snack Bars")'
+	      onclick='setFilter("Baby|Roof|Overflow|Cabin|Cowboy|Vampire", false, "Snack Bars")'
           >Baby|Roof|Overflow|Cabin|Cowboy</span>
       </div>
       <div class="more row">
@@ -481,33 +480,33 @@ const permanentFields = [  // gridFields = [ ...permanentFields, ...customFields
   {"end":"time"}
 ];
 
-const status = document.querySelector("#status");
-const badge = document.querySelector("#badge");
-const darkmode = document.querySelector("#darkmode");
-const abbreviatefoodservice = document.querySelector("#abbreviatefoodservice");
-const suppressmiddlenames = document.querySelector("#suppressmiddlenames");
-const paste = document.querySelector("#pasteme");
-const filter = document.querySelector("#filter");
-const invertFilter = document.querySelector("#invertFilter");
-const filterName = document.querySelector("#filter-name");
-const undo = document.querySelector("#undo");
-const share = document.querySelector("#share");
-const date = document.querySelector("#date");
-const text = document.querySelector("#text");
-const grid = document.querySelector("#grid");
-const stations = document.querySelector("#stations");
-const sixteen = document.querySelector("#sixteen");
-const movesuper = document.querySelector("#movesuper");
-const movelead = document.querySelector("#movelead");
-const today = document.querySelector("#today");
-const days = document.querySelector("#days");
-const everyone = document.querySelector("#everyone");
-const food = document.querySelector("#food");
-const shortclear = document.querySelector("#short-clear");
-const sortclear = document.querySelector("#sort-clear");
-const shorttoday = document.querySelector("#shorttoday");
-const shortfilter = document.querySelector("#shortfilter");
-const customJSON = document.querySelector("#custom-json");
+const status = 		document.querySelector("#status");
+const badge = 		document.querySelector("#badge");
+const darkmode = 	document.querySelector("#darkmode");
+const abbreviatefoodservice = 	document.querySelector("#abbreviatefoodservice");
+const suppressmiddlenames = 	document.querySelector("#suppressmiddlenames");
+const paste = 		document.querySelector("#pasteme");
+const filter = 		document.querySelector("#filter");
+const invertFilter = 	document.querySelector("#invertFilter");
+const filterName = 	document.querySelector("#filter-name");
+const undo = 		document.querySelector("#undo");
+const share = 		document.querySelector("#share");
+const date = 		document.querySelector("#date");
+const text = 		document.querySelector("#text");
+const grid = 		document.querySelector("#grid");
+const stations = 	document.querySelector("#stations");
+const sixteen = 	document.querySelector("#sixteen");
+const movesuper = 	document.querySelector("#movesuper");
+const movelead = 	document.querySelector("#movelead");
+const today = 		document.querySelector("#today");
+const days = 		document.querySelector("#days");
+const everyone = 	document.querySelector("#everyone");
+const food = 		document.querySelector("#food");
+const shortclear = 	document.querySelector("#short-clear");
+const sortclear = 	document.querySelector("#sort-clear");
+const shorttoday = 	document.querySelector("#shorttoday");
+const shortfilter = 	document.querySelector("#shortfilter");
+const customJSON = 	document.querySelector("#custom-json");
 
 main();
 
@@ -902,7 +901,7 @@ function diffGlobal( prev, next ){
   }
   return  { type, extra };
 }
-
+  //TODO  fine tooth comb
 function findRecord( it, rec ){
   let name = rec[ 2 ];
   let n = name.split( " " ).length;
@@ -1025,8 +1024,6 @@ function loadAndOutput(){
       let q = params.get("q");
       createData( parse( q ) );
     }
-    //let s = window.location.search;
-    //let q = decodeURIComponent();
     appendStatus( "query read." );
     saveData();
     let span = createSpan( "Please reload before editing." );
@@ -1050,6 +1047,7 @@ function interpretCustomJSON( event ){
   output();
 }
 
+  //TODO finish
 function diffCustom( prev, next ){
   let pz = prev.length;
   let nz = next.length;
@@ -1110,7 +1108,6 @@ function parseInternal( input ){
   let lines = input.split( "\n" );
   let date = findDate( input );
   let custom = findCustomFields( input );
-  //console.log( custom );
   let stationNotes = findStationNotes( input );
   let startIndex = lines.findIndex( x => x.match( /^station notes/ ) );
   let cat = "";
@@ -1124,18 +1121,17 @@ function parseInternal( input ){
       let re = /(\D*)(\d?\d:?\d?\d?\s*[ap]m)\s*-\s*(\d?\d:?\d?\d?\s*[ap]m)(.*)/;
       let matches = re.exec( line );
       if(  matches  ){
-	let name = matches[1].replace( /^\s*/s, "" ).replace(/\s*$/, "" ).replace( /[\n]/g, "" );
-	//console.log( name );
-	let start = matches[2].replace( /^\s*0/s, "" ).replace( /:00/, "" ).replace( /\s/g, "" );
-	let end = matches[3].replace( /^\s*0/s, "" ).replace( /:00/, "" ).replace( /\s/g, "" );
-        let rest = matches[4].replace( /^\t/, "" ).split( "\t" );
-	//console.log( rest );
+	let name = matches[1].
+	    replace( /^\s*/s, "" ). replace( /\s*$/, "" ). replace( /[\n]/g, "" );
+	let start = matches[2].
+	    replace( /^\s*0/s, "" ). replace( /:00/, "" ). replace( /\s/g, "" );
+	let end = matches[3].
+	    replace( /^\s*0/s, "" ). replace( /:00/, "" ). replace( /\s/g, "" );
+        let rest = matches[4]. replace( /^\t/, "" ). split( "\t" );
 	if(  rest.length < custom.length  ){
 	  rest = rest.concat( Array( custom.length - rest.length ).fill( "" ) );
 	}
-	//let notes = matches[4].replace( /^\s*/s, "" );
 	let rec = [ loc, pos, name, start, end, ...rest ];
-	//console.log( rec );
 	output.push( rec );
       }
     } else {
@@ -1225,7 +1221,6 @@ function updateDayLinks(){
   ).sort( cmpDay );
   let years = unique( saved.map( d => d[0] ) );
   years.forEach( year => {
-    //console.log( `year: "${year}" ` );
     days.appendChild( createSpan( year + ": " ) );
     let these = saved.filter( d => d[0] == year );
     let mons = unique( these.map( d => d[1] ) );
@@ -1490,7 +1485,7 @@ function formatStations( it ){
     /Slide/, /Prep/, /Distr/,
     // ...
     /Art City/, /Food Service.*(Supervisor|Lead)/, /Overflow/,
-    /Cowboy|Arch/, /Beatnik/, /Pinball/, /Elephant/, /Artifacts/,
+    /Cowboy|Vampire|Arch/, /Beatnik/, /Pinball/, /Elephant/, /Artifacts/,
     /CopOut|Guard/, /Facilities/,
     /Lizz?ard/,
     /Floor/, /Front|Guest/, /Retail/, /Cabin/,
@@ -1498,13 +1493,21 @@ function formatStations( it ){
     /Grounds/, /Parking/,
     /Project/,
   ];
-  spots.push( res.reduce( (acc,cur) => {
+  let last = res.reduce( (acc,cur) => {
       let [ people, rest ] = sift( acc, cur );
       spots.push( people );
       return  rest;
     },
     it.data
-  ) );
+  );
+  let [ lastfood, lastother ] = sift( last, /Food/ );
+  spots.push( lastfood );
+  spots.push( lastother );
+  spots = spots.reduce( ( acc, cur ) => {
+    let locs = unique( cur.map( x=>x[1] ) );
+    locs.forEach( loc => acc.push( cur.filter( x=>x[1]==loc ) ) );
+    return  acc;
+  }, [] );
   spots.forEach( spot => {
     if(  ! spot[0]  ) return;
     let classes = [ "name", "start", "end" ];
@@ -1518,13 +1521,6 @@ function formatStations( it ){
 			      ?abbreviateFoodService( location )
 			      :location );
     loc.appendChild( locname );
-    //let [ stnoteinput, stnoteelem ] = newInput( "text",
-						//it.stationNotes[ location ] ?? "",
-						//"station-note",
-						//-1,
-						//-1,
-						//it.stationNotes[ location ]?.length );
-    //let stinput = stnoteinput.querySelector( stnoteelem );
     let stinput = document.createElement( "textarea" );
     stinput.classList.add( "station-note" );
     stinput.classList.add( "text" );
@@ -1533,9 +1529,6 @@ function formatStations( it ){
     stinput.setAttribute( "inputmode", "latin" );
     if(  it.stationNotes[ location ]  ){
       stinput.value = it.stationNotes[ location ];
-      //stinput.setAttribute( "size", it.stationNotes[ location ].length );
-    } else {
-      //stinput.setAttribute( "size", 8 );
     }
     stinput.onchange = (e) => {
       changeStationNote( location, e.target.value );
@@ -1578,18 +1571,13 @@ function formatStations( it ){
         mapTuple( row, 4, rec =>
 	  rec.slice(0, 3).forEach( (cell, idx) => {
 	    let td = document.createElement( "td" );
-	    let [ input, element ] = newInput( types[ idx ],
+	    let [ input, tag ] = newInput( types[ idx ],
                                                idx==0 && suppressmiddlenames.checked
 					         ?suppressMiddleNames( cell ) :cell,
 					       classes[ idx ],
 					       rec[ 3 ],
 					       2 + idx,
 					       cell.length );
-	  //td.dataset.index = rec[ 3 ];
-	  //td.classList.add( idx==0  ? "name" : "time" );
-	  //td.appendChild( document.createTextNode( idx==0 && suppressmiddlenames.checked
-						   //?suppressMiddleNames(cell)
-						   //:cell ) );
             td.appendChild( input );
 	    td.classList.add( types[ idx ] );
 	    tr.appendChild( td );
@@ -1599,7 +1587,7 @@ function formatStations( it ){
       } );
     }
     stations.appendChild( table );
-    stinput.style.width = ((loc.getClientRects()?.[0]?.width -
+    stinput.style.width = ((table.getBoundingClientRect()?.width -
       locname.getClientRects()?.[0]?.width) ?? 50) + "px";
   } );
 }
@@ -1612,7 +1600,9 @@ function formatTable( it ){
   let header = document.createElement( "tr" );
   let maxlocation =
       it.data.reduce( (x,y) =>
-	Math.max(x,(abbreviatefoodservice.checked?abbreviateFoodService(y[1]):y[1]).length),
+	Math.max( x, ( abbreviatefoodservice.checked
+		         ? abbreviateFoodService(y[1])
+		         : y[1] ).length ),
 	0 );
   let maxposition = it.data.reduce( (x,y) => Math.max(x,y[2].length), 0 );
   let maxname = it.data.reduce( (x,y) => Math.max(x,y[3].length), 0 );
@@ -1644,7 +1634,7 @@ function formatTable( it ){
 	let size = colIdx == 0 ? maxlocation :
 	    colIdx == 1 ? maxposition :
 	    colIdx == 2 ? maxname : 0;
-        let [ input, element ] = newInput( types[colIdx],
+        let [ input, tag ] = newInput( types[colIdx],
 					   (colIdx==0 && abbreviatefoodservice.checked)?
                                              abbreviateFoodService(col):
                                              (colIdx==2 && suppressmiddlenames.checked)?
@@ -1806,7 +1796,6 @@ function newInput( type, value, theClass, idx, colIdx, size ){
     element.setAttribute( "label", value );
     element.addEventListener( "change", e => {
       //console.log( e );
-      //changeField( idx, colIdx, element.label );
       changeField( idx, colIdx, element.getAttribute( "label" ) );
       saveData();
       output();
@@ -1821,7 +1810,7 @@ function handleDragStart( event ){
     el.classList.remove( "dragging" )
   );
   event.target.classList.add( "dragging" );
-  //event.preventDefault();
+  event.preventDefault();
   //console.log( "dragstart", event );
 }
   
