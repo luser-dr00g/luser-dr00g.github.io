@@ -716,32 +716,54 @@ function editData( data ){
 }
 
 function doDiffChanges( undorec ){
-  undorec.diff.extra.change.forEach( change => {
-    let idx = findRecord( global, change.next );
-    for(  var i = 0; i < change.next.length; ++i  ){
-      if(  i == 2  ) continue;
-      global.data[ idx ][ i ] = change.next[ i ];
-    }
-  } );
-  undorec.diff.extra.add.forEach( rec => {
-    global.data.push( rec );
-  } );
+  switch(  undorec.diff.type  ){
+  case 'Edit data':
+    undorec.diff.extra.change.forEach( change => {
+      let idx = findRecord( global, change.next );
+      for(  var i = 0; i < change.next.length; ++i  ){
+        if(  i == 2  ) continue;
+        global.data[ idx ][ i ] = change.next[ i ];
+      }
+    } );
+    undorec.diff.extra.add.forEach( rec => {
+      global.data.push( rec );
+    } );
+    break;
+  case 'Edit station':
+    undorec.diff.extra.change.forEach( change => {
+      global.stationNotes[ change.key ] = change.next;
+    } );
+    undorec.diff.extra.add.forEach( change => {
+      global.stationNotes[ change.key ] = change.next;
+    } );
+  }
 }
   
 function undoDiffChanges( undorec ){
-  undorec.diff.extra.change.forEach( change => {
-    let idx = findRecord( global, change.prev );
-    for(  var i = 0; i < change.prev.length; ++i  ){
-      if(  i == 2  ) continue;
-      global.data[ idx ][ i ] = change.prev[ i ];
-    }
-  } );
-  undorec.diff.extra.add.forEach( rec => {
-    let idx = findRecord( global, rec );
-    let head = global.data.slice( 0, idx );
-    let tail = global.data.slice( idx + 1 );
-    global.data = head.concat( tail );
-  } );
+  switch(  undorec.diff.type  ){
+  case 'Edit data':
+    undorec.diff.extra.change.forEach( change => {
+      let idx = findRecord( global, change.prev );
+      for(  var i = 0; i < change.prev.length; ++i  ){
+        if(  i == 2  ) continue;
+        global.data[ idx ][ i ] = change.prev[ i ];
+      }
+    } );
+    undorec.diff.extra.add.forEach( rec => {
+      let idx = findRecord( global, rec );
+      let head = global.data.slice( 0, idx );
+      let tail = global.data.slice( idx + 1 );
+      global.data = head.concat( tail );
+    } );
+    break;
+  case 'Edit station':
+    undorec.diff.extra.change.forEach( change => {
+      global.stationNotes[ change.key ] = change.prev;
+    } );
+    undorec.diff.extra.add.forEach( change => {
+      delete global.stationNotes[ change.key ];
+    } );
+  }
 }
 
 function changeField( idx, colIdx, newValue ){
@@ -876,6 +898,22 @@ function diffGlobal( prev, next ){
     type = "Load day";
   } else if(  ! objectEq( prev.stationNotes, next.stationNotes )  ){
     type = "Edit station";
+    Object.keys( next.stationNotes ).forEach( key => {
+      if(  prev.stationNotes.hasOwnProperty( key )  ){
+	if(  prev.stationNotes[ key ] != next.stationNotes[ key ]  )
+          extra.change.push( {
+	    key,
+	    next: next.stationNotes[ key ],
+	    prev: prev.stationNotes[ key ]
+	  } );
+      } else {
+	extra.add.push( {
+	  key,
+	  next: next.stationNotes[ key ],
+	  prev: ""
+	} );
+      }
+    } );
   } else {
     type = "Edit data";
     let sp = sortedData( prev, cmpColumns( [ 3, 1, 2, 4, 5 ] ) );
@@ -1753,7 +1791,7 @@ function newInput( type, value, theClass, idx, colIdx, size ){
     let [ element, tag ] = fillElement( input, "input", type, theClass, idx, colIdx );
     element.value = value;
     element.setAttribute( "size", size );
-    element.setAttribute( "maxlength", size );
+    //element.setAttribute( "maxlength", size );
     element.setAttribute( "list", theClass + "s" );
     element.addEventListener( "focus", e => {
       element.setAttribute( "placeholder", element.value );
@@ -1810,7 +1848,7 @@ function handleDragStart( event ){
     el.classList.remove( "dragging" )
   );
   event.target.classList.add( "dragging" );
-  event.preventDefault();
+  //event.preventDefault();
   //console.log( "dragstart", event );
 }
   
