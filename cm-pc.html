@@ -64,8 +64,7 @@ input[type="text"]{
 #darkmode:checked+label::before{
     content: "Light";
     text-decoration: underline;
-    cursor: pointer;
-}
+    cursor: pointer; }
 textarea{
     color: var(--text);
     border-color: var(--text);
@@ -292,6 +291,9 @@ details[open] #shortfilter{ display: none; }
         <span id="food" class="shortcut more less"
 	      onclick='setFilter("Food|Bar", false, "Food")'
 	      >Food</span>
+        <span id="floor" class="shortcut more less"
+	      onclick='setFilter("Guest|Operations|Floor", false, "Floor")'
+	      >Floor</span>
 	<span class="shortcut more less"
 	      onclick="plusEvent()"
 	      >&pm;Event</span>
@@ -299,9 +301,6 @@ details[open] #shortfilter{ display: none; }
 	      onclick="plusPinball()"
 	      >&pm;Pinball</span>
       <div class="more row">
-        <span class="shortcut"
-	      onclick='setFilter("Guest|Operations", false, "Floor")'
-	      >Floor</span>
 	<span class="shortcut"
 	      onclick='setFilter("Services", false, "Services")'
 	      >Services</span>
@@ -502,6 +501,7 @@ const today = 		document.querySelector("#today");
 const days = 		document.querySelector("#days");
 const everyone = 	document.querySelector("#everyone");
 const food = 		document.querySelector("#food");
+const floor = 		document.querySelector("#floor");
 const shortclear = 	document.querySelector("#short-clear");
 const sortclear = 	document.querySelector("#sort-clear");
 const shorttoday = 	document.querySelector("#shorttoday");
@@ -1331,6 +1331,11 @@ function output(){
     food.classList.remove( "less" );
   } else {
     food.classList.add( "less" );
+  }
+  if(  filterName.textContent.match( /Floor/ ) && ! invertFilter.checked  ){
+    floor.classList.remove( "less" );
+  } else {
+    floor.classList.add( "less" );
   }
   if(  arrayEq( sortOrder, [] )  ){
     shortclear.style.display = "none";
