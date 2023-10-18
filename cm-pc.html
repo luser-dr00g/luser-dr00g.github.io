@@ -302,7 +302,11 @@ details[open] #shortfilter{ display: none; }
 	      >&pm;Pinball</span>
       <div class="more row">
 	<span class="shortcut"
-	      onclick='setFilter("Services", false, "Services")'
+	      onclick='setFilter("Guest|Operations|Floor|House|Services",
+		       false, "Operations")'
+	      >Operations</span>
+	<span class="shortcut"
+	      onclick='setFilter("House|Services", false, "Services")'
 	      >Services</span>
 	<span class="shortcut"
 	      onclick='setFilter("Retail", false, "Retail")'
@@ -319,7 +323,8 @@ details[open] #shortfilter{ display: none; }
 	      onclick='setFilter("Lizard|CopOut|Beatnik", false, "Kitchens")'
           >Lizard|CopOut|Beatnik</span>
 	<span class="shortcut"
-	      onclick='setFilter("Baby|Roof|Overflow|Cabin|Cowboy|Vampire", false, "Snack Bars")'
+	      onclick='setFilter("Baby|Roof|Overflow|Cabin|Cowboy|Vampire",
+		       false, "Snack Bars")'
           >Baby|Roof|Overflow|Cabin|Cowboy</span>
       </div>
       <div class="more row">
