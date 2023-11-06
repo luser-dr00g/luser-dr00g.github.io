@@ -1256,6 +1256,7 @@ function cmpMonth( x, y ){
 }
 
 function updateDayLinks(){
+  let today = global.date.split( "-" );
   days.textContent = "";
   let stuff = localStorage.getItem( "days" )?.replace( /^ +/, "" ).split( " " );
   //console.log( stuff );
@@ -1264,19 +1265,35 @@ function updateDayLinks(){
   ).sort( cmpDay );
   let years = unique( saved.map( d => d[0] ) );
   years.forEach( year => {
-    days.appendChild( createSpan( year + ": " ) );
+    //days.appendChild( createSpan( year + ": " ) );
+    let theYear = createDetails( year, year == today[0] );
+    days.appendChild( theYear );
     let these = saved.filter( d => d[0] == year );
     let mons = unique( these.map( d => d[1] ) );
     mons.forEach( mon => {
-      days.appendChild( document.createElement( "br" ) );
-      days.appendChild( createSpan( mon + ": " ) );
+      //days.appendChild( document.createElement( "br" ) );
+      //days.appendChild( createSpan( mon + ": " ) );
+      //theYear.appendChild( createSpan( mon + ": " ) );
+      let theMonth = createDetails( mon, mon == today[1] );
+      theYear.appendChild( theMonth );
       let em = these.filter( d => d[1] == mon );
       em.forEach( day => {
-	days.appendChild( dayLink( day ) );
+	//days.appendChild( dayLink( day ) );
+	//theYear.appendChild( dayLink( day ) );
+	theMonth.appendChild( dayLink( day ) );
       } );
     } );
-    days.appendChild( document.createElement( "br" ) );
+    //days.appendChild( document.createElement( "br" ) );
   } );
+}
+
+function createDetails( summary, isOpen ){
+  let details = document.createElement( "details" );
+  if(  isOpen  ) details.setAttribute( "open", "true" );
+  let sum = document.createElement( "summary" );
+  sum.appendChild( document.createTextNode( summary ) );
+  details.appendChild( sum );
+  return  details;
 }
 
 function output(){
